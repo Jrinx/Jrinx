@@ -71,7 +71,7 @@ dbg: | .gdbinit run
 	@$(RM) .gdbinit
 
 check-style:
-	scripts/check-style
+	@scripts/check-style
 
 fix-style:
-	scripts/check-style -f
+	@scripts/check-style -f
