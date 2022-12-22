@@ -75,3 +75,6 @@ check-style:
 
 fix-style:
 	@scripts/check-style -f
+
+register-git-hooks:
+	@ln -s ../../scripts/pre-commit .git/hooks/pre-commit
