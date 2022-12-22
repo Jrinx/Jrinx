@@ -1,6 +1,7 @@
 .vscode
 target
 
+.gdbinit
 *.o
 *.objdump
 *.bin

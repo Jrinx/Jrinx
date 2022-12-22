@@ -7,6 +7,8 @@ OBJDUMP		:= $(CROSS_COMPILE)objdump
 OBJCOPY		:= $(CROSS_COMPILE)objcopy
 GDB		:= gdb-multiarch
 
+include mk/conf.mk
+
 CFLAGS		+= -nostdlib \
 		-Wall -Werror \
 		-mabi=lp64 -march=rv64g -mcmodel=medany -mno-relax \
@@ -63,11 +65,10 @@ objcopy:
 run:
 	@$(EMU) $(EMU_OPTS)
 
-dbg: EMU_OPTS += -s -S
-dbg: run
-
-gdb:
-	@$(GDB) --eval-command 'target remote :1234' $(JRINX)
+dbg: EMU_OPTS	+= -s -S
+dbg: CFLAGS	+= -DJRINX=$(JRINX)
+dbg: | .gdbinit run
+	@$(RM) .gdbinit
 
 check-style:
 	scripts/check-style
