@@ -9,12 +9,12 @@ GDB		:= gdb-multiarch
 
 include mk/conf.mk
 
-CFLAGS		+= -nostdlib \
-		-Wall -Werror \
+CFLAGS		+= --std=gnu99 -nostdlib \
+		-Wall -Werror -Wa,--fatal-warnings \
 		-mabi=lp64 -march=rv64g -mcmodel=medany -mno-relax \
-		-fno-omit-frame-pointer -ffreestanding -fno-common -fno-stack-protector
+		-fno-omit-frame-pointer -ffreestanding -fno-common -fno-stack-protector -fno-builtin
 
-LDFLAGS		+=
+LDFLAGS		+= --fatal-warnings --warn-unresolved-symbols
 
 EMU 		:= qemu-system-riscv64
 EMU_MACH 	:= sifive_u
