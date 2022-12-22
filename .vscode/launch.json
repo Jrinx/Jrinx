@@ -1,0 +1,26 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "qemu-gdb",
+      "type": "cppdbg",
+      "program": "${workspaceRoot}/target/jrinx",
+      "request": "launch",
+      "MIMode": "gdb",
+      "miDebuggerPath": "/usr/bin/gdb-multiarch",
+      "miDebuggerArgs": "--cd=${workspaceFolder} --nx",
+      "setupCommands": [
+        {
+          "text": "source ${workspaceFolder}/.gdbinit",
+          "ignoreFailures": true,
+        },
+        {
+          "text": "break kernel_init",
+        }
+      ],
+      "launchCompleteCommand": "None",
+      "externalConsole": false,
+      "cwd": "${workspaceFolder}",
+    }
+  ]
+}
