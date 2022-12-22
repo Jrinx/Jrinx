@@ -1,0 +1,9 @@
+.vscode
+target
+
+*.o
+*.objdump
+*.bin
+*.ld
+*.swp
+*~

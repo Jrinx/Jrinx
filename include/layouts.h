@@ -1,0 +1,14 @@
+#ifndef _LAYOUTS_H_
+#define _LAYOUTS_H_
+
+#define PGSHIFT 12
+#define PGSIZE (1 << PGSHIFT)
+
+#define KERNBASE 0x80200000
+
+#define KSTKSHIFT 4
+#define KSTKSIZE (PGSIZE << KSTKSHIFT)
+
+#define KSTKTOP (KSTKSIZE * CONFIG_NR_CORES)
+
+#endif
