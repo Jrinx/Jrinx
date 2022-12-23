@@ -23,7 +23,7 @@ EMU_RAM_SIZE	:= 1G
 EMU_OPTS	:= -M $(EMU_MACH) -m $(EMU_RAM_SIZE) -nographic -smp $(EMU_CPUS)
 
 INCLUDES	:= -I./include
-MODULES		:= init kern lib
+MODULES		:= kern lib
 OBJECTS		:= $(addsuffix /**/*.o, $(MODULES))
 LDSCRIPT	:= kern.ld
 TARGET_DIR	:= target
