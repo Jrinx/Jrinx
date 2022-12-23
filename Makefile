@@ -1,3 +1,5 @@
+OPENSBI_FW_PATH	?= ../archive/opensbi/build/platform/generic/firmware
+
 CROSS_COMPILE	:= riscv64-unknown-elf-
 
 __CC		:= $(CROSS_COMPILE)gcc
@@ -17,7 +19,7 @@ CFLAGS		+= --std=gnu99 -nostdlib \
 LDFLAGS		+= --fatal-warnings --warn-unresolved-symbols
 
 EMU 		:= qemu-system-riscv64
-EMU_MACH 	:= sifive_u
+EMU_MACH 	:= virt
 EMU_CPUS 	:= 5
 EMU_RAM_SIZE	:= 1G
 EMU_OPTS	:= -M $(EMU_MACH) -m $(EMU_RAM_SIZE) -nographic -smp $(EMU_CPUS)
@@ -28,9 +30,10 @@ OBJECTS		:= $(addsuffix /**/*.o, $(MODULES))
 LDSCRIPT	:= kern.ld
 TARGET_DIR	:= target
 JRINX		:= $(TARGET_DIR)/jrinx
+BOOTLOADER	:= $(OPENSBI_FW_PATH)/fw_jump.elf
 
 CFLAGS		+= -DCONFIG_NR_CORES=$(EMU_CPUS)
-EMU_OPTS	+= -kernel $(JRINX)
+EMU_OPTS	+= -kernel $(JRINX) -bios $(BOOTLOADER)
 
 export __CC __CPP __LD OBJDUMP OBJCOPY CFLAGS LDFLAGS
 
@@ -66,7 +69,7 @@ run:
 	@$(EMU) $(EMU_OPTS)
 
 dbg: EMU_OPTS	+= -s -S
-dbg: CFLAGS	+= -DJRINX=$(JRINX)
+dbg: CFLAGS	+= -DJRINX=$(JRINX) -DBOOTLOADER=$(BOOTLOADER)
 dbg: | .gdbinit run
 	@$(RM) .gdbinit
 
