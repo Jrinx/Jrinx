@@ -45,13 +45,15 @@ all:
 	@$(MAKE) $(JRINX)
 
 $(JRINX): SHELL := /bin/bash
-$(JRINX): $(MODULES) $(LDSCRIPT)
-	mkdir -p $(TARGET_DIR)
+$(JRINX): $(MODULES) $(LDSCRIPT) $(TARGET_DIR)
 	shopt -s nullglob globstar
 	$(LD) $(LDFLAGS) -T $(LDSCRIPT) -o $(JRINX) $(OBJECTS)
 
 $(MODULES):
 	$(MAKE) -C $@
+
+$(TARGET_DIR):
+	mkdir -p $(TARGET_DIR)
 
 include mk/compile.mk
 
