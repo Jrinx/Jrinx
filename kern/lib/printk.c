@@ -1,4 +1,4 @@
-#include <kern/sbi/ecall-intf.h>
+#include <kern/lib/ecall-intf.h>
 #include <lib/printfmt.h>
 
 static void outputk(void *data, const char *buf, size_t len) {

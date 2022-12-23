@@ -1,4 +1,4 @@
-#include <kern/sbi/ecall-intf.h>
+#include <kern/lib/ecall-intf.h>
 #include <types.h>
 
 inline long sbi_console_putchar(int ch) {
