@@ -38,7 +38,7 @@ EMU_OPTS	+= -kernel $(JRINX) -bios $(BOOTLOADER)
 export __CC __CPP __LD OBJDUMP OBJCOPY CFLAGS LDFLAGS
 
 .ONESHELL:
-.PHONY: all clean objdump run gdb dbg $(JRINX) $(MODULES)
+.PHONY: all clean objdump objcopy run dbg $(JRINX) $(MODULES)
 
 all:
 	@export MAKEFLAGS="-j$$(nproc) -s $$MAKEFLAGS"
