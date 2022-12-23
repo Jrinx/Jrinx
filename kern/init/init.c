@@ -20,6 +20,8 @@ void kernel_init(unsigned long hartid, unsigned long opaque) {
     }
     haltk("[ hart %ld ] all cores running!", hartid);
   } else {
+    while ((hart_table & ((1 << hartid) - 1)) != 0) {
+    }
     printk("[ hart %ld ] Hello Jrinx, I am slave hart!\n", hartid);
     hart_table &= ~(1 << hartid);
     while (1) {
