@@ -1,6 +1,3 @@
 INCLUDES := -I../../include
 
-include ../../mk/compile.mk
-
-.PHONY: all
-all: ecall-intf.o
+include ../../mk/compile.mk ../../mk/auto-tar.mk

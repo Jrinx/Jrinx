@@ -1,8 +1,8 @@
-MODULES		:= lib sbi
+KERN_MODULES := $(dir $(wildcard ./*/))
 
-.PHONY: all $(MODULES)
+.PHONY: all $(KERN_MODULES)
 
-all: $(MODULES)
+all: $(KERN_MODULES)
 
-$(MODULES):
+$(KERN_MODULES):
 	$(MAKE) -C $@

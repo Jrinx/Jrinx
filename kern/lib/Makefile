@@ -1,6 +1,3 @@
 INCLUDES := -I../../include
 
-.PHONY: all
-all: printk.o
-
-include ../../mk/compile.mk
+include ../../mk/compile.mk ../../mk/auto-tar.mk

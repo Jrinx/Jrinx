@@ -1,6 +1,3 @@
 INCLUDES := -I../include
 
-include ../mk/compile.mk
-
-.PHONY: all
-all: printfmt.o string.o
+include ../mk/compile.mk ../mk/auto-tar.mk
