@@ -71,7 +71,7 @@ run:
 	@$(EMU) $(EMU_OPTS)
 
 dbg: EMU_OPTS	+= -s -S
-dbg: CFLAGS	+= -DJRINX=$(JRINX) -DBOOTLOADER=$(BOOTLOADER)
+dbg: CFLAGS	+= -DJRINX=$(JRINX)
 dbg: | .gdbinit run
 	@$(RM) .gdbinit
 
