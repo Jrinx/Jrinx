@@ -8,6 +8,7 @@ __LD		:= $(CROSS_COMPILE)ld
 OBJDUMP		:= $(CROSS_COMPILE)objdump
 OBJCOPY		:= $(CROSS_COMPILE)objcopy
 GDB		:= gdb-multiarch
+GDB_EVAL_CMD	:= -ex 'target remote :1234'
 
 include mk/conf.mk
 
@@ -38,7 +39,7 @@ EMU_OPTS	+= -kernel $(JRINX) -bios $(BOOTLOADER)
 export __CC __CPP __LD OBJDUMP OBJCOPY CFLAGS LDFLAGS
 
 .ONESHELL:
-.PHONY: all clean objdump objcopy run dbg gdb $(JRINX) $(MODULES)
+.PHONY: all clean objdump objcopy run dbg gdb gdb-sbi $(JRINX) $(MODULES)
 
 all:
 	@export MAKEFLAGS="-j$$(nproc) -s $$MAKEFLAGS"
@@ -70,12 +71,15 @@ objcopy:
 run:
 	@$(EMU) $(EMU_OPTS)
 
-dbg: EMU_OPTS	+= -s -S
-dbg: CFLAGS	+= -DJRINX=$(JRINX)
+dbg: EMU_OPTS		+= -s -S
+dbg: CFLAGS		+= -DJRINX=$(JRINX)
 dbg: run
 
 gdb:
-	@$(GDB) -ex 'target remote :1234' $(JRINX)
+	@$(GDB) $(GDB_EVAL_CMD) $(JRINX)
+
+gdb-sbi: GDB_EVAL_CMD	+= -ex 'set confirm off' -ex 'add-symbol-file $(BOOTLOADER)' -ex 'set confirm on'
+gdb-sbi: gdb
 
 check-style:
 	@scripts/check-style
