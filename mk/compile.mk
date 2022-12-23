@@ -8,6 +8,3 @@ include $(addsuffix silent.mk,$(dir $(lastword $(MAKEFILE_LIST))))
 
 %.ld: %.ld.S
 	$(CPP) $(CFLAGS) $(INCLUDES) -E -P -x c $< > $@
-
-.gdbinit: .gdbinit.S
-	$(CPP) $(CFLAGS) $(INCLUDES) -E -P -x c $< > $@

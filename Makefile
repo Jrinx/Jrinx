@@ -38,7 +38,7 @@ EMU_OPTS	+= -kernel $(JRINX) -bios $(BOOTLOADER)
 export __CC __CPP __LD OBJDUMP OBJCOPY CFLAGS LDFLAGS
 
 .ONESHELL:
-.PHONY: all clean objdump objcopy run dbg $(JRINX) $(MODULES)
+.PHONY: all clean objdump objcopy run dbg gdb $(JRINX) $(MODULES)
 
 all:
 	@export MAKEFLAGS="-j$$(nproc) -s $$MAKEFLAGS"
@@ -72,8 +72,10 @@ run:
 
 dbg: EMU_OPTS	+= -s -S
 dbg: CFLAGS	+= -DJRINX=$(JRINX)
-dbg: | .gdbinit run
-	@$(RM) .gdbinit
+dbg: run
+
+gdb:
+	@$(GDB) -ex 'target remote :1234' $(JRINX)
 
 check-style:
 	@scripts/check-style

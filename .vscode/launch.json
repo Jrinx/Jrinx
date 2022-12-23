@@ -8,16 +8,7 @@
       "request": "launch",
       "MIMode": "gdb",
       "miDebuggerPath": "/usr/bin/gdb-multiarch",
-      "miDebuggerArgs": "--cd=${workspaceFolder} --nx",
-      "setupCommands": [
-        {
-          "text": "source ${workspaceFolder}/.gdbinit",
-          "ignoreFailures": true,
-        },
-        {
-          "text": "break kernel_init",
-        }
-      ],
+      "miDebuggerServerAddress": "127.0.0.1:1234",
       "launchCompleteCommand": "None",
       "externalConsole": false,
       "cwd": "${workspaceFolder}",
