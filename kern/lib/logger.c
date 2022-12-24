@@ -1,6 +1,9 @@
 #include <kern/lib/debug.h>
 #include <kern/lib/sbi.h>
+#include <kern/lock/spinlock.h>
 #include <lib/printfmt.h>
+
+static with_spinlock(print);
 
 static void outputk(void *data, const char *buf, size_t len) {
   for (int i = 0; i < len; i++) {
@@ -11,7 +14,9 @@ static void outputk(void *data, const char *buf, size_t len) {
 void printk(const char *restrict fmt, ...) {
   va_list ap;
   va_start(ap, fmt);
+  panic_e(spl_acquire(&print_splk));
   vprintfmt(outputk, NULL, fmt, ap);
+  panic_e(spl_release(&print_splk));
   va_end(ap);
 }
 

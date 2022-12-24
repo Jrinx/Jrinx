@@ -1,15 +1,20 @@
 #include <kern/lib/debug.h>
 #include <kern/lib/logger.h>
 #include <kern/lib/sbi.h>
+#include <kern/lock/spinlock.h>
 #include <layouts.h>
 #include <stdint.h>
 
 void kernel_init(unsigned long hartid, unsigned long opaque) {
   static int is_master = 1;
-  static unsigned long hart_table = 0;
+  static unsigned long init_cnt = 0;
+  static with_spinlock(init_cnt);
+  hrt_set_id(hartid);
   if (is_master) {
     info("[ hart %ld ] Hello Jrinx, I am master hart!\n", hartid);
+    init_cnt++;
     is_master = 0;
+    unsigned long hart_table = 0;
     for (int i = 0; i < CONFIG_NR_CORES; i++) {
       if (i != hartid) {
         hart_table |= 1 << i;
@@ -17,14 +22,14 @@ void kernel_init(unsigned long hartid, unsigned long opaque) {
       }
     }
     panic_e(sbi_send_ipi(&hart_table));
-    while (hart_table) {
+    while (init_cnt < CONFIG_NR_CORES) {
     }
-    haltk("[ hart %ld ] all cores running!", hartid);
+    haltk("[ hart %ld ] all cores are running, halt!", hartid);
   } else {
-    while ((hart_table & ((1 << hartid) - 1)) != 0) {
-    }
     info("[ hart %ld ] Hello Jrinx, I am slave hart!\n", hartid);
-    hart_table &= ~(1 << hartid);
+    panic_e(spl_acquire(&init_cnt_splk));
+    init_cnt++;
+    panic_e(spl_release(&init_cnt_splk));
     while (1) {
     }
   }
