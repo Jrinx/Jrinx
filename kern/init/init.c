@@ -1,7 +1,7 @@
 #include <kern/lib/logger.h>
 #include <kern/lib/sbi.h>
 #include <layouts.h>
-#include <types.h>
+#include <stdint.h>
 
 void kernel_init(unsigned long hartid, unsigned long opaque) {
   static int is_master = 1;

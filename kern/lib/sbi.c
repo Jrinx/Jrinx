@@ -1,5 +1,5 @@
 #include <kern/lib/sbi.h>
-#include <types.h>
+#include <stdint.h>
 
 static inline struct sbiret sbi_call(long arg0, long arg1, long arg2, long eid, long fid) {
   register long a0 asm("a0") = arg0;

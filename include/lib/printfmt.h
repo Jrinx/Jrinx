@@ -2,7 +2,8 @@
 #define _LIB_PRINTFMT_H_
 
 #include <stdarg.h>
-#include <types.h>
+#include <stddef.h>
+#include <stdint.h>
 
 typedef void (*fmt_callback_t)(void *, const char *, size_t);
 

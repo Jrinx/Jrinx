@@ -1,17 +1,18 @@
-#include <types.h>
+#include <stddef.h>
+#include <stdint.h>
 
 void *memcpy(void *restrict dst, const void *restrict src, size_t n) {
   void *dstaddr = dst;
   void *max = dst + n;
 
-  if (((u_long)src % sizeof(uint32_t)) != ((u_long)dst % sizeof(uint32_t))) {
+  if (((unsigned long)src % sizeof(uint32_t)) != ((unsigned long)dst % sizeof(uint32_t))) {
     while (dst < max) {
       *(uint8_t *)dst++ = *(uint8_t *)src++;
     }
     return dstaddr;
   }
 
-  while (((u_long)dst % sizeof(uint32_t)) && dst < max) {
+  while (((unsigned long)dst % sizeof(uint32_t)) && dst < max) {
     *(uint8_t *)dst++ = *(uint8_t *)src++;
   }
 
@@ -33,7 +34,7 @@ void *memset(void *restrict dst, int c, size_t n) {
   uint8_t byte = (uint8_t)(c & 0xff);
   uint32_t word = byte | byte << 8 | byte << 16 | byte << 24;
 
-  while (((u_long)dst % sizeof(uint32_t)) && dst < max) {
+  while (((unsigned long)dst % sizeof(uint32_t)) && dst < max) {
     *(uint8_t *)dst++ = byte;
   }
 

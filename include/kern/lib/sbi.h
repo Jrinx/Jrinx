@@ -244,7 +244,7 @@ struct sbiret {
   long value;
 };
 
-#include <types.h>
+#include <stdint.h>
 
 long sbi_console_putchar(int ch);
 long sbi_send_ipi(const unsigned long *hart_mask);
