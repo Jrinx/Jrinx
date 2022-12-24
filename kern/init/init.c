@@ -7,7 +7,7 @@
 
 void kernel_init(unsigned long hartid, unsigned long opaque) {
   static int is_master = 1;
-  static unsigned long init_cnt = 0;
+  static volatile unsigned long init_cnt = 0;
   static with_spinlock(init_cnt);
   hrt_set_id(hartid);
   if (is_master) {
