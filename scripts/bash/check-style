@@ -63,7 +63,7 @@ function check-ec() {
 
 function check-sh() {
   green '[ shellcheck ] begin'
-  bash_files=$(grep --exclude-dir=.git -m 1 -rIzl '^#![[:blank:]]*/.*bin/.*bash')
+  bash_files=$(grep --exclude-dir=.git -m 1 -rIzl '^#!/bin/bash')
   # shellcheck disable=2086
   if ! $SHELLCHECK -x $bash_files -e 1090,1091 ; then
     fatal '[ shellcheck ] failed'
@@ -108,7 +108,7 @@ function check-cl() {
 
 function check-py() {
   green '[ autopep8 ] begin'
-  py_files=$(find -- * -name '*.py' -print)
+  py_files=$(grep --exclude-dir=.git -m 1 -rIzl '^#!/usr/bin/python.*')
 
   if [ -z "$py_files" ]; then
     green '[ autopep8 ] no python files found'
