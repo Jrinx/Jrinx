@@ -4,10 +4,10 @@
 #include <stdarg.h>
 
 void printk(const char *restrict fmt, ...) __attribute__((format(printf, 1, 2)));
-void panick(const char *restrict file, const unsigned long line, const char *restrict fmt, ...)
-    __attribute__((format(printf, 3, 4)));
+void panick(const char *restrict fmt, ...) __attribute__((format(printf, 1, 2)));
 void haltk(const char *restrict fmt, ...) __attribute__((noreturn));
 
-#define fatal(msg, ...) panick(__FILE__, __LINE__, msg, ##__VA_ARGS__)
+#define info(msg, ...) printk("%s:%d " msg, __FILE__, __LINE__, ##__VA_ARGS__)
+#define fatal(msg, ...) panick("%s:%d " msg, __FILE__, __LINE__, ##__VA_ARGS__)
 
 #endif
