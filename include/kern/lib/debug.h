@@ -24,8 +24,12 @@
   ({                                                                                           \
     typeof(expr) ret = (expr);                                                                 \
     long err = *((long *)&ret);                                                                \
-    if (unlikely(err < 0)) {                                                                   \
-      fatal("unexpected error %ld: " #expr, err);                                              \
+    if (err < 0) {                                                                             \
+      if (sizeof(ret) == sizeof(long) && -err < KER_ERR_MAX) {                                 \
+        fatal("unexpected error %ld (%s): " #expr, err, msg_of(err));                          \
+      } else {                                                                                 \
+        fatal("unexpected error %ld: " #expr, err);                                            \
+      }                                                                                        \
     }                                                                                          \
   })
 
