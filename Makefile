@@ -1,5 +1,8 @@
 OPENSBI_FW_PATH	?= ../archive/opensbi/build/platform/generic/firmware
 
+# Qemu dose not support big endian now.
+TARGET_ENDIAN	?= little
+
 CROSS_COMPILE	:= riscv64-unknown-elf-
 
 __CC		:= $(CROSS_COMPILE)gcc
@@ -14,8 +17,14 @@ include mk/conf.mk
 
 CFLAGS		+= --std=gnu99 -nostdlib \
 		-Wall -Werror -Wa,--fatal-warnings \
-		-mabi=lp64 -march=rv64g -mcmodel=medany -mno-relax \
+		-mabi=lp64 -march=rv64g -m$(TARGET_ENDIAN)-endian -mcmodel=medany -mno-relax \
 		-fno-omit-frame-pointer -ffreestanding -fno-common -fno-stack-protector -fno-builtin
+
+ifeq ($(TARGET_ENDIAN),little)
+	CFLAGS	+= -DCONFIG_LITTLE_ENDIAN=1
+else
+	CFLAGS	+= -DCONFIG_LITTLE_ENDIAN=0
+endif
 
 LDFLAGS		+= --fatal-warnings --warn-unresolved-symbols
 
@@ -74,6 +83,12 @@ run:
 dbg: EMU_OPTS		+= -s -S
 dbg: CFLAGS		+= -DJRINX=$(JRINX)
 dbg: run
+
+dumpdtb: EMU_OPTS	+= -M $(EMU_MACH),dumpdtb=$(EMU_MACH).dtb
+dumpdtb : run
+
+dumpdts: dumpdtb
+	dtc -I dtb -O dts $(EMU_MACH).dtb -o $(EMU_MACH).dts
 
 gdb:
 	@$(GDB) $(GDB_EVAL_CMD) $(JRINX)

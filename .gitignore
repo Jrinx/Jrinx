@@ -6,4 +6,6 @@ target
 *.bin
 *.ld
 *.swp
+*.dtb
+*.dts
 *~

@@ -1,12 +1,14 @@
+#include <kern/drivers/devicetree.h>
 #include <kern/lib/debug.h>
 #include <kern/lib/logger.h>
 #include <kern/lib/sbi.h>
 #include <kern/lock/lock.h>
 #include <kern/lock/spinlock.h>
 #include <layouts.h>
+#include <stddef.h>
 #include <stdint.h>
 
-void kernel_init(unsigned long hartid, unsigned long opaque) {
+void kernel_init(unsigned long hartid, void *dtb_addr) {
   static int is_master = 1;
   static volatile unsigned long init_cnt = 0;
   static with_spinlock(init_cnt);
@@ -15,6 +17,10 @@ void kernel_init(unsigned long hartid, unsigned long opaque) {
     lk_init();
 
     info("[ hart %ld ] Hello Jrinx, I am master hart!\n", hartid);
+
+    struct dev_tree dt;
+    dt_load(dtb_addr, &dt);
+    dt_print_tree(&dt);
 
     init_cnt++;
     is_master = 0;
