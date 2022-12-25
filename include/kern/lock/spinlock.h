@@ -3,23 +3,21 @@
 
 #include <kern/lib/errors.h>
 #include <kern/lib/hart.h>
+#include <kern/lock/lock.h>
 
-enum spinlock_state {
-  SPL_FREE = 0,
-  SPL_USED = 1,
-};
+#define SPINLOCK_TYPE "spin"
 
-struct spinlock {
-  const char *spl_name;
-  enum spinlock_state spl_state;
-  unsigned long spl_hartid;
-};
+#define spinlock_of(res) res##_spnlk
 
 #define with_spinlock(res)                                                                     \
-  struct spinlock res##_splk = {                                                               \
-      .spl_name = #res "_splk", .spl_state = SPL_FREE, .spl_hartid = HARTID_MAX}
+  struct lock spinlock_of(res) = {                                                             \
+      .lk_state = LK_UNLOCKED, .lk_hartid = HARTID_MAX, .lk_type = SPINLOCK_TYPE}
 
-long spl_acquire(struct spinlock *lock);
-long spl_release(struct spinlock *lock);
+#ifdef _KERN_LOCK_SPINLOCK_FUNCDEF_
+
+long spnlk_acquire(struct lock *lock);
+long spnlk_release(struct lock *lock);
+
+#endif
 
 #endif

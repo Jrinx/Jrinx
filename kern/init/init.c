@@ -1,6 +1,7 @@
 #include <kern/lib/debug.h>
 #include <kern/lib/logger.h>
 #include <kern/lib/sbi.h>
+#include <kern/lock/lock.h>
 #include <kern/lock/spinlock.h>
 #include <layouts.h>
 #include <stdint.h>
@@ -11,7 +12,10 @@ void kernel_init(unsigned long hartid, unsigned long opaque) {
   static with_spinlock(init_cnt);
   hrt_set_id(hartid);
   if (is_master) {
+    lk_init();
+
     info("[ hart %ld ] Hello Jrinx, I am master hart!\n", hartid);
+
     init_cnt++;
     is_master = 0;
     unsigned long hart_table = 0;
@@ -27,9 +31,9 @@ void kernel_init(unsigned long hartid, unsigned long opaque) {
     haltk("[ hart %ld ] all cores are running, halt!", hartid);
   } else {
     info("[ hart %ld ] Hello Jrinx, I am slave hart!\n", hartid);
-    panic_e(spl_acquire(&init_cnt_splk));
+    panic_e(lk_acquire(&spinlock_of(init_cnt)));
     init_cnt++;
-    panic_e(spl_release(&init_cnt_splk));
+    panic_e(lk_release(&spinlock_of(init_cnt)));
     while (1) {
     }
   }
