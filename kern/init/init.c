@@ -1,9 +1,11 @@
+#include <kern/drivers/device.h>
 #include <kern/drivers/devicetree.h>
 #include <kern/lib/debug.h>
 #include <kern/lib/logger.h>
 #include <kern/lib/sbi.h>
 #include <kern/lock/lock.h>
 #include <kern/lock/spinlock.h>
+#include <kern/mm/mem.h>
 #include <layouts.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -20,7 +22,9 @@ void kernel_init(unsigned long hartid, void *dtb_addr) {
 
     struct dev_tree dt;
     dt_load(dtb_addr, &dt);
-    dt_print_tree(&dt);
+    panic_e(device_init());
+    panic_e(device_probe(&dt));
+    memory_init();
 
     init_cnt++;
     is_master = 0;

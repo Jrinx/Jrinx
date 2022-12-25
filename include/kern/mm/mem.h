@@ -5,4 +5,8 @@
 
 void *bare_alloc(size_t size);
 
+extern struct device memory_device;
+
+void memory_init(void);
+
 #endif
