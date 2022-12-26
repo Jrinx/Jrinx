@@ -27,9 +27,7 @@ inline long sbi_send_ipi(const unsigned long *hart_mask) {
 
 inline void sbi_shutdown(void) {
   sbi_call(0, 0, 0, SBI_EXT_0_1_SHUTDOWN, 0);
-  while (1) {
-    // unreachable
-  }
+  __builtin_unreachable();
 }
 
 inline struct sbiret sbi_hart_start(unsigned long hartid, unsigned long start_addr,
