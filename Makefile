@@ -69,7 +69,7 @@ include mk/compile.mk
 
 clean:
 	@rm -rf $(TARGET_DIR)
-	@find -- . \( -name '*.o' -o -name '*.ld' \) -delete
+	@find -- . \( -name '*.o' -o -name '*.ld' -o -name '*.dtb' -o -name '*.dts' \) -delete
 
 objdump:
 	@$(OBJDUMP) -aldS $(JRINX) > $(JRINX).objdump
@@ -84,7 +84,7 @@ dbg: EMU_OPTS		+= -s -S
 dbg: CFLAGS		+= -DJRINX=$(JRINX)
 dbg: run
 
-dumpdtb: EMU_OPTS	+= -M $(EMU_MACH),dumpdtb=$(EMU_MACH).dtb
+dumpdtb: EMU_OPTS	:= -M $(EMU_MACH),dumpdtb=$(EMU_MACH).dtb
 dumpdtb : run
 
 dumpdts: dumpdtb
