@@ -74,7 +74,10 @@ include mk/compile.mk
 
 clean:
 	@rm -rf $(TARGET_DIR)
-	@find -- . \( -name '*.o' -o -name '*.ld' -o -name '*.dtb' -o -name '*.dts' -o -name '*.i' \) -delete
+	@find -- . \( \
+		-name '*.o' -o -name '*.ld' -o -name '*.dtb' -o -name '*.dts' -o \
+		-name '*.i' \
+	\) -delete
 
 objdump:
 	@$(OBJDUMP) -aldS $(JRINX) > $(JRINX).objdump
