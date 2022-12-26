@@ -102,7 +102,8 @@ dumpdts: dumpdtb
 gdb:
 	@$(GDB) $(GDB_EVAL_CMD) $(JRINX)
 
-gdb-sbi: GDB_EVAL_CMD	+= -ex 'set confirm off' -ex 'add-symbol-file $(BOOTLOADER)' -ex 'set confirm on'
+gdb-sbi: GDB_EVAL_CMD	+= -ex 'set confirm off' -ex 'add-symbol-file $(BOOTLOADER)' \
+			-ex 'set confirm on'
 gdb-sbi: gdb
 
 check-style:

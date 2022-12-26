@@ -15,7 +15,8 @@ set -e
 [ -z "$AUTOPEP8" ] && AUTOPEP8=autopep8
 
 fix="no"
-opt="escp"
+opt="lescp"
+line_len_max=96
 
 while [[ $# -gt 0 ]]
 do
@@ -27,6 +28,7 @@ do
   -c|--check)
     if [ $# -lt 2 ]; then
       echo "Expect spec check following -c/--check (choose from 'escp')"
+      echo "  l  line-length-max check"
       echo "  e  editorconfig check"
       echo "  s  shellscript check"
       echo "  c  clang-format check/format"
@@ -35,7 +37,7 @@ do
     fi
     shift
     opt="$1"
-    if [[ "$opt" =~ [^escp] ]]; then
+    if [[ "$opt" =~ [^lescp] ]]; then
       echo "Unknown spec check $opt"
       exit 1
     fi
@@ -49,6 +51,32 @@ do
 done
 
 source "${0%/*}"/bash/utils.sh
+
+function check-ln() {
+  green '[ line-length-max checker ] begin'
+  line_len_max_check="$(cat <<-EOF
+BEGIN {
+  cnt = 0
+}
+{
+  if (length > $line_len_max) {
+    print FILENAME ":" NR;
+    cnt = cnt + 1;
+  }
+}
+END {
+  exit cnt
+}
+EOF
+)"
+  if ! find -- * ! -path .git -type f -print0 | xargs -0 -n1 awk "$line_len_max_check" ; then
+    fatal '[ line-length-max checker ] failed'
+    return 1
+  else
+    green '[ line-length-max checker ] passed'
+    return 0
+  fi
+}
 
 function check-ec() {
   green '[ editor-config checker ] begin'
@@ -92,7 +120,8 @@ function check-cl() {
     return 0
   else
     # shellcheck disable=2086
-    cnt=$($CLANG_FORMAT $c_files --output-replacements-xml | grep -c "<replacement "; exit "${PIPESTATUS[0]}")
+    cnt=$($CLANG_FORMAT $c_files --output-replacements-xml | \
+            grep -c "<replacement "; exit "${PIPESTATUS[0]}")
     if [ "${PIPESTATUS[0]}" -ne 0 ] && [ "$cnt" -eq 0 ]; then
       warning '[ clang-format ] maybe version too low?'
     fi
@@ -117,11 +146,11 @@ function check-py() {
 
   if [ "$fix" = "yes" ]; then
     # shellcheck disable=2086
-    $AUTOPEP8 --max-line-length 100 -i -j 0 $py_files
+    $AUTOPEP8 --max-line-length $line_len_max -i -j 0 $py_files
     green '[ autopep8 ] fix end'
   else
     # shellcheck disable=2086
-    if ! $AUTOPEP8 --max-line-length 100 --exit-code -d $py_files ; then
+    if ! $AUTOPEP8 --max-line-length $line_len_max --exit-code -d $py_files ; then
       fatal '[ autopep8 ] check failed'
       return 1
     else
@@ -133,15 +162,18 @@ function check-py() {
 
 r=0
 if [[ "$opt" == *"p"* ]] && ! check-py; then
-  r=2
+  r=$((r+2))
 fi
 if [[ "$opt" == *"c"* ]] && ! check-cl; then
-  r=3
+  r=$((r+4))
 fi
 if [[ "$opt" == *"s"* ]] && ! check-sh; then
-  r=4
+  r=$((r+8))
 fi
 if [[ "$opt" == *"e"* ]] && ! check-ec; then
-  r=5
+  r=$((r+16))
+fi
+if [[ "$opt" == *"l"* ]] && ! check-ln; then
+  r=$((r+32))
 fi
 exit $r
