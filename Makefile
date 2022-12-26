@@ -3,6 +3,9 @@ OPENSBI_FW_PATH	?= ../archive/opensbi/build/platform/generic/firmware
 # Qemu dose not support big endian now.
 TARGET_ENDIAN	?= little
 
+# Used to check macro expansion.
+CHECK_PREPROC	?= n
+
 CROSS_COMPILE	:= riscv64-unknown-elf-
 
 __CC		:= $(CROSS_COMPILE)gcc
@@ -47,7 +50,7 @@ EMU_OPTS	+= -kernel $(JRINX) -bios $(BOOTLOADER)
 
 DTC		:= dtc
 
-export __CC __CPP __LD OBJDUMP OBJCOPY CFLAGS LDFLAGS
+export __CC __CPP __LD OBJDUMP OBJCOPY CFLAGS LDFLAGS CHECK_PREPROC
 
 .ONESHELL:
 .PHONY: all clean objdump objcopy run dbg gdb gdb-sbi $(JRINX) $(MODULES)
@@ -71,7 +74,7 @@ include mk/compile.mk
 
 clean:
 	@rm -rf $(TARGET_DIR)
-	@find -- . \( -name '*.o' -o -name '*.ld' -o -name '*.dtb' -o -name '*.dts' \) -delete
+	@find -- . \( -name '*.o' -o -name '*.ld' -o -name '*.dtb' -o -name '*.dts' -o -name '*.i' \) -delete
 
 objdump:
 	@$(OBJDUMP) -aldS $(JRINX) > $(JRINX).objdump

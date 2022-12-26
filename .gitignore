@@ -2,6 +2,7 @@ target
 
 .gdbinit
 *.o
+*.i
 *.objdump
 *.bin
 *.ld

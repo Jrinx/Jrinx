@@ -1,5 +1,11 @@
 include $(addsuffix silent.mk,$(dir $(lastword $(MAKEFILE_LIST))))
 
+%.i: %.c
+	$(CPP) $(CFLAGS) $(INCLUDES) -E -P $< > $@
+
+%.i: %.S
+	$(CPP) $(CFLAGS) $(INCLUDES) -E -P $< > $@
+
 %.o: %.c
 	$(CC) $(CFLAGS) $(INCLUDES) -c -o $@ $<
 
