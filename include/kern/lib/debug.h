@@ -3,6 +3,7 @@
 
 #include <brpred.h>
 #include <kern/lib/logger.h>
+#include <macroargs.h>
 
 #define assert(expr)                                                                           \
   ({                                                                                           \
@@ -11,7 +12,7 @@
     }                                                                                          \
   })
 
-#define catch_e(expr)                                                                          \
+#define _catch_e_simple(expr)                                                                  \
   ({                                                                                           \
     typeof(expr) ret = (expr);                                                                 \
     long err = *((long *)&ret);                                                                \
@@ -19,6 +20,20 @@
       return err;                                                                              \
     }                                                                                          \
   })
+
+#define _catch_e_with_action(expr, action)                                                     \
+  ({                                                                                           \
+    typeof(expr) ret = (expr);                                                                 \
+    long err = *((long *)&ret);                                                                \
+    if (unlikely(err < 0)) {                                                                   \
+      (action);                                                                                \
+      __builtin_unreachable();                                                                 \
+    }                                                                                          \
+  })
+
+#define catch_e(...) MACRO_CONCAT(_catch_e_, VA_CNT(__VA_ARGS__))(__VA_ARGS__)
+#define _catch_e_1(x1) _catch_e_simple(x1)
+#define _catch_e_2(x1, x2) _catch_e_with_action(x1, x2)
 
 #define panic_e(expr)                                                                          \
   ({                                                                                           \
