@@ -4,7 +4,7 @@
 #include <stdarg.h>
 
 void printk(const char *restrict fmt, ...) __attribute__((format(printf, 1, 2)));
-void panick(const char *restrict fmt, ...) __attribute__((format(printf, 1, 2)));
+void panick(const char *restrict fmt, ...) __attribute__((format(printf, 1, 2), noreturn));
 void haltk(const char *restrict fmt, ...) __attribute__((noreturn));
 
 #define info(msg, ...) printk("%s:%d " msg, __FILE__, __LINE__, ##__VA_ARGS__)
