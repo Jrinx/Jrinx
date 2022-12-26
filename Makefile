@@ -45,6 +45,8 @@ BOOTLOADER	:= $(OPENSBI_FW_PATH)/fw_jump.elf
 CFLAGS		+= -DCONFIG_NR_CORES=$(EMU_CPUS)
 EMU_OPTS	+= -kernel $(JRINX) -bios $(BOOTLOADER)
 
+DTC		:= dtc
+
 export __CC __CPP __LD OBJDUMP OBJCOPY CFLAGS LDFLAGS
 
 .ONESHELL:
@@ -88,7 +90,7 @@ dumpdtb: EMU_OPTS	:= -M $(EMU_MACH),dumpdtb=$(EMU_MACH).dtb
 dumpdtb : run
 
 dumpdts: dumpdtb
-	dtc -I dtb -O dts $(EMU_MACH).dtb -o $(EMU_MACH).dts
+	@$(DTC) -I dtb -O dts $(EMU_MACH).dtb -o $(EMU_MACH).dts
 
 gdb:
 	@$(GDB) $(GDB_EVAL_CMD) $(JRINX)
