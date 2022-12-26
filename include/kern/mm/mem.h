@@ -22,6 +22,7 @@ long frame2sel(struct phy_frame *frame, unsigned long *sel);
 long pa2frame(unsigned long addr, struct phy_frame **frame);
 long frame2pa(struct phy_frame *frame, unsigned long *addr);
 long phy_frame_alloc(struct phy_frame **frame);
-long phy_frame_free(struct phy_frame *frame);
+long phy_frame_ref_desc(struct phy_frame *frame);
+long phy_frame_ref_asc(struct phy_frame *frame);
 
 #endif

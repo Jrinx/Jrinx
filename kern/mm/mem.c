@@ -192,11 +192,37 @@ long phy_frame_alloc(struct phy_frame **frame) {
   return -KER_MEM_ER;
 }
 
-long phy_frame_free(struct phy_frame *frame) {
+static long phy_frame_free(struct phy_frame *frame) {
   unsigned long sel;
   catch_e(frame2sel(frame, &sel));
   catch_e(lk_acquire(&spinlock_of(pf_free_list)));
   LIST_INSERT_HEAD(&pf_free_list[sel], frame, pf_link);
   catch_e(lk_release(&spinlock_of(pf_free_list)));
+  return KER_SUCCESS;
+}
+
+static with_spinlock(frame_ref_mod);
+
+long phy_frame_ref_desc(struct phy_frame *frame) {
+  catch_e(lk_acquire(&spinlock_of(frame_ref_mod)));
+  if (frame->pf_ref == 0) {
+    catch_e(lk_release(&spinlock_of(frame_ref_mod)));
+    return -KER_MEM_ER;
+  }
+  frame->pf_ref--;
+  if (frame->pf_ref == 0) {
+    catch_e(phy_frame_free(frame), {
+      catch_e(lk_release(&spinlock_of(frame_ref_mod)));
+      return err;
+    });
+  }
+  catch_e(lk_release(&spinlock_of(frame_ref_mod)));
+  return KER_SUCCESS;
+}
+
+long phy_frame_ref_asc(struct phy_frame *frame) {
+  catch_e(lk_acquire(&spinlock_of(frame_ref_mod)));
+  frame->pf_ref++;
+  catch_e(lk_release(&spinlock_of(frame_ref_mod)));
   return KER_SUCCESS;
 }
