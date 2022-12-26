@@ -3,6 +3,8 @@
 #include <kern/drivers/device.h>
 #include <kern/lib/debug.h>
 #include <kern/lib/errors.h>
+#include <kern/lock/lock.h>
+#include <kern/lock/spinlock.h>
 #include <kern/mm/mem.h>
 #include <layouts.h>
 #include <lib/string.h>
@@ -104,6 +106,7 @@ void *(*alloc)(size_t size) = bare_alloc;
 void (*free)(void *ptr) = bare_free;
 
 static struct phy_frame_list *pf_free_list;
+static with_spinlock(pf_free_list);
 static struct phy_frame **pf_array;
 static size_t *pf_array_len;
 
@@ -176,19 +179,24 @@ long frame2pa(struct phy_frame *frame, unsigned long *addr) {
 }
 
 long phy_frame_alloc(struct phy_frame **frame) {
+  catch_e(lk_acquire(&spinlock_of(pf_free_list)));
   for (size_t i = 0; i < mem_num; i++) {
     if (!LIST_EMPTY(&pf_free_list[i])) {
       *frame = LIST_FIRST(&pf_free_list[i]);
       LIST_REMOVE(*frame, pf_link);
+      catch_e(lk_release(&spinlock_of(pf_free_list)));
       return KER_SUCCESS;
     }
   }
+  catch_e(lk_release(&spinlock_of(pf_free_list)));
   return -KER_MEM_ER;
 }
 
 long phy_frame_free(struct phy_frame *frame) {
   unsigned long sel;
   catch_e(frame2sel(frame, &sel));
+  catch_e(lk_acquire(&spinlock_of(pf_free_list)));
   LIST_INSERT_HEAD(&pf_free_list[sel], frame, pf_link);
+  catch_e(lk_release(&spinlock_of(pf_free_list)));
   return KER_SUCCESS;
 }
