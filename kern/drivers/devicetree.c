@@ -40,10 +40,10 @@ static long dt_node_load(void *dtb_addr, size_t pos, size_t *nxt_pos, struct dev
 
   pos++;
 
-  struct dev_node *node = bare_alloc(sizeof(struct dev_node));
+  struct dev_node *node = alloc(sizeof(struct dev_node));
   const char *node_name = (char *)(dtb_addr + dtb_struct_off + pos * sizeof(uint32_t));
   size_t node_name_len = strlen(node_name);
-  node->nd_name = bare_alloc(sizeof(char) * (node_name_len + 1));
+  node->nd_name = alloc(sizeof(char) * (node_name_len + 1));
   strcpy(node->nd_name, node_name);
   TAILQ_INIT(&node->nd_prop_tailq);
   TAILQ_INIT(&node->nd_children_tailq);
@@ -61,14 +61,14 @@ static long dt_node_load(void *dtb_addr, size_t pos, size_t *nxt_pos, struct dev
 
     pos += 3;
 
-    struct dev_node_prop *prop = bare_alloc(sizeof(struct dev_node_prop));
+    struct dev_node_prop *prop = alloc(sizeof(struct dev_node_prop));
     const char *prop_name = (char *)(dtb_addr + dtb_strings_off + prop_nameoff);
     size_t prop_name_len = strlen(prop_name);
-    prop->pr_name = bare_alloc(sizeof(char) * (prop_name_len + 1));
+    prop->pr_name = alloc(sizeof(char) * (prop_name_len + 1));
     strcpy(prop->pr_name, prop_name);
     prop->pr_len = prop_len;
     if (prop_len != 0) {
-      prop->pr_values = bare_alloc(sizeof(uint8_t) * prop_len);
+      prop->pr_values = alloc(sizeof(uint8_t) * prop_len);
       memcpy(prop->pr_values, dtb_addr + dtb_struct_off + pos * sizeof(uint32_t), prop_len);
     } else {
       prop->pr_values = NULL;
@@ -116,7 +116,7 @@ long dt_load(void *dtb_addr, struct dev_tree *dt) {
     if (rsvent->e_addr == 0 && rsvent->e_size == 0) {
       break;
     }
-    struct dev_rsvmem *dev_rsvmem_ent = bare_alloc(sizeof(struct dev_rsvmem));
+    struct dev_rsvmem *dev_rsvmem_ent = alloc(sizeof(struct dev_rsvmem));
     dev_rsvmem_ent->r_addr = rsvent->e_addr;
     dev_rsvmem_ent->r_size = rsvent->e_size;
     TAILQ_INSERT_TAIL(&dt->dt_rsvmem_tailq, dev_rsvmem_ent, r_link);
