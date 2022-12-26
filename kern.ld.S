@@ -26,7 +26,7 @@ SECTIONS {
   }
 
   . = ALIGN(PGSIZE);
-  .stack : {
+  .ksec : {
     *(.ksec .ksec.*)
   }
 
