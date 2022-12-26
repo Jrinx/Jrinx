@@ -80,7 +80,8 @@ clean:
 	\) -delete
 
 objdump:
-	@$(OBJDUMP) -aldS $(JRINX) > $(JRINX).objdump
+	@find -- * \( -path $(JRINX) \) -exec \
+		sh -c '$(OBJDUMP) {} -aldS > {}.objdump && echo {}.objdump' ';'
 
 objcopy:
 	@$(OBJCOPY) -O binary $(JRINX) $(JRINX).bin
