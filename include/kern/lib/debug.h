@@ -12,15 +12,6 @@
     }                                                                                          \
   })
 
-#define _catch_e_simple(expr)                                                                  \
-  ({                                                                                           \
-    typeof(expr) ret = (expr);                                                                 \
-    long err = *((long *)&ret);                                                                \
-    if (unlikely(err < 0)) {                                                                   \
-      return err;                                                                              \
-    }                                                                                          \
-  })
-
 #define _catch_e_with_action(expr, action)                                                     \
   ({                                                                                           \
     typeof(expr) ret = (expr);                                                                 \
@@ -32,19 +23,15 @@
   })
 
 #define catch_e(...) MACRO_CONCAT(_catch_e_, VA_CNT(__VA_ARGS__))(__VA_ARGS__)
-#define _catch_e_1(x1) _catch_e_simple(x1)
+#define _catch_e_1(x1) _catch_e_with_action(x1, { return err; })
 #define _catch_e_2(x1, x2) _catch_e_with_action(x1, x2)
 
 #define panic_e(expr)                                                                          \
-  ({                                                                                           \
-    typeof(expr) ret = (expr);                                                                 \
-    long err = *((long *)&ret);                                                                \
-    if (err < 0) {                                                                             \
-      if (sizeof(ret) == sizeof(long) && -err < KER_ERR_MAX) {                                 \
-        fatal("unexpected error %ld (%s): " #expr, err, msg_of(err));                          \
-      } else {                                                                                 \
-        fatal("unexpected error %ld: " #expr, err);                                            \
-      }                                                                                        \
+  catch_e(expr, {                                                                              \
+    if (sizeof(ret) == sizeof(long) && -err < KER_ERR_MAX) {                                   \
+      fatal("unexpected error %ld (%s): " #expr, err, msg_of(err));                            \
+    } else {                                                                                   \
+      fatal("unexpected error %ld: " #expr, err);                                              \
     }                                                                                          \
   })
 
