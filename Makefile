@@ -50,7 +50,8 @@ export __CC __CPP __LD OBJDUMP OBJCOPY CFLAGS LDFLAGS CHECK_PREPROC
 .ONESHELL:
 .PHONY: all debug release clean run dbg gdb gdb-sbi \
 	objdump objcopy dumpdtb dumpdts \
-	$(JRINX) $(MODULES)
+	$(JRINX) $(MODULES) \
+	check-style fix-style register-git-hooks
 
 all: clean
 	@export MAKEFLAGS="-j$$(nproc) -s $$MAKEFLAGS"
