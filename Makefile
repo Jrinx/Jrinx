@@ -82,7 +82,7 @@ clean:
 	@find -- . \( \
 		-name '*.o' -o -name '*.ld' -o -name '*.dtb' -o -name '*.dts' -o \
 		-name '*.i' \
-	\) -delete
+	\) -type f -delete
 
 macro-expand:
 	@export CHECK_PREPROC=y
