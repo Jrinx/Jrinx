@@ -49,7 +49,7 @@ export __CC __CPP __LD OBJDUMP OBJCOPY CFLAGS LDFLAGS CHECK_PREPROC
 
 .ONESHELL:
 .PHONY: all debug release clean run dbg gdb gdb-sbi \
-	objdump objcopy dumpdtb dumpdts \
+	macro-expand objdump objcopy dumpdtb dumpdts \
 	$(JRINX) $(MODULES) \
 	check-style fix-style register-git-hooks
 
@@ -83,6 +83,10 @@ clean:
 		-name '*.o' -o -name '*.ld' -o -name '*.dtb' -o -name '*.dts' -o \
 		-name '*.i' \
 	\) -delete
+
+macro-expand:
+	@export CHECK_PREPROC=y
+	@$(MAKE) -s
 
 objdump:
 	@find -- * \( -path $(JRINX) \) -exec \
