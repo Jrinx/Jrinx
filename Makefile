@@ -22,9 +22,9 @@ CFLAGS		+= --std=gnu99 -nostdlib \
 		-fno-omit-frame-pointer -ffreestanding -fno-common -fno-stack-protector -fno-builtin
 
 ifeq ($(TARGET_ENDIAN),little)
-	CFLAGS	+= -DCONFIG_LITTLE_ENDIAN=1
+	CFLAGS	+= -DCONFIG_ENDIAN=LITTLE_ENDIAN
 else
-	CFLAGS	+= -DCONFIG_LITTLE_ENDIAN=0
+	CFLAGS	+= -DCONFIG_ENDIAN=BIG_ENDIAN
 endif
 
 LDFLAGS		+= --fatal-warnings --warn-unresolved-symbols
