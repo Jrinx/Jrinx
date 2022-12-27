@@ -35,7 +35,7 @@ struct dev_tree {
   struct dev_node_tailq dt_node_tailq;
 };
 
-long dt_load(void *dtb_addr, struct dev_tree *dt);
+long dt_load(void *dtb_addr, struct dev_tree *dt) __attribute__((warn_unused_result));
 void dt_find(struct dev_tree *dt, const char *name, struct dev_node **p_node);
 void dt_print_tree(struct dev_tree *dt);
 

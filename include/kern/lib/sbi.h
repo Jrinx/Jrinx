@@ -246,8 +246,8 @@ struct sbiret {
 
 #include <stdint.h>
 
-long sbi_console_putchar(int ch);
-long sbi_send_ipi(const unsigned long *hart_mask);
+long sbi_console_putchar(int ch) __attribute__((warn_unused_result));
+long sbi_send_ipi(const unsigned long *hart_mask) __attribute__((warn_unused_result));
 void sbi_shutdown(void) __attribute__((noreturn));
 struct sbiret sbi_hart_start(unsigned long hartid, unsigned long start_addr,
                              unsigned long opaque);

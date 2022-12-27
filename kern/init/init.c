@@ -21,7 +21,7 @@ void kernel_init(unsigned long hartid, void *dtb_addr) {
     info("[ hart %ld ] Hello Jrinx, I am master hart!\n", hartid);
 
     struct dev_tree dt;
-    dt_load(dtb_addr, &dt);
+    panic_e(dt_load(dtb_addr, &dt));
     panic_e(device_init());
     panic_e(device_probe(&dt));
     memory_init();

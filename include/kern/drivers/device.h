@@ -20,8 +20,8 @@ struct device {
 
 TAILQ_HEAD(dev_queue_t, device);
 
-long dev_register(struct device *dev);
-long device_init(void);
-long device_probe(struct dev_tree *dt);
+long dev_register(struct device *dev) __attribute__((warn_unused_result));
+long device_init(void) __attribute__((warn_unused_result));
+long device_probe(struct dev_tree *dt) __attribute__((warn_unused_result));
 
 #endif
