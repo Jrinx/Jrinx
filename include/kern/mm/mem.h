@@ -12,7 +12,7 @@ struct phy_frame {
 LIST_HEAD(phy_frame_list, phy_frame);
 
 extern void *(*alloc)(size_t size);
-extern void (*free)(void *ptr);
+extern void (*free)(const void *ptr);
 
 extern struct device memory_device;
 

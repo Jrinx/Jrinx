@@ -32,7 +32,7 @@ static void *bare_alloc(size_t size) {
   return res;
 }
 
-static void bare_free(void *ptr) {
+static void bare_free(const void *ptr) {
   fatal("unexpected free %016lx", (unsigned long)ptr);
 }
 
@@ -103,7 +103,7 @@ struct device memory_device = {
 };
 
 void *(*alloc)(size_t size) = bare_alloc;
-void (*free)(void *ptr) = bare_free;
+void (*free)(const void *ptr) = bare_free;
 
 static struct phy_frame_list *pf_free_list;
 static with_spinlock(pf_free_list);
