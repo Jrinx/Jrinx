@@ -7,6 +7,7 @@
 #include <kern/lock/spinlock.h>
 #include <kern/mm/mem.h>
 #include <layouts.h>
+#include <lib/string.h>
 #include <stddef.h>
 #include <stdint.h>
 
@@ -28,14 +29,14 @@ void kernel_init(unsigned long hartid, void *dtb_addr) {
 
     init_cnt++;
     is_master = 0;
-    unsigned long hart_table = 0;
+    unsigned long hart_table[CONFIG_NR_CORES / (sizeof(unsigned long) * 8) + 1] = {0};
     for (int i = 0; i < CONFIG_NR_CORES; i++) {
       if (i != hartid) {
-        hart_table |= 1 << i;
+        hart_table[i / (sizeof(unsigned long) * 8)] |= 1 << (i % (sizeof(unsigned long) * 8));
         panic_e(sbi_hart_start(i, KERNBASE, 0));
       }
     }
-    panic_e(sbi_send_ipi(&hart_table));
+    panic_e(sbi_send_ipi(hart_table));
     while (init_cnt < CONFIG_NR_CORES) {
     }
     haltk("[ hart %ld ] all cores are running, halt!", hartid);
