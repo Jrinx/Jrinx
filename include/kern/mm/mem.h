@@ -22,7 +22,7 @@ long frame2sel(struct phy_frame *frame, unsigned long *sel) __attribute__((warn_
 long pa2frame(unsigned long addr, struct phy_frame **frame) __attribute__((warn_unused_result));
 long frame2pa(struct phy_frame *frame, unsigned long *addr) __attribute__((warn_unused_result));
 long phy_frame_alloc(struct phy_frame **frame) __attribute__((warn_unused_result));
-long phy_frame_ref_desc(struct phy_frame *frame) __attribute__((warn_unused_result));
-long phy_frame_ref_asc(struct phy_frame *frame) __attribute__((warn_unused_result));
+long phy_frame_ref_dec(struct phy_frame *frame) __attribute__((warn_unused_result));
+long phy_frame_ref_inc(struct phy_frame *frame) __attribute__((warn_unused_result));
 
 #endif

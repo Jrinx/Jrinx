@@ -203,7 +203,7 @@ static long phy_frame_free(struct phy_frame *frame) {
 
 static with_spinlock(frame_ref_mod);
 
-long phy_frame_ref_desc(struct phy_frame *frame) {
+long phy_frame_ref_dec(struct phy_frame *frame) {
   catch_e(lk_acquire(&spinlock_of(frame_ref_mod)));
   if (frame->pf_ref == 0) {
     catch_e(lk_release(&spinlock_of(frame_ref_mod)));
@@ -220,7 +220,7 @@ long phy_frame_ref_desc(struct phy_frame *frame) {
   return KER_SUCCESS;
 }
 
-long phy_frame_ref_asc(struct phy_frame *frame) {
+long phy_frame_ref_inc(struct phy_frame *frame) {
   catch_e(lk_acquire(&spinlock_of(frame_ref_mod)));
   frame->pf_ref++;
   catch_e(lk_release(&spinlock_of(frame_ref_mod)));
