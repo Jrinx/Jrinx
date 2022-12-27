@@ -17,13 +17,13 @@ static uint64_t *mem_size;
 
 static unsigned long freemem_base = 0;
 
-static void *bare_alloc(size_t size) {
+static void *bare_alloc(size_t size, size_t align) {
   if (unlikely(freemem_base == 0)) {
     extern uint8_t kern_end[];
     freemem_base = (unsigned long)kern_end;
   }
 
-  freemem_base = freemem_base / size * size + size;
+  freemem_base = freemem_base / align * align + align;
 
   void *res = (void *)freemem_base;
 
@@ -78,8 +78,8 @@ static long mem_probe(const struct dev_node *node) {
         return -KER_DTB_ER;
       }
       mem_num = prop->pr_len / (sizeof(uint64_t) * 2);
-      mem_addr = alloc(sizeof(uint64_t) * mem_num);
-      mem_size = alloc(sizeof(uint64_t) * mem_num);
+      mem_addr = alloc(sizeof(uint64_t) * mem_num, sizeof(uint64_t));
+      mem_size = alloc(sizeof(uint64_t) * mem_num, sizeof(uint64_t));
       uint64_t *reg_table = (uint64_t *)prop->pr_values;
       for (size_t i = 0; i < mem_num; i++) {
         mem_addr[i] = from_be(reg_table[i * 2]);
@@ -109,7 +109,7 @@ struct device memory_device = {
     .d_probe_pri = HIGHEST,
 };
 
-void *(*alloc)(size_t size) = bare_alloc;
+void *(*alloc)(size_t size, size_t align) = bare_alloc;
 void (*free)(const void *ptr) = bare_free;
 
 static struct phy_frame_list *pf_free_list;
@@ -118,13 +118,14 @@ static struct phy_frame **pf_array;
 static size_t *pf_array_len;
 
 void memory_init(void) {
-  pf_free_list = alloc(sizeof(struct phy_frame_list) * mem_num);
-  pf_array = alloc(sizeof(struct phy_frame *) * mem_num);
-  pf_array_len = alloc(sizeof(size_t) * mem_num);
+  pf_free_list = alloc(sizeof(struct phy_frame_list) * mem_num, sizeof(struct phy_frame_list));
+  pf_array = alloc(sizeof(struct phy_frame *) * mem_num, sizeof(struct phy_frame *));
+  pf_array_len = alloc(sizeof(size_t) * mem_num, sizeof(size_t));
   for (size_t i = 0; i < mem_num; i++) {
     LIST_INIT(&pf_free_list[i]);
     pf_array_len[i] = mem_size[i] / PGSIZE;
-    pf_array[i] = alloc(sizeof(struct phy_frame) * pf_array_len[i]);
+    pf_array[i] = alloc(sizeof(struct phy_frame) * pf_array_len[i],
+                        PGSIZE >= sizeof(struct phy_frame) ? PGSIZE : sizeof(struct phy_frame));
     for (size_t j = 0; j < pf_array_len[i]; j++) {
       LIST_INSERT_HEAD(&pf_free_list[i], &pf_array[i][j], pf_link);
     }

@@ -29,7 +29,7 @@ static long cpu_probe(const struct dev_node *node) {
         return -KER_DTB_ER;
       }
       if (id != hrt_get_id()) {
-        unsigned long stack_top = (unsigned long)alloc(KSTKSIZE);
+        unsigned long stack_top = (unsigned long)alloc(KSTKSIZE, PGSIZE);
         info("%s (slave) probed (stack top: %016lx)\n", node->nd_name, stack_top);
         unsigned long hart_mask[id / (sizeof(unsigned long) * 8) + 1];
         memset(hart_mask, 0, (id / (sizeof(unsigned long) * 8) + 1) * sizeof(unsigned long));
