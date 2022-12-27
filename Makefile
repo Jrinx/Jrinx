@@ -92,7 +92,7 @@ dbg: CFLAGS		+= -DJRINX=$(JRINX)
 dbg: run
 
 dumpdtb: EMU_OPTS	+= -M $(EMU_MACH),dumpdtb=$(EMU_MACH).dtb
-dumpdtb : run
+dumpdtb: run
 
 dumpdts: dumpdtb
 	@$(DTC) -I dtb -O dts $(EMU_MACH).dtb -o $(EMU_MACH).dts
