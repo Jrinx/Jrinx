@@ -50,7 +50,7 @@ DTC		:= dtc
 export __CC __CPP __LD OBJDUMP OBJCOPY CFLAGS LDFLAGS CHECK_PREPROC
 
 .ONESHELL:
-.PHONY: all clean objdump objcopy run dbg gdb gdb-sbi $(JRINX) $(MODULES)
+.PHONY: all clean objdump objcopy run dbg gdb gdb-sbi dumpdtb dumpdts $(JRINX) $(MODULES)
 
 all:
 	@export MAKEFLAGS="-j$$(nproc) -s $$MAKEFLAGS"
@@ -91,18 +91,18 @@ dbg: EMU_OPTS		+= -s -S
 dbg: CFLAGS		+= -DJRINX=$(JRINX)
 dbg: run
 
-dumpdtb: EMU_OPTS	+= -M $(EMU_MACH),dumpdtb=$(EMU_MACH).dtb
-dumpdtb: run
-
-dumpdts: dumpdtb
-	@$(DTC) -I dtb -O dts $(EMU_MACH).dtb -o $(EMU_MACH).dts
-
 gdb:
 	@$(GDB) $(GDB_EVAL_CMD) $(JRINX)
 
 gdb-sbi: GDB_EVAL_CMD	+= -ex 'set confirm off' -ex 'add-symbol-file $(BOOTLOADER)' \
 			-ex 'set confirm on'
 gdb-sbi: gdb
+
+dumpdtb: EMU_OPTS	+= -M $(EMU_MACH),dumpdtb=$(EMU_MACH).dtb
+dumpdtb: run
+
+dumpdts: dumpdtb
+	@$(DTC) -I dtb -O dts $(EMU_MACH).dtb -o $(EMU_MACH).dts
 
 check-style:
 	@scripts/check-style
