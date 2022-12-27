@@ -16,8 +16,6 @@ OBJCOPY		:= $(CROSS_COMPILE)objcopy
 GDB		:= gdb-multiarch
 GDB_EVAL_CMD	:= -ex 'target remote :1234'
 
-include mk/conf.mk
-
 CFLAGS		+= --std=gnu99 -nostdlib \
 		-Wall -Werror -Wa,--fatal-warnings \
 		-mabi=lp64 -march=rv64g -m$(TARGET_ENDIAN)-endian -mcmodel=medany -mno-relax \
@@ -50,11 +48,20 @@ DTC		:= dtc
 export __CC __CPP __LD OBJDUMP OBJCOPY CFLAGS LDFLAGS CHECK_PREPROC
 
 .ONESHELL:
-.PHONY: all clean objdump objcopy run dbg gdb gdb-sbi dumpdtb dumpdts $(JRINX) $(MODULES)
+.PHONY: all debug release clean run dbg gdb gdb-sbi \
+	objdump objcopy dumpdtb dumpdts \
+	$(JRINX) $(MODULES)
 
-all:
+all: clean
 	@export MAKEFLAGS="-j$$(nproc) -s $$MAKEFLAGS"
 	@$(MAKE) $(JRINX)
+
+release: CFLAGS		+= -O2
+release: LDFLAGS	+= -O --gc-sections
+release: all
+
+debug: CFLAGS		+= -O0 -g -ggdb
+debug: all
 
 $(JRINX): SHELL := /bin/bash
 $(JRINX): $(MODULES) $(LDSCRIPT) $(TARGET_DIR)
