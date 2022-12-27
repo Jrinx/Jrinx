@@ -7,13 +7,17 @@
 .section .ksec.stack
 .globl kstack
 kstack:
-.space KSTKSIZE * CONFIG_NR_CORES
+.space KSTKSIZE
 
 .text
 .section .boot
 EXPORT(_start)
-  add t0, a0, 1
-  slli t0, t0, (PGSHIFT + KSTKSHIFT)
-  la sp, kstack
-  add sp, sp, t0
+.extern cpu_master_init
+  lw t0, cpu_master_init
+  beq t0, zero, init_stk
+  mv sp, a1
+  j init_kern_call
+init_stk:
+  li sp, KSTKTOP
+init_kern_call:
   call kernel_init

@@ -138,33 +138,26 @@ static int dt_node_has_dev_type(struct dev_node *node, const char *type) {
   return 0;
 }
 
-static void dt_find_node(struct dev_node *node, const char *name, struct dev_node **p_node) {
+static long dt_find_node(struct dev_node *node, const char *name, dt_find_callback_t callback) {
   struct dev_node *child;
   TAILQ_FOREACH (child, &node->nd_children_tailq, nd_link) {
     if (dt_node_has_dev_type(child, name)) {
-      *p_node = child;
-      return;
+      catch_e(callback(child));
     }
-    dt_find_node(child, name, p_node);
-    if (*p_node != NULL) {
-      return;
-    }
+    catch_e(dt_find_node(child, name, callback));
   }
+  return KER_SUCCESS;
 }
 
-void dt_find(struct dev_tree *dt, const char *name, struct dev_node **p_node) {
+long dt_find(struct dev_tree *dt, const char *name, dt_find_callback_t callback) {
   struct dev_node *node;
-  *p_node = NULL;
   TAILQ_FOREACH (node, &dt->dt_node_tailq, nd_link) {
     if (dt_node_has_dev_type(node, name)) {
-      *p_node = node;
-      return;
+      catch_e(callback(node));
     }
-    dt_find_node(node, name, p_node);
-    if (*p_node != NULL) {
-      return;
-    }
+    catch_e(dt_find_node(node, name, callback));
   }
+  return KER_SUCCESS;
 }
 
 static inline void dt_print_indention(unsigned long layer) {

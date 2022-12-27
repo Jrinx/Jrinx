@@ -45,9 +45,6 @@ TARGET_DIR	:= target
 JRINX		:= $(TARGET_DIR)/jrinx
 BOOTLOADER	:= $(OPENSBI_FW_PATH)/fw_jump.elf
 
-CFLAGS		+= -DCONFIG_NR_CORES=$(EMU_CPUS)
-EMU_OPTS	+= -kernel $(JRINX) -bios $(BOOTLOADER)
-
 DTC		:= dtc
 
 export __CC __CPP __LD OBJDUMP OBJCOPY CFLAGS LDFLAGS CHECK_PREPROC
@@ -86,6 +83,7 @@ objdump:
 objcopy:
 	@$(OBJCOPY) -O binary $(JRINX) $(JRINX).bin
 
+run: EMU_OPTS		+= -kernel $(JRINX) -bios $(BOOTLOADER)
 run:
 	@$(EMU) $(EMU_OPTS)
 
@@ -93,7 +91,7 @@ dbg: EMU_OPTS		+= -s -S
 dbg: CFLAGS		+= -DJRINX=$(JRINX)
 dbg: run
 
-dumpdtb: EMU_OPTS	:= -M $(EMU_MACH),dumpdtb=$(EMU_MACH).dtb
+dumpdtb: EMU_OPTS	+= -M $(EMU_MACH),dumpdtb=$(EMU_MACH).dtb
 dumpdtb : run
 
 dumpdts: dumpdtb

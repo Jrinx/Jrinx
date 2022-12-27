@@ -1,3 +1,4 @@
+#include <kern/drivers/cpu.h>
 #include <kern/drivers/device.h>
 #include <kern/lib/debug.h>
 #include <kern/lib/errors.h>
@@ -38,16 +39,14 @@ long dev_register(struct device *dev) {
 long device_init(void) {
   TAILQ_INIT(&dev_queue);
   catch_e(dev_register(&memory_device));
+  catch_e(dev_register(&cpu_device));
   return KER_SUCCESS;
 }
 
 long device_probe(struct dev_tree *dt) {
   struct device *dev;
   TAILQ_FOREACH (dev, &dev_queue, d_link) {
-    struct dev_node *node;
-    dt_find(dt, dev->d_name, &node);
-    catch_e(dev->d_probe(node));
-    info("device %s is probed\n", node->nd_name);
+    catch_e(dt_find(dt, dev->d_name, dev->d_probe));
   }
   return KER_SUCCESS;
 }

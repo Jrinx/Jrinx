@@ -3,7 +3,7 @@
 
 #include <kern/lib/regs.h>
 
-#define HARTID_MAX CONFIG_NR_CORES
+#define HARTID_MAX -1UL
 
 static inline unsigned long hrt_get_id(void) {
   return r_tp();

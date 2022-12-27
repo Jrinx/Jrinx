@@ -85,6 +85,13 @@ static long mem_probe(const struct dev_node *node) {
         mem_addr[i] = from_be(reg_table[i * 2]);
         mem_size[i] = from_be(reg_table[i * 2 + 1]);
       }
+
+      info("%s probed (consists of %lu memory):\n", node->nd_name, mem_num);
+
+      for (size_t i = 0; i < mem_num; i++) {
+        info("\tmemory[%lu] locates at ", i);
+        mm_print_range(mem_addr[i], mem_size[i], NULL);
+      }
       break;
     }
   }
@@ -111,13 +118,6 @@ static struct phy_frame **pf_array;
 static size_t *pf_array_len;
 
 void memory_init(void) {
-  info("%lu memory probed\n", mem_num);
-
-  for (size_t i = 0; i < mem_num; i++) {
-    info("memory[%lu] locates at ", i);
-    mm_print_range(mem_addr[i], mem_size[i], NULL);
-  }
-
   pf_free_list = alloc(sizeof(struct phy_frame_list) * mem_num);
   pf_array = alloc(sizeof(struct phy_frame *) * mem_num);
   pf_array_len = alloc(sizeof(size_t) * mem_num);

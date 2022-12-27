@@ -1,3 +1,4 @@
+#include <kern/drivers/cpu.h>
 #include <kern/drivers/device.h>
 #include <kern/drivers/devicetree.h>
 #include <kern/lib/debug.h>
@@ -12,11 +13,11 @@
 #include <stdint.h>
 
 void kernel_init(unsigned long hartid, void *dtb_addr) {
-  static int is_master = 1;
-  static volatile unsigned long init_cnt = 0;
-  static with_spinlock(init_cnt);
+  static volatile unsigned long init_state = 0;
+  static with_spinlock(init_state);
   hrt_set_id(hartid);
-  if (is_master) {
+  if (!cpu_master_init) {
+    cpu_master_init = 1;
     lk_init();
 
     info("[ hart %ld ] Hello Jrinx, I am master hart!\n", hartid);
@@ -27,24 +28,19 @@ void kernel_init(unsigned long hartid, void *dtb_addr) {
     panic_e(device_probe(&dt));
     memory_init();
 
-    init_cnt++;
-    is_master = 0;
-    unsigned long hart_table[CONFIG_NR_CORES / (sizeof(unsigned long) * 8) + 1] = {0};
-    for (int i = 0; i < CONFIG_NR_CORES; i++) {
-      if (i != hartid) {
-        hart_table[i / (sizeof(unsigned long) * 8)] |= 1 << (i % (sizeof(unsigned long) * 8));
-        panic_e(sbi_hart_start(i, KERNBASE, 0));
-      }
-    }
-    panic_e(sbi_send_ipi(hart_table));
-    while (init_cnt < CONFIG_NR_CORES) {
+    panic_e(lk_acquire(&spinlock_of(init_state)));
+    init_state++;
+    panic_e(lk_release(&spinlock_of(init_state)));
+    while (init_state != cpu_get_count()) {
     }
     haltk("[ hart %ld ] all cores are running, halt!", hartid);
   } else {
+    while (init_state == 0) {
+    }
     info("[ hart %ld ] Hello Jrinx, I am slave hart!\n", hartid);
-    panic_e(lk_acquire(&spinlock_of(init_cnt)));
-    init_cnt++;
-    panic_e(lk_release(&spinlock_of(init_cnt)));
+    panic_e(lk_acquire(&spinlock_of(init_state)));
+    init_state++;
+    panic_e(lk_release(&spinlock_of(init_state)));
     while (1) {
     }
   }

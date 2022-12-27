@@ -3,8 +3,6 @@
 
 #include <kern/drivers/devicetree.h>
 
-typedef long (*probe_t)(const struct dev_node *node);
-
 enum probe_pri_t {
   HIGHEST,
   MEDIUM,
@@ -13,7 +11,7 @@ enum probe_pri_t {
 
 struct device {
   char *d_name;
-  probe_t d_probe;
+  dt_find_callback_t d_probe;
   enum probe_pri_t d_probe_pri;
   TAILQ_ENTRY(device) d_link;
 };

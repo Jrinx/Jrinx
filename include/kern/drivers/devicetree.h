@@ -35,8 +35,11 @@ struct dev_tree {
   struct dev_node_tailq dt_node_tailq;
 };
 
+typedef long (*dt_find_callback_t)(const struct dev_node *node);
+
 long dt_load(void *dtb_addr, struct dev_tree *dt) __attribute__((warn_unused_result));
-void dt_find(struct dev_tree *dt, const char *name, struct dev_node **p_node);
+long dt_find(struct dev_tree *dt, const char *name, dt_find_callback_t callback)
+    __attribute__((warn_unused_result));
 void dt_print_tree(struct dev_tree *dt);
 
 #endif
