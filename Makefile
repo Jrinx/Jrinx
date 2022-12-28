@@ -8,11 +8,6 @@ CHECK_PREPROC	?= n
 
 CROSS_COMPILE	:= riscv64-unknown-elf-
 
-__CC		:= $(CROSS_COMPILE)gcc
-__CPP		:= $(CROSS_COMPILE)cpp
-__LD		:= $(CROSS_COMPILE)ld
-OBJDUMP		:= $(CROSS_COMPILE)objdump
-OBJCOPY		:= $(CROSS_COMPILE)objcopy
 GDB		:= gdb-multiarch
 GDB_EVAL_CMD	:= -ex 'target remote :1234'
 
@@ -45,7 +40,7 @@ BOOTLOADER	:= $(OPENSBI_FW_PATH)/fw_jump.elf
 
 DTC		:= dtc
 
-export __CC __CPP __LD OBJDUMP OBJCOPY CFLAGS LDFLAGS CHECK_PREPROC
+export CROSS_COMPILE CFLAGS LDFLAGS CHECK_PREPROC
 
 .ONESHELL:
 .PHONY: all debug release clean run dbg gdb gdb-sbi \
