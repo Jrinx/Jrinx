@@ -3,10 +3,12 @@
 #include <kern/drivers/devicetree.h>
 #include <kern/lib/debug.h>
 #include <kern/lib/logger.h>
-#include <kern/lib/sbi.h>
+#include <kern/lib/regs.h>
+#include <kern/lib/sync.h>
 #include <kern/lock/lock.h>
 #include <kern/lock/spinlock.h>
 #include <kern/mm/mem.h>
+#include <kern/mm/vm.h>
 #include <layouts.h>
 #include <lib/string.h>
 #include <stddef.h>
@@ -27,6 +29,8 @@ void kernel_init(unsigned long hartid, void *dtb_addr) {
     panic_e(device_init());
     panic_e(device_probe(&dt));
     memory_init();
+    vm_init();
+    vm_start();
 
     panic_e(lk_acquire(&spinlock_of(init_state)));
     init_state++;
@@ -37,6 +41,7 @@ void kernel_init(unsigned long hartid, void *dtb_addr) {
   } else {
     while (init_state == 0) {
     }
+    vm_start();
     info("[ hart %ld ] Hello Jrinx, I am slave hart!\n", hartid);
     panic_e(lk_acquire(&spinlock_of(init_state)));
     init_state++;

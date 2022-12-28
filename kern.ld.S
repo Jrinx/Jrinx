@@ -9,7 +9,7 @@ SECTIONS {
     *(.boot)
     *(.text .text.*)
   }
-
+  PROVIDE(kern_text_end = .);
   . = ALIGN(PGSIZE);
   .rodata : {
     *(.rodata .rodata.*)

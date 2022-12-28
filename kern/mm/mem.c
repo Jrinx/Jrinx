@@ -17,6 +17,10 @@ static uint64_t *mem_size;
 
 static unsigned long freemem_base = 0;
 
+unsigned long mm_get_freemem_base(void) {
+  return freemem_base;
+}
+
 static void *bare_alloc(size_t size, size_t align) {
   if (unlikely(freemem_base == 0)) {
     extern uint8_t kern_end[];
@@ -187,6 +191,9 @@ long phy_frame_alloc(struct phy_frame **frame) {
     if (!LIST_EMPTY(&pf_free_list[i])) {
       *frame = LIST_FIRST(&pf_free_list[i]);
       LIST_REMOVE(*frame, pf_link);
+      unsigned long pa;
+      panic_e(frame2pa(*frame, &pa));
+      memset((void *)pa, 0, PGSIZE);
       catch_e(lk_release(&spinlock_of(pf_free_list)));
       return KER_SUCCESS;
     }
