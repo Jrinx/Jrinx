@@ -3,9 +3,6 @@ OPENSBI_FW_PATH	?= ../archive/opensbi/build/platform/generic/firmware
 # Qemu does not support big endian now.
 TARGET_ENDIAN	?= little
 
-# Used to check macro expansion.
-CHECK_PREPROC	?= n
-
 CROSS_COMPILE	:= riscv64-unknown-elf-
 
 GDB		:= gdb-multiarch
@@ -35,7 +32,8 @@ BOOTLOADER	:= $(OPENSBI_FW_PATH)/fw_jump.elf
 
 DTC		:= dtc
 
-export CROSS_COMPILE CFLAGS LDFLAGS CHECK_PREPROC
+export CROSS_COMPILE CFLAGS LDFLAGS
+export CHECK_PREPROC ?= n
 
 .ONESHELL:
 .PHONY: all debug release clean run dbg gdb gdb-sbi \
