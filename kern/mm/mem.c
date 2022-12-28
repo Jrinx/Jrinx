@@ -127,6 +127,7 @@ void memory_init(void) {
     pf_array[i] = alloc(sizeof(struct phy_frame) * pf_array_len[i],
                         PGSIZE >= sizeof(struct phy_frame) ? PGSIZE : sizeof(struct phy_frame));
     for (size_t j = 0; j < pf_array_len[i]; j++) {
+      pf_array[i][j].pf_ref = 0;
       LIST_INSERT_HEAD(&pf_free_list[i], &pf_array[i][j], pf_link);
     }
   }
@@ -140,6 +141,7 @@ void memory_init(void) {
     struct phy_frame *frame;
     panic_e(pa2frame(rsvaddr, &frame));
     LIST_REMOVE(frame, pf_link);
+    frame->pf_ref = 1;
   }
 }
 
