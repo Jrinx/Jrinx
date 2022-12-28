@@ -44,10 +44,13 @@ export CROSS_COMPILE CFLAGS LDFLAGS CHECK_PREPROC
 
 .ONESHELL:
 .PHONY: all debug release clean run dbg gdb gdb-sbi \
-	macro-expand objdump objcopy dumpdtb dumpdts \
+	preprocess objdump objcopy dumpdtb dumpdts \
 	$(JRINX) $(MODULES) \
 	check-style fix-style register-git-hooks
 
+ifneq ($(filter preprocess,$(MAKECMDGOALS)),)
+all: CHECK_PREPROC	:= y
+endif
 all: clean
 	@export MAKEFLAGS="-j$$(nproc) -s $$MAKEFLAGS"
 	@$(MAKE) $(JRINX)
@@ -79,9 +82,7 @@ clean:
 		-name '*.i' \
 	\) -type f -delete
 
-macro-expand:
-	@export CHECK_PREPROC=y
-	@$(MAKE) -s
+preprocess: all
 
 objdump:
 	@find -- * \( -path $(JRINX) \) -exec \
