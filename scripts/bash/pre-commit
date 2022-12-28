@@ -2,5 +2,4 @@
 
 set -e
 
-make clean
 make check-style
