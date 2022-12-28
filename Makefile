@@ -3,6 +3,8 @@ OPENSBI_FW_PATH	?= ../archive/opensbi/build/platform/generic/firmware
 # Qemu does not support big endian now.
 TARGET_ENDIAN	?= little
 
+CPUS		?= 5
+
 CROSS_COMPILE	:= riscv64-unknown-elf-
 
 GDB		:= gdb-multiarch
@@ -18,7 +20,7 @@ LDFLAGS		+= --fatal-warnings --warn-unresolved-symbols
 
 EMU 		:= qemu-system-riscv64
 EMU_MACH 	:= virt
-EMU_CPUS 	:= 5
+EMU_CPUS 	:= $(CPUS)
 EMU_RAM_SIZE	:= 1G
 EMU_OPTS	:= -M $(EMU_MACH) -m $(EMU_RAM_SIZE) -nographic -smp $(EMU_CPUS)
 
