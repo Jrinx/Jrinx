@@ -2,16 +2,25 @@
 #include <kern/lock/spinlock.h>
 
 long spnlk_acquire(struct lock *lock) {
-  while (__sync_lock_test_and_set(&lock->lk_state, LK_LOCKED) != 0) {
-  }
-  __sync_synchronize();
+  int wait;
+  enum lock_state_t state = LK_LOCKED;
+  do {
+    asm volatile("amoswap.w %0, %2, %1\n"
+                 "fence r, rw"
+                 : "=r"(wait), "+A"(lock->lk_state)
+                 : "r"(state)
+                 : "memory");
+  } while (wait);
 
   return KER_SUCCESS;
 }
 
 long spnlk_release(struct lock *lock) {
-  __sync_synchronize();
-  __sync_lock_release(&lock->lk_state);
-
+  enum lock_state_t state = LK_UNLOCKED;
+  asm volatile("fence rw, r\n"
+               "amoswap.w x0, %1, %0"
+               : "+A"(lock->lk_state)
+               : "r"(state)
+               : "memory");
   return KER_SUCCESS;
 }
