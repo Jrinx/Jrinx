@@ -59,7 +59,7 @@ build: clean
 	@export MAKEFLAGS="-j$$(nproc) -s $$MAKEFLAGS"
 	@$(MAKE) $(JRINX)
 
-$(JRINX): SHELL := /bin/bash
+$(JRINX): SHELL := $(shell which bash)
 $(JRINX): $(MODULES) $(LDSCRIPT) $(TARGET_DIR)
 	shopt -s nullglob globstar
 	$(LD) $(LDFLAGS) -T $(LDSCRIPT) -o $(JRINX) $(OBJECTS)
