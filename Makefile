@@ -14,13 +14,8 @@ GDB_EVAL_CMD	:= -ex 'target remote :1234'
 CFLAGS		+= --std=gnu99 -nostdlib \
 		-Wall -Werror -Wa,--fatal-warnings \
 		-mabi=lp64 -march=rv64g -m$(TARGET_ENDIAN)-endian -mcmodel=medany -mno-relax \
-		-fno-omit-frame-pointer -ffreestanding -fno-common -fno-stack-protector -fno-builtin
-
-ifeq ($(TARGET_ENDIAN),little)
-	CFLAGS	+= -DCONFIG_ENDIAN=LITTLE_ENDIAN
-else
-	CFLAGS	+= -DCONFIG_ENDIAN=BIG_ENDIAN
-endif
+		-fno-omit-frame-pointer -ffreestanding -fno-common -fno-stack-protector -fno-builtin \
+		-DCONFIG_ENDIAN=$(shell echo $(TARGET_ENDIAN) | tr '[:lower:]' '[:upper:]')_ENDIAN
 
 LDFLAGS		+= --fatal-warnings --warn-unresolved-symbols
 
