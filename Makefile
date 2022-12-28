@@ -36,24 +36,26 @@ export CROSS_COMPILE CFLAGS LDFLAGS
 export CHECK_PREPROC ?= n
 
 .ONESHELL:
-.PHONY: all debug release clean run dbg gdb gdb-sbi \
+.PHONY: all debug release build clean run dbg gdb gdb-sbi \
 	preprocess objdump objcopy dumpdtb dumpdts \
 	$(JRINX) $(MODULES) \
 	check-style fix-style register-git-hooks
 
-ifneq ($(filter preprocess,$(MAKECMDGOALS)),)
-all: CHECK_PREPROC	:= y
-endif
-all: clean
-	@export MAKEFLAGS="-j$$(nproc) -s $$MAKEFLAGS"
-	@$(MAKE) $(JRINX)
+all: debug
 
 release: CFLAGS		+= -O2
 release: LDFLAGS	+= -O --gc-sections
-release: all
+release: build
 
 debug: CFLAGS		+= -O0 -g -ggdb
-debug: all
+debug: build
+
+ifneq ($(filter preprocess,$(MAKECMDGOALS)),)
+build: CHECK_PREPROC	:= y
+endif
+build: clean
+	@export MAKEFLAGS="-j$$(nproc) -s $$MAKEFLAGS"
+	@$(MAKE) $(JRINX)
 
 $(JRINX): SHELL := /bin/bash
 $(JRINX): $(MODULES) $(LDSCRIPT) $(TARGET_DIR)
