@@ -1,6 +1,6 @@
 OPENSBI_FW_PATH	?= ../archive/opensbi/build/platform/generic/firmware
 
-# Qemu dose not support big endian now.
+# Qemu does not support big endian now.
 TARGET_ENDIAN	?= little
 
 # Used to check macro expansion.
