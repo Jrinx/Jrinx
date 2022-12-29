@@ -1,0 +1,7 @@
+#ifndef _ALIGNS_H_
+#define _ALIGNS_H_
+
+#define align_down(x, align) ((x) / (align) * (align))
+#define align_up(x, align) (align_down(x, align) + (align))
+
+#endif

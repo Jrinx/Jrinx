@@ -1,3 +1,4 @@
+#include <aligns.h>
 #include <brpred.h>
 #include <endian.h>
 #include <kern/drivers/device.h>
@@ -27,7 +28,7 @@ static void *bare_alloc(size_t size, size_t align) {
     freemem_base = (unsigned long)kern_end;
   }
 
-  freemem_base = freemem_base / align * align + align;
+  freemem_base = align_up(freemem_base, align);
 
   void *res = (void *)freemem_base;
 
@@ -136,7 +137,7 @@ void memory_init(void) {
     }
   }
 
-  freemem_base = freemem_base / PGSIZE * PGSIZE + PGSIZE;
+  freemem_base = align_up(freemem_base, PGSIZE);
 
   info("opensbi reserves memory at ");
   mm_print_range(SBIBASE, KERNBASE - SBIBASE, NULL);

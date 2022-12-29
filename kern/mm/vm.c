@@ -1,3 +1,4 @@
+#include <aligns.h>
 #include <kern/lib/debug.h>
 #include <kern/lib/errors.h>
 #include <kern/lib/regs.h>
@@ -109,10 +110,11 @@ long pt_map(pte_t *pgdir, vaddr_t va, paddr_t pa, perm_t perm) {
 
 void vm_init_kern_pgdir(void) {
   extern uint8_t kern_text_end[];
+  unsigned long freemem_base = mm_get_freemem_base();
   vaddr_t va = {.val = KERNBASE};
   paddr_t pa = {.val = KERNBASE};
-  size_t text_end = (size_t)kern_text_end / PGSIZE * PGSIZE + PGSIZE;
-  size_t free_end = (size_t)mm_get_freemem_base() / PGSIZE * PGSIZE + PGSIZE;
+  size_t text_end = align_up((size_t)kern_text_end, PGSIZE);
+  size_t free_end = align_up((size_t)freemem_base, PGSIZE);
 
   info("set up kernel text mapping at ");
   mm_print_range(KERNBASE, text_end - KERNBASE, NULL);
