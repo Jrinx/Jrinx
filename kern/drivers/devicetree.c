@@ -20,7 +20,8 @@ static inline long fdt_from(void *dtb_addr, struct fdt_header **pfhdr) {
   return KER_SUCCESS;
 }
 
-static long dt_node_load(void *dtb_addr, size_t pos, size_t *nxt_pos, struct dev_tree *dt) {
+static long dt_node_load(void *dtb_addr, size_t pos, size_t *nxt_pos,
+                         struct dev_node_tailq *queue) {
   struct fdt_header *fhdr = dtb_addr;
   uint32_t dtb_struct_off = from_be(fhdr->h_off_dt_struct);
   uint32_t dtb_strings_off = from_be(fhdr->h_off_dt_strings);
@@ -47,7 +48,7 @@ static long dt_node_load(void *dtb_addr, size_t pos, size_t *nxt_pos, struct dev
   strcpy(node->nd_name, node_name);
   TAILQ_INIT(&node->nd_prop_tailq);
   TAILQ_INIT(&node->nd_children_tailq);
-  TAILQ_INSERT_TAIL(&dt->dt_node_tailq, node, nd_link);
+  TAILQ_INSERT_TAIL(queue, node, nd_link);
 
   pos = (pos * sizeof(uint32_t) + node_name_len) / sizeof(uint32_t) + 1;
 
@@ -85,7 +86,7 @@ static long dt_node_load(void *dtb_addr, size_t pos, size_t *nxt_pos, struct dev
 
   do {
     if (struct_token == FDT_BEGIN_NODE) {
-      catch_e(dt_node_load(dtb_addr, pos, &pos, dt));
+      catch_e(dt_node_load(dtb_addr, pos, &pos, &node->nd_children_tailq));
     } else if (struct_token == FDT_NOP) {
       pos++;
     } else {
@@ -124,7 +125,7 @@ long dt_load(void *dtb_addr, struct dev_tree *dt) {
     TAILQ_INSERT_TAIL(&dt->dt_rsvmem_tailq, dev_rsvmem_ent, r_link);
   }
 
-  catch_e(dt_node_load(dtb_addr, 0, NULL, dt));
+  catch_e(dt_node_load(dtb_addr, 0, NULL, &dt->dt_node_tailq));
 
   return KER_SUCCESS;
 }
@@ -199,7 +200,6 @@ static void dt_print_node(struct dev_node *node, unsigned long layer) {
     printk("\n");
   }
 
-  layer++;
   struct dev_node *child;
   TAILQ_FOREACH (child, &node->nd_children_tailq, nd_link) {
     dt_printl("%s {\n", child->nd_name);
@@ -217,14 +217,12 @@ void dt_print_tree(struct dev_tree *dt) {
     printk("/memreserve/\t0x%16lx 0x%16lx;\n", rsvmem->r_addr, rsvmem->r_size);
   }
 
-  printk("{\n");
   struct dev_node *node;
   TAILQ_FOREACH (node, &dt->dt_node_tailq, nd_link) {
-    dt_print_indention(1);
+    dt_print_indention(0);
     dt_print_node_header(node->nd_name);
-    dt_print_node(node, 2);
-    dt_print_indention(1);
+    dt_print_node(node, 1);
+    dt_print_indention(0);
     printk("}\n");
   }
-  printk("}\n");
 }
