@@ -38,7 +38,7 @@ export CROSS_COMPILE CFLAGS LDFLAGS
 export CHECK_PREPROC ?= n
 
 .ONESHELL:
-.PHONY: all debug release build clean run dbg gdb gdb-sbi \
+.PHONY: all debug release release-debug build clean run dbg gdb gdb-sbi \
 	preprocess objdump objcopy dumpdtb dumpdts \
 	$(JRINX) $(MODULES) \
 	check-style fix-style register-git-hooks
@@ -48,6 +48,9 @@ all: debug
 release: CFLAGS		+= -O2
 release: LDFLAGS	+= -O --gc-sections
 release: build
+
+release-debug: CFLAGS	+= -g -ggdb
+release-debug: release
 
 debug: CFLAGS		+= -O0 -g -ggdb
 debug: build
