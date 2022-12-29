@@ -19,6 +19,8 @@ union kern_init_arg {
   unsigned long stacktop; // slave
 };
 
+struct dev_tree boot_dt;
+
 void kernel_init(unsigned long hartid, union kern_init_arg arg) {
   static volatile unsigned long init_state = 0;
   static with_spinlock(init_state);
@@ -28,10 +30,9 @@ void kernel_init(unsigned long hartid, union kern_init_arg arg) {
 
     info("Hello Jrinx, I am master hart!\n");
 
-    struct dev_tree dt;
-    panic_e(dt_load(arg.dtb_addr, &dt));
+    panic_e(dt_load(arg.dtb_addr, &boot_dt));
     panic_e(device_init());
-    panic_e(device_probe(&dt));
+    panic_e(device_probe(&boot_dt));
     memory_init();
     vm_init_kern_pgdir();
     vm_start();
