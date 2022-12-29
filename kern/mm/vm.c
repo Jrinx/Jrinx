@@ -107,21 +107,22 @@ long pt_map(pte_t *pgdir, vaddr_t va, paddr_t pa, perm_t perm) {
   return KER_SUCCESS;
 }
 
-void vm_init(void) {
+void vm_init_kern_pgdir(void) {
   extern uint8_t kern_text_end[];
   vaddr_t va = {.val = KERNBASE};
   paddr_t pa = {.val = KERNBASE};
-  size_t text_end = (size_t)kern_text_end;
-  size_t free_end = (size_t)mm_get_freemem_base();
+  size_t text_end = (size_t)kern_text_end / PGSIZE * PGSIZE + PGSIZE;
+  size_t free_end = (size_t)mm_get_freemem_base() / PGSIZE * PGSIZE + PGSIZE;
 
-  info("set up kernel virtual address mapping on [%016lx, %016lx)\n", (unsigned long)KERNBASE,
-       free_end);
-
+  info("set up kernel text mapping at ");
+  mm_print_range(KERNBASE, text_end - KERNBASE, NULL);
   for (; va.val < text_end; va.val += PGSIZE, pa.val += PGSIZE) {
     perm_t perm = {.bits = {.a = 1, .d = 1, .r = 1, .x = 1, .w = 1, .g = 1}};
     panic_e(pt_map(kern_pgdir, va, pa, perm));
   }
 
+  info("set up kernel data mapping at ");
+  mm_print_range(text_end, free_end - text_end, NULL);
   for (; va.val < free_end; va.val += PGSIZE, pa.val += PGSIZE) {
     perm_t perm = {.bits = {.a = 1, .d = 1, .r = 1, .w = 1, .g = 1}};
     panic_e(pt_map(kern_pgdir, va, pa, perm));

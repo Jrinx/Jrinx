@@ -29,7 +29,7 @@ void kernel_init(unsigned long hartid, void *dtb_addr) {
     panic_e(device_init());
     panic_e(device_probe(&dt));
     memory_init();
-    vm_init();
+    vm_init_kern_pgdir();
     vm_start();
 
     panic_e(lk_acquire(&spinlock_of(init_state)));

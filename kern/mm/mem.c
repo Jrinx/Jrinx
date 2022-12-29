@@ -61,7 +61,7 @@ static void mm_print_bytes(unsigned long size, size_t shift) {
   }
 }
 
-static void mm_print_range(unsigned long addr, unsigned long size, const char *suffix) {
+void mm_print_range(unsigned long addr, unsigned long size, const char *suffix) {
   printk("[%016lx, %016lx) <size: ", addr, addr + size);
   mm_print_bytes(size, 0);
   printk(">");
@@ -138,8 +138,11 @@ void memory_init(void) {
 
   freemem_base = freemem_base / PGSIZE * PGSIZE + PGSIZE;
 
-  info("opensbi & kernel reserve memory at ");
-  mm_print_range(SBIBASE, freemem_base - SBIBASE, NULL);
+  info("opensbi reserves memory at ");
+  mm_print_range(SBIBASE, KERNBASE - SBIBASE, NULL);
+
+  info("os kernel reserves memory at ");
+  mm_print_range(KERNBASE, freemem_base - KERNBASE, NULL);
 
   for (unsigned long rsvaddr = SBIBASE; rsvaddr < freemem_base; rsvaddr += PGSIZE) {
     struct phy_frame *frame;
