@@ -29,7 +29,7 @@ static long cpus_probe(const struct dev_node *node) {
     }
   }
 
-  cpus_stacktop = alloc(sizeof(KSTKSIZE) * cpus_count, PGSIZE);
+  cpus_stacktop = alloc(sizeof(unsigned long) * cpus_count, sizeof(unsigned long));
   size_t hart_mask_size = (cpus_count - 1) / (sizeof(unsigned long) * 8) + 1;
   unsigned long hart_mask[hart_mask_size];
   memset(hart_mask, 0, hart_mask_size * sizeof(unsigned long));
@@ -55,13 +55,13 @@ static long cpus_probe(const struct dev_node *node) {
           if (id != hrt_get_id()) {
             unsigned long stack_top = (unsigned long)alloc(KSTKSIZE, PGSIZE);
             cpus_stacktop[id] = stack_top;
-            info("%s (slave)  probed (stack top: %016lx)\n", node->nd_name, stack_top);
-            hart_mask[id / sizeof(unsigned long) * 8] |= 1
-                                                         << (id % (sizeof(unsigned long) * 8));
+            info("%s (slave)  probed (stack top: %016lx)\n", child->nd_name, stack_top);
+            hart_mask[id / (sizeof(unsigned long) * 8)] |=
+                1UL << (id % (sizeof(unsigned long) * 8));
             catch_e(sbi_hart_start(id, KERNBASE, 0));
           } else {
             cpus_stacktop[id] = KSTKTOP;
-            info("%s (master) probed (stack top: %016lx)\n", node->nd_name,
+            info("%s (master) probed (stack top: %016lx)\n", child->nd_name,
                  (unsigned long)KSTKTOP);
           }
           break;
