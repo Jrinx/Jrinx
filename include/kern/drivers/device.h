@@ -10,8 +10,7 @@ enum probe_pri_t {
 };
 
 struct device {
-  char *d_name;
-  dt_find_callback_t d_probe;
+  dt_iter_callback_t d_probe;
   enum probe_pri_t d_probe_pri;
   TAILQ_ENTRY(device) d_link;
 };

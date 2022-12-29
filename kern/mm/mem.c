@@ -74,6 +74,10 @@ void mm_print_range(unsigned long addr, unsigned long size, const char *suffix) 
 }
 
 static long mem_probe(const struct dev_node *node) {
+  if (!dt_node_has_dev_type(node, "memory")) {
+    return KER_SUCCESS;
+  }
+
   int reg_found = 0;
   struct dev_node_prop *prop;
   TAILQ_FOREACH (prop, &node->nd_prop_tailq, pr_link) {
@@ -109,7 +113,6 @@ static long mem_probe(const struct dev_node *node) {
 }
 
 struct device memory_device = {
-    .d_name = "memory",
     .d_probe = mem_probe,
     .d_probe_pri = HIGHEST,
 };

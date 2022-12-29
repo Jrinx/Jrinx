@@ -12,10 +12,12 @@ kstack:
 .text
 .section .boot
 EXPORT(_start)
-.extern cpu_master_init
-  lw t0, cpu_master_init
+.extern cpus_stacktop
+  ld t0, cpus_stacktop
   beq t0, zero, init_stk
-  mv sp, a1
+  sll t1, a0, 3
+  add t1, t0, t1
+  ld sp, (t1)
   j init_kern_call
 init_stk:
   li sp, KSTKTOP

@@ -130,7 +130,7 @@ long dt_load(void *dtb_addr, struct dev_tree *dt) {
   return KER_SUCCESS;
 }
 
-static int dt_node_has_dev_type(struct dev_node *node, const char *type) {
+int dt_node_has_dev_type(const struct dev_node *node, const char *type) {
   struct dev_node_prop *prop;
   TAILQ_FOREACH (prop, &node->nd_prop_tailq, pr_link) {
     if (strcmp(prop->pr_name, "device_type") == 0 &&
@@ -141,24 +141,20 @@ static int dt_node_has_dev_type(struct dev_node *node, const char *type) {
   return 0;
 }
 
-static long dt_find_node(struct dev_node *node, const char *name, dt_find_callback_t callback) {
+static long dt_find_node(struct dev_node *node, dt_iter_callback_t callback) {
   struct dev_node *child;
   TAILQ_FOREACH (child, &node->nd_children_tailq, nd_link) {
-    if (dt_node_has_dev_type(child, name)) {
-      catch_e(callback(child));
-    }
-    catch_e(dt_find_node(child, name, callback));
+    catch_e(callback(child));
+    catch_e(dt_find_node(child, callback));
   }
   return KER_SUCCESS;
 }
 
-long dt_find(struct dev_tree *dt, const char *name, dt_find_callback_t callback) {
+long dt_iter(struct dev_tree *dt, dt_iter_callback_t callback) {
   struct dev_node *node;
   TAILQ_FOREACH (node, &dt->dt_node_tailq, nd_link) {
-    if (dt_node_has_dev_type(node, name)) {
-      catch_e(callback(node));
-    }
-    catch_e(dt_find_node(node, name, callback));
+    catch_e(callback(node));
+    catch_e(dt_find_node(node, callback));
   }
   return KER_SUCCESS;
 }
