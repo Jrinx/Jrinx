@@ -104,7 +104,8 @@ gdb-sbi: GDB_EVAL_CMD	+= -ex 'set confirm off' -ex 'add-symbol-file $(BOOTLOADER
 gdb-sbi: gdb
 
 dumpdtb: EMU_OPTS	+= -M $(EMU_MACH),dumpdtb=$(EMU_MACH).dtb
-dumpdtb: run
+dumpdtb:
+	@$(EMU) $(EMU_OPTS)
 
 dumpdts: dumpdtb
 	@$(DTC) -I dtb -O dts $(EMU_MACH).dtb -o $(EMU_MACH).dts
