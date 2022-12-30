@@ -31,8 +31,6 @@ static long cpus_probe(const struct dev_node *node) {
   }
 
   cpus_stacktop = alloc(sizeof(unsigned long) * cpus_count, sizeof(unsigned long));
-  BITMAP_DECL(hart_mask, cpus_count);
-  memset(hart_mask, 0, BITMAP_SIZE(cpus_count));
 
   TAILQ_FOREACH (child, &node->nd_children_tailq, nd_link) {
     if (dt_node_has_dev_type(child, "cpu")) {
@@ -56,7 +54,6 @@ static long cpus_probe(const struct dev_node *node) {
             unsigned long stack_top = (unsigned long)alloc(KSTKSIZE, PGSIZE);
             cpus_stacktop[id] = stack_top;
             info("%s (slave)  probed (stack top: %016lx)\n", child->nd_name, stack_top);
-            bitmap_set_bit(hart_mask, id);
             catch_e(sbi_hart_start(id, KERNBASE, 0));
           } else {
             cpus_stacktop[id] = KSTKTOP;
@@ -72,7 +69,6 @@ static long cpus_probe(const struct dev_node *node) {
       }
     }
   }
-  catch_e(sbi_send_ipi(hart_mask));
   return KER_SUCCESS;
 }
 
