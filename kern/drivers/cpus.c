@@ -5,7 +5,7 @@
 #include <kern/lib/errors.h>
 #include <kern/lib/hart.h>
 #include <kern/lib/sbi.h>
-#include <kern/mm/mem.h>
+#include <kern/mm/pmm.h>
 #include <layouts.h>
 #include <lib/string.h>
 

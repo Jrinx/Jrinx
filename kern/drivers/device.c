@@ -2,7 +2,7 @@
 #include <kern/drivers/device.h>
 #include <kern/lib/debug.h>
 #include <kern/lib/errors.h>
-#include <kern/mm/mem.h>
+#include <kern/mm/pmm.h>
 
 static struct dev_queue_t dev_queue;
 

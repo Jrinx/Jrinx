@@ -3,7 +3,7 @@
 #include <kern/drivers/dtb.h>
 #include <kern/lib/debug.h>
 #include <kern/lib/errors.h>
-#include <kern/mm/mem.h>
+#include <kern/mm/pmm.h>
 #include <lib/printfmt.h>
 #include <lib/string.h>
 #include <stddef.h>

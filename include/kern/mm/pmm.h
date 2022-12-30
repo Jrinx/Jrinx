@@ -1,5 +1,5 @@
-#ifndef _KERN_MM_MEM_H_
-#define _KERN_MM_MEM_H_
+#ifndef _KERN_MM_PMM_H_
+#define _KERN_MM_PMM_H_
 
 #include <stddef.h>
 #include <sys/queue.h>
@@ -12,7 +12,7 @@ struct phy_frame {
 LIST_HEAD(phy_frame_list, phy_frame);
 
 unsigned long mm_get_freemem_base(void);
-void mm_print_range(unsigned long addr, unsigned long size, const char *suffix);
+void mem_print_range(unsigned long addr, unsigned long size, const char *suffix);
 
 extern void *(*alloc)(size_t size, size_t align);
 extern void (*free)(const void *ptr);

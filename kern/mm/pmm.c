@@ -6,7 +6,7 @@
 #include <kern/lib/errors.h>
 #include <kern/lock/lock.h>
 #include <kern/lock/spinlock.h>
-#include <kern/mm/mem.h>
+#include <kern/mm/pmm.h>
 #include <layouts.h>
 #include <lib/string.h>
 #include <stddef.h>
@@ -41,7 +41,7 @@ static void bare_free(const void *ptr) {
   UNIMPLEMENTED;
 }
 
-static void mm_print_bytes(unsigned long size, size_t shift) {
+static void mem_print_bytes(unsigned long size, size_t shift) {
   static const char *unit[] = {"B", "KiB", "MiB", "GiB", "TiB"};
 
   if (size == 0 && shift == 0) {
@@ -52,7 +52,7 @@ static void mm_print_bytes(unsigned long size, size_t shift) {
   unsigned long rem = size & ((1UL << 10) - 1);
   unsigned long quo = size >> 10;
   if (quo != 0) {
-    mm_print_bytes(quo, shift + 1);
+    mem_print_bytes(quo, shift + 1);
   }
   if (rem != 0) {
     if (quo != 0) {
@@ -62,9 +62,9 @@ static void mm_print_bytes(unsigned long size, size_t shift) {
   }
 }
 
-void mm_print_range(unsigned long addr, unsigned long size, const char *suffix) {
+void mem_print_range(unsigned long addr, unsigned long size, const char *suffix) {
   printk("[%016lx, %016lx) <size: ", addr, addr + size);
-  mm_print_bytes(size, 0);
+  mem_print_bytes(size, 0);
   printk(">");
   if (suffix) {
     printk("%s", suffix);
@@ -99,7 +99,7 @@ static long mem_probe(const struct dev_node *node) {
 
       for (size_t i = 0; i < mem_num; i++) {
         info("\tmemory[%lu] locates at ", i);
-        mm_print_range(mem_addr[i], mem_size[i], NULL);
+        mem_print_range(mem_addr[i], mem_size[i], NULL);
       }
       break;
     }
@@ -143,10 +143,10 @@ void memory_init(void) {
   freemem_base = align_up(freemem_base, PGSIZE);
 
   info("opensbi reserves memory at ");
-  mm_print_range(SBIBASE, KERNBASE - SBIBASE, NULL);
+  mem_print_range(SBIBASE, KERNBASE - SBIBASE, NULL);
 
   info("os kernel reserves memory at ");
-  mm_print_range(KERNBASE, freemem_base - KERNBASE, NULL);
+  mem_print_range(KERNBASE, freemem_base - KERNBASE, NULL);
 
   for (unsigned long rsvaddr = SBIBASE; rsvaddr < freemem_base; rsvaddr += PGSIZE) {
     struct phy_frame *frame;

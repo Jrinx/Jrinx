@@ -7,8 +7,8 @@
 #include <kern/lib/sync.h>
 #include <kern/lock/lock.h>
 #include <kern/lock/spinlock.h>
-#include <kern/mm/mem.h>
-#include <kern/mm/vm.h>
+#include <kern/mm/pmm.h>
+#include <kern/mm/vmm.h>
 #include <layouts.h>
 #include <lib/string.h>
 #include <stddef.h>
@@ -34,8 +34,8 @@ void kernel_init(unsigned long hartid, union kern_init_arg arg) {
     panic_e(device_init());
     panic_e(device_probe(&boot_dt));
     memory_init();
-    vm_init_kern_pgdir();
-    vm_start();
+    vmm_init_kern_pgdir();
+    vmm_start();
 
     panic_e(lk_acquire(&spinlock_of(init_state)));
     init_state++;
@@ -46,7 +46,7 @@ void kernel_init(unsigned long hartid, union kern_init_arg arg) {
   } else {
     while (init_state == 0) {
     }
-    vm_start();
+    vmm_start();
     info("Hello Jrinx, I am slave hart!\n");
     panic_e(lk_acquire(&spinlock_of(init_state)));
     init_state++;
