@@ -15,7 +15,7 @@ static void *kalloc(size_t size, size_t align) {
   UNIMPLEMENTED;
 }
 
-static void kfree(void *ptr) {
+static void kfree(const void *ptr) {
   UNIMPLEMENTED;
 }
 
