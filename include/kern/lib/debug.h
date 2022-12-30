@@ -3,7 +3,7 @@
 
 #include <brpred.h>
 #include <kern/lib/logger.h>
-#include <macroargs.h>
+#include <magicros.h>
 
 #define assert(expr)                                                                           \
   ({                                                                                           \

@@ -38,7 +38,7 @@ static void *bare_alloc(size_t size, size_t align) {
 }
 
 static void bare_free(const void *ptr) {
-  fatal("unexpected free %016lx", (unsigned long)ptr);
+  UNIMPLEMENTED;
 }
 
 static void mm_print_bytes(unsigned long size, size_t shift) {

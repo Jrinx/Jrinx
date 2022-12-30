@@ -11,6 +11,14 @@
 
 pte_t kern_pgdir[PGSIZE / sizeof(pte_t)] __attribute__((aligned(PGSIZE)));
 
+static void *kalloc(size_t size, size_t align) {
+  UNIMPLEMENTED;
+}
+
+static void kfree(void *ptr) {
+  UNIMPLEMENTED;
+}
+
 static long pt_walk(pte_t *pgdir, vaddr_t va, int create, pte_t **pte) {
   struct phy_frame *frame1 = NULL;
   struct phy_frame *frame2 = NULL;
@@ -129,6 +137,9 @@ void vm_init_kern_pgdir(void) {
     perm_t perm = {.bits = {.a = 1, .d = 1, .r = 1, .w = 1, .g = 1}};
     panic_e(pt_map(kern_pgdir, va, pa, perm));
   }
+
+  alloc = kalloc;
+  free = kfree;
 }
 
 void vm_start(void) {
