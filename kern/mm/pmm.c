@@ -125,7 +125,7 @@ static with_spinlock(pf_free_list);
 static struct phy_frame **pf_array;
 static size_t *pf_array_len;
 
-void memory_init(void) {
+void pmm_init(void) {
   pf_free_list = alloc(sizeof(struct phy_frame_list) * mem_num, sizeof(struct phy_frame_list));
   pf_array = alloc(sizeof(struct phy_frame *) * mem_num, sizeof(struct phy_frame *));
   pf_array_len = alloc(sizeof(size_t) * mem_num, sizeof(size_t));

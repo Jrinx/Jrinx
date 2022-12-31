@@ -19,7 +19,7 @@ extern void (*free)(const void *ptr);
 
 extern struct device memory_device;
 
-void memory_init(void);
+void pmm_init(void);
 long pa2sel(unsigned long addr, unsigned long *sel) __attribute__((warn_unused_result));
 long frame2sel(struct phy_frame *frame, unsigned long *sel) __attribute__((warn_unused_result));
 long pa2frame(unsigned long addr, struct phy_frame **frame) __attribute__((warn_unused_result));
