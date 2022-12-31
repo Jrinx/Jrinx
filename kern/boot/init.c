@@ -34,7 +34,7 @@ void kernel_init(unsigned long hartid, union kern_init_arg arg) {
     panic_e(device_init());
     panic_e(device_probe(&boot_dt));
     pmm_init();
-    vmm_init_kern_pgdir();
+    vmm_setup_kern();
     vmm_start();
 
     panic_e(lk_acquire(&spinlock_of(init_state)));

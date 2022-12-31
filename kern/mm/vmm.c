@@ -116,7 +116,7 @@ long pt_map(pte_t *pgdir, vaddr_t va, paddr_t pa, perm_t perm) {
   return KER_SUCCESS;
 }
 
-void vmm_init_kern_pgdir(void) {
+void vmm_setup_kern(void) {
   extern uint8_t kern_text_end[];
   unsigned long freemem_base = mm_get_freemem_base();
   vaddr_t va = {.val = KERNBASE};

@@ -88,7 +88,7 @@ long pt_unmap(pte_t *pgdir, vaddr_t va) __attribute__((warn_unused_result));
 long pt_map(pte_t *pgdir, vaddr_t va, paddr_t pa, perm_t perm)
     __attribute__((warn_unused_result));
 
-void vmm_init_kern_pgdir(void);
+void vmm_setup_kern(void);
 void vmm_start(void);
 
 #endif
