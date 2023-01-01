@@ -130,15 +130,14 @@ long dt_load(void *dtb_addr, struct dev_tree *dt) {
   return KER_SUCCESS;
 }
 
-int dt_node_has_dev_type(const struct dev_node *node, const char *type) {
+struct dev_node_prop *dt_node_prop_extract(const struct dev_node *node, const char *prop_name) {
   struct dev_node_prop *prop;
   TAILQ_FOREACH (prop, &node->nd_prop_tailq, pr_link) {
-    if (strcmp(prop->pr_name, "device_type") == 0 &&
-        strcmp((char *)prop->pr_values, type) == 0) {
-      return 1;
+    if (strcmp(prop->pr_name, prop_name) == 0) {
+      return prop;
     }
   }
-  return 0;
+  return NULL;
 }
 
 static long dt_iter_node(struct dev_node *node, dt_iter_callback_t callback) {

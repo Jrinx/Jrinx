@@ -74,39 +74,34 @@ void mem_print_range(unsigned long addr, unsigned long size, const char *suffix)
 }
 
 static long mem_probe(const struct dev_node *node) {
-  if (!dt_node_has_dev_type(node, "memory")) {
+  struct dev_node_prop *prop;
+  prop = dt_node_prop_extract(node, "device_type");
+  if (prop == NULL || strcmp((char *)prop->pr_values, "memory") != 0) {
     return KER_SUCCESS;
   }
 
-  int reg_found = 0;
-  struct dev_node_prop *prop;
-  TAILQ_FOREACH (prop, &node->nd_prop_tailq, pr_link) {
-    if (strcmp(prop->pr_name, "reg") == 0) {
-      reg_found = 1;
-      if (prop->pr_len % (sizeof(uint64_t) * 2) != 0) {
-        return -KER_DTB_ER;
-      }
-      mem_num = prop->pr_len / (sizeof(uint64_t) * 2);
-      mem_addr = alloc(sizeof(uint64_t) * mem_num, sizeof(uint64_t));
-      mem_size = alloc(sizeof(uint64_t) * mem_num, sizeof(uint64_t));
-      uint64_t *reg_table = (uint64_t *)prop->pr_values;
-      for (size_t i = 0; i < mem_num; i++) {
-        mem_addr[i] = from_be(reg_table[i * 2]);
-        mem_size[i] = from_be(reg_table[i * 2 + 1]);
-      }
-
-      info("%s probed (consists of %lu memory):\n", node->nd_name, mem_num);
-
-      for (size_t i = 0; i < mem_num; i++) {
-        info("\tmemory[%lu] locates at ", i);
-        mem_print_range(mem_addr[i], mem_size[i], NULL);
-      }
-      break;
-    }
+  prop = dt_node_prop_extract(node, "reg");
+  if (prop == NULL) {
+    return -KER_DTB_ER;
   }
 
-  if (!reg_found) {
+  if (prop->pr_len % (sizeof(uint64_t) * 2) != 0) {
     return -KER_DTB_ER;
+  }
+  mem_num = prop->pr_len / (sizeof(uint64_t) * 2);
+  mem_addr = alloc(sizeof(uint64_t) * mem_num, sizeof(uint64_t));
+  mem_size = alloc(sizeof(uint64_t) * mem_num, sizeof(uint64_t));
+  uint64_t *reg_table = (uint64_t *)prop->pr_values;
+  for (size_t i = 0; i < mem_num; i++) {
+    mem_addr[i] = from_be(reg_table[i * 2]);
+    mem_size[i] = from_be(reg_table[i * 2 + 1]);
+  }
+
+  info("%s probed (consists of %lu memory):\n", node->nd_name, mem_num);
+
+  for (size_t i = 0; i < mem_num; i++) {
+    info("\tmemory[%lu] locates at ", i);
+    mem_print_range(mem_addr[i], mem_size[i], NULL);
   }
 
   return KER_SUCCESS;
