@@ -140,6 +140,26 @@ struct dev_node_prop *dt_node_prop_extract(const struct dev_node *node, const ch
   return NULL;
 }
 
+int dt_match_strlist(const uint8_t *prop_values, uint32_t prop_len, const char *target) {
+  size_t target_bytes_len = strlen(target) + 1;
+  uint8_t *target_bytes = (uint8_t *)target;
+  if (prop_len < target_bytes_len) {
+    return 0;
+  }
+
+  size_t i;
+  size_t j;
+  for (i = 0, j = 0; i < target_bytes_len && j < prop_len; j++) {
+    if (target_bytes[i] != prop_values[j]) {
+      i = 0;
+    } else {
+      i++;
+    }
+  }
+
+  return i == target_bytes_len ? j : 0;
+}
+
 static long dt_iter_node(struct dev_node *node, dt_iter_callback_t callback) {
   struct dev_node *child;
   TAILQ_FOREACH (child, &node->nd_children_tailq, nd_link) {

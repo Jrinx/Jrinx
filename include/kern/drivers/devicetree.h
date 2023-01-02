@@ -38,6 +38,7 @@ struct dev_tree {
 typedef long (*dt_iter_callback_t)(const struct dev_node *node);
 
 struct dev_node_prop *dt_node_prop_extract(const struct dev_node *node, const char *prop_name);
+int dt_match_strlist(const uint8_t *prop_values, uint32_t prop_len, const char *target);
 long dt_load(void *dtb_addr, struct dev_tree *dt) __attribute__((warn_unused_result));
 long dt_iter(struct dev_tree *dt, dt_iter_callback_t callback)
     __attribute__((warn_unused_result));
