@@ -1,5 +1,6 @@
 #include <kern/drivers/cpus.h>
 #include <kern/drivers/device.h>
+#include <kern/drivers/mems.h>
 #include <kern/lib/debug.h>
 #include <kern/lib/errors.h>
 #include <kern/mm/pmm.h>

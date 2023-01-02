@@ -17,8 +17,6 @@ void mem_print_range(unsigned long addr, unsigned long size, const char *suffix)
 extern void *(*alloc)(size_t size, size_t align);
 extern void (*free)(const void *ptr);
 
-extern struct device memory_device;
-
 void pmm_init(void);
 long pa2sel(unsigned long addr, unsigned long *sel) __attribute__((warn_unused_result));
 long frame2sel(struct phy_frame *frame, unsigned long *sel) __attribute__((warn_unused_result));

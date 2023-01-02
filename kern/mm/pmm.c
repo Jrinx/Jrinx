@@ -2,6 +2,7 @@
 #include <brpred.h>
 #include <endian.h>
 #include <kern/drivers/device.h>
+#include <kern/drivers/mems.h>
 #include <kern/lib/debug.h>
 #include <kern/lib/errors.h>
 #include <kern/lock/lock.h>
@@ -11,10 +12,6 @@
 #include <lib/string.h>
 #include <stddef.h>
 #include <stdint.h>
-
-static size_t mem_num;
-static uint64_t *mem_addr;
-static uint64_t *mem_size;
 
 static unsigned long freemem_base = 0;
 
@@ -73,45 +70,6 @@ void mem_print_range(unsigned long addr, unsigned long size, const char *suffix)
   }
 }
 
-static long mem_probe(const struct dev_node *node) {
-  struct dev_node_prop *prop;
-  prop = dt_node_prop_extract(node, "device_type");
-  if (prop == NULL || strcmp((char *)prop->pr_values, "memory") != 0) {
-    return KER_SUCCESS;
-  }
-
-  prop = dt_node_prop_extract(node, "reg");
-  if (prop == NULL) {
-    return -KER_DTB_ER;
-  }
-
-  if (prop->pr_len % (sizeof(uint64_t) * 2) != 0) {
-    return -KER_DTB_ER;
-  }
-  mem_num = prop->pr_len / (sizeof(uint64_t) * 2);
-  mem_addr = alloc(sizeof(uint64_t) * mem_num, sizeof(uint64_t));
-  mem_size = alloc(sizeof(uint64_t) * mem_num, sizeof(uint64_t));
-  uint64_t *reg_table = (uint64_t *)prop->pr_values;
-  for (size_t i = 0; i < mem_num; i++) {
-    mem_addr[i] = from_be(reg_table[i * 2]);
-    mem_size[i] = from_be(reg_table[i * 2 + 1]);
-  }
-
-  info("%s probed (consists of %lu memory):\n", node->nd_name, mem_num);
-
-  for (size_t i = 0; i < mem_num; i++) {
-    info("\tmemory[%lu] locates at ", i);
-    mem_print_range(mem_addr[i], mem_size[i], NULL);
-  }
-
-  return KER_SUCCESS;
-}
-
-struct device memory_device = {
-    .d_probe = mem_probe,
-    .d_probe_pri = HIGHEST,
-};
-
 void *(*alloc)(size_t size, size_t align) = bare_alloc;
 void (*free)(const void *ptr) = bare_free;
 
@@ -121,12 +79,15 @@ static struct phy_frame **pf_array;
 static size_t *pf_array_len;
 
 void pmm_init(void) {
+  size_t mem_num = mem_get_num();
   pf_free_list = alloc(sizeof(struct phy_frame_list) * mem_num, sizeof(struct phy_frame_list));
   pf_array = alloc(sizeof(struct phy_frame *) * mem_num, sizeof(struct phy_frame *));
   pf_array_len = alloc(sizeof(size_t) * mem_num, sizeof(size_t));
   for (size_t i = 0; i < mem_num; i++) {
     LIST_INIT(&pf_free_list[i]);
-    pf_array_len[i] = mem_size[i] / PGSIZE;
+    uint64_t mem_size;
+    panic_e(mem_get_size(i, &mem_size));
+    pf_array_len[i] = mem_size / PGSIZE;
     pf_array[i] = alloc(sizeof(struct phy_frame) * pf_array_len[i],
                         PGSIZE >= sizeof(struct phy_frame) ? PGSIZE : sizeof(struct phy_frame));
     for (size_t j = 0; j < pf_array_len[i]; j++) {
@@ -152,8 +113,13 @@ void pmm_init(void) {
 }
 
 long pa2sel(unsigned long addr, unsigned long *sel) {
+  size_t mem_num = mem_get_num();
   for (size_t i = 0; i < mem_num; i++) {
-    if (addr >= mem_addr[i] && addr < mem_addr[i] + mem_size[i]) {
+    uint64_t mem_addr;
+    uint64_t mem_size;
+    catch_e(mem_get_addr(i, &mem_addr));
+    catch_e(mem_get_size(i, &mem_size));
+    if (addr >= mem_addr && addr < mem_addr + mem_size) {
       *sel = i;
       return KER_SUCCESS;
     }
@@ -162,6 +128,7 @@ long pa2sel(unsigned long addr, unsigned long *sel) {
 }
 
 long frame2sel(struct phy_frame *frame, unsigned long *sel) {
+  size_t mem_num = mem_get_num();
   for (size_t i = 0; i < mem_num; i++) {
     if (frame >= pf_array[i] && frame < pf_array[i] + pf_array_len[i]) {
       *sel = i;
@@ -174,7 +141,9 @@ long frame2sel(struct phy_frame *frame, unsigned long *sel) {
 long pa2frame(unsigned long addr, struct phy_frame **frame) {
   unsigned long sel;
   catch_e(pa2sel(addr, &sel));
-  unsigned long off = addr - mem_addr[sel];
+  uint64_t mem_addr;
+  catch_e(mem_get_addr(sel, &mem_addr));
+  unsigned long off = addr - mem_addr;
   *frame = &pf_array[sel][off / PGSIZE];
   return KER_SUCCESS;
 }
@@ -183,11 +152,14 @@ long frame2pa(struct phy_frame *frame, unsigned long *addr) {
   unsigned long sel;
   catch_e(frame2sel(frame, &sel));
   unsigned long off = (frame - pf_array[sel]) * PGSIZE;
-  *addr = mem_addr[sel] + off;
+  uint64_t mem_addr;
+  catch_e(mem_get_addr(sel, &mem_addr));
+  *addr = mem_addr + off;
   return KER_SUCCESS;
 }
 
 long phy_frame_alloc(struct phy_frame **frame) {
+  size_t mem_num = mem_get_num();
   catch_e(lk_acquire(&spinlock_of(pf_free_list)));
   for (size_t i = 0; i < mem_num; i++) {
     if (!LIST_EMPTY(&pf_free_list[i])) {
