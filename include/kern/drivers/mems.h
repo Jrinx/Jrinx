@@ -1,6 +1,7 @@
 #ifndef _KERN_DRIVERS_MEMS_H_
 #define _KERN_DRIVERS_MEMS_H_
 
+#include <kern/drivers/device.h>
 #include <stddef.h>
 #include <stdint.h>
 
