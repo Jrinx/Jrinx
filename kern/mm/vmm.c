@@ -145,6 +145,7 @@ void vmm_setup_kern(void) {
 void vmm_start(void) {
   rv64_satp satp_reg = {
       .bits = {.mode = SV39, .asid = 0, .ppn = ((unsigned long)&kern_pgdir) / PGSIZE}};
+  info("enable virtual memory with satp: %016lx\n", satp_reg.val);
   csrw_satp(satp_reg.val);
   sfence_vma;
 }
