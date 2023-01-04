@@ -32,10 +32,12 @@ static long plic_setup_map(unsigned long addr) {
   plic_addr = addr + DEVOFFSET;
   vaddr_t va = {.val = plic_addr};
   paddr_t pa = {.val = addr};
-  perm_t perm = {.bits = {.a = 1, .d = 1, .g = 1, .r = 1, .v = 1, .w = 1}};
-  catch_e(pt_map(kern_pgdir, va, pa, perm));
+  perm_t perm = {.bits = {.a = 1, .d = 1, .r = 1, .w = 1, .g = 1}};
   info("set up plic mapping at ");
   mem_print_range(plic_addr, plic_size, NULL);
+  for (; va.val < plic_addr + plic_size; va.val += PGSIZE, pa.val += PGSIZE) {
+    catch_e(pt_map(kern_pgdir, va, pa, perm));
+  }
   return KER_SUCCESS;
 }
 
