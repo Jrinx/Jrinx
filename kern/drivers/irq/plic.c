@@ -186,7 +186,7 @@ static long plic_probe(const struct dev_node *node) {
   }
   unsigned int phandle = from_be(*((uint32_t *)prop->pr_values));
   info("%s probed (phandle: %08x) to handle user external int\n", node->nd_name, phandle);
-  info("\tlocates at ");
+  info("\tplic locates at ");
   mem_print_range(plic_addr, plic_size, NULL);
 
   intc_register_handler(CAUSE_INT_OFFSET + CAUSE_INT_U_EXTERNAL, plic_handle_int);
