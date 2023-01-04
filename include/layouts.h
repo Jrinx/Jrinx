@@ -15,4 +15,6 @@
 
 #define KSTKTOP (KERNBASE + KSTKSIZE)
 
+#define DEVOFFSET 0xffffffff40000000UL
+
 #endif

@@ -1,5 +1,6 @@
 #include <kern/drivers/cpus.h>
 #include <kern/drivers/device.h>
+#include <kern/drivers/irq/plic.h>
 #include <kern/drivers/mems.h>
 #include <kern/lib/debug.h>
 #include <kern/lib/errors.h>
@@ -41,6 +42,7 @@ long device_init(void) {
   TAILQ_INIT(&dev_queue);
   catch_e(dev_register(&memory_device));
   catch_e(dev_register(&cpus_device));
+  catch_e(dev_register(&plic_device));
   return KER_SUCCESS;
 }
 

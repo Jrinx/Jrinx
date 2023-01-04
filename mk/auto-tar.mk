@@ -7,4 +7,4 @@ ifeq ($(CHECK_PREPROC),y)
 endif
 
 .PHONY: tar
-tar: $(COMPILE_TARGETS)
+tar:: $(COMPILE_TARGETS)

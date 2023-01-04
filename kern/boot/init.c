@@ -33,7 +33,6 @@ void kernel_init(unsigned long hartid, union kern_init_arg arg) {
     panic_e(dt_load(arg.dtb_addr, &boot_dt));
     panic_e(device_init());
     panic_e(device_probe(&boot_dt));
-    pmm_init();
     vmm_setup_kern();
     vmm_start();
 
