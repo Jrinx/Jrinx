@@ -21,7 +21,7 @@ static void serial_output(void *data, const char *buf, size_t len) {
 
 static void (*outputk)(void *data, const char *buf, size_t len) = sbi_output;
 
-void log_switch_to_local_serial_output(void) {
+void log_localize_output(void) {
   outputk = serial_output;
 }
 

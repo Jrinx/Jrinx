@@ -5,7 +5,7 @@
 #include <kern/lib/hart.h>
 #include <stdarg.h>
 
-void log_switch_to_local_serial_output(void);
+void log_localize_output(void);
 void printk(const char *restrict fmt, ...) __attribute__((format(printf, 1, 2)));
 void panick(const char *restrict fmt, ...) __attribute__((format(printf, 1, 2), noreturn));
 void haltk(const char *restrict fmt, ...) __attribute__((noreturn));

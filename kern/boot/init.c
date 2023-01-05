@@ -42,7 +42,7 @@ void kernel_init(unsigned long hartid, union kern_init_arg arg) {
     vmm_setup_kern();
     vmm_start();
 
-    log_switch_to_local_serial_output();
+    log_localize_output();
     info("Use local serial output!\n");
 
     panic_e(lk_acquire(&spinlock_of(init_state)));
