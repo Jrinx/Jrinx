@@ -116,6 +116,26 @@ long pt_map(pte_t *pgdir, vaddr_t va, paddr_t pa, perm_t perm) {
   return KER_SUCCESS;
 }
 
+struct mmio_setup {
+  mmio_setup_func_t mm_setup_func;
+  LIST_ENTRY(mmio_setup) mm_link;
+};
+
+static LIST_HEAD(__magic, mmio_setup) vmm_mmio_setup_queue;
+
+void vmm_register_mmio(mmio_setup_func_t setup_func) {
+  struct mmio_setup *func_node = alloc(sizeof(struct mmio_setup), sizeof(struct mmio_setup));
+  func_node->mm_setup_func = setup_func;
+  LIST_INSERT_HEAD(&vmm_mmio_setup_queue, func_node, mm_link);
+}
+
+void vmm_setup_mmio(void) {
+  struct mmio_setup *func_node;
+  LIST_FOREACH (func_node, &vmm_mmio_setup_queue, mm_link) {
+    panic_e(func_node->mm_setup_func());
+  }
+}
+
 void vmm_setup_kern(void) {
   extern uint8_t kern_text_end[];
   unsigned long freemem_base = mm_get_freemem_base();
@@ -147,5 +167,9 @@ void vmm_start(void) {
       .bits = {.mode = SV39, .asid = 0, .ppn = ((unsigned long)&kern_pgdir) / PGSIZE}};
   info("enable virtual memory with satp: %016lx\n", satp_reg.val);
   csrw_satp(satp_reg.val);
+  sfence_vma;
+}
+
+void vmm_flush(void) {
   sfence_vma;
 }

@@ -40,8 +40,6 @@ static long mem_probe(const struct dev_node *node) {
     mem_print_range(mem_addr[i], mem_size[i], NULL);
   }
 
-  pmm_init();
-
   return KER_SUCCESS;
 }
 

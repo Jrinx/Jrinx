@@ -15,14 +15,13 @@ static unsigned long plic_addr;
 static unsigned long plic_size;
 static trap_handler_t plic_int_map[PLIC_SOURCE_MAX + 1];
 
-static long plic_setup_map(unsigned long addr) {
-  plic_addr = addr + DEVOFFSET;
-  vaddr_t va = {.val = plic_addr};
-  paddr_t pa = {.val = addr};
+static long plic_setup_map() {
+  vaddr_t va = {.val = plic_addr + DEVOFFSET};
+  paddr_t pa = {.val = plic_addr};
   perm_t perm = {.bits = {.a = 1, .d = 1, .r = 1, .w = 1, .g = 1}};
   info("set up plic mapping at ");
-  mem_print_range(plic_addr, plic_size, NULL);
-  for (; va.val < plic_addr + plic_size; va.val += PGSIZE, pa.val += PGSIZE) {
+  mem_print_range(plic_addr + DEVOFFSET, plic_size, NULL);
+  for (; va.val < plic_addr + DEVOFFSET + plic_size; va.val += PGSIZE, pa.val += PGSIZE) {
     catch_e(pt_map(kern_pgdir, va, pa, perm));
   }
   return KER_SUCCESS;
@@ -166,6 +165,7 @@ static long plic_probe(const struct dev_node *node) {
   }
   plic_addr = from_be(*((uint64_t *)prop->pr_values));
   plic_size = from_be(*((uint64_t *)prop->pr_values + 1));
+  vmm_register_mmio(plic_setup_map);
 
   prop = dt_node_prop_extract(node, "phandle");
   if (prop == NULL) {
@@ -176,11 +176,10 @@ static long plic_probe(const struct dev_node *node) {
   info("\tplic locates at ");
   mem_print_range(plic_addr, plic_size, NULL);
 
-  intc_register_handler(CAUSE_INT_OFFSET + CAUSE_INT_U_EXTERNAL, plic_handle_int);
+  catch_e(intc_register_handler(CAUSE_INT_OFFSET + CAUSE_INT_U_EXTERNAL, plic_handle_int));
   intc_set_phandle(phandle, plic_register_irq);
 
   plic_init();
-  catch_e(plic_setup_map(plic_addr));
   return KER_SUCCESS;
 }
 

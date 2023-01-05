@@ -88,7 +88,12 @@ long pt_unmap(pte_t *pgdir, vaddr_t va) __attribute__((warn_unused_result));
 long pt_map(pte_t *pgdir, vaddr_t va, paddr_t pa, perm_t perm)
     __attribute__((warn_unused_result));
 
+typedef long (*mmio_setup_func_t)(void);
+
+void vmm_register_mmio(mmio_setup_func_t setup_func);
+void vmm_setup_mmio(void);
 void vmm_setup_kern(void);
 void vmm_start(void);
+void vmm_flush(void);
 
 #endif
