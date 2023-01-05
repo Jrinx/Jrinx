@@ -1,6 +1,7 @@
 #include <endian.h>
 #include <kern/drivers/device.h>
 #include <kern/drivers/intc.h>
+#include <kern/drivers/irq/plic.h>
 #include <kern/lib/debug.h>
 #include <kern/lib/errors.h>
 #include <kern/lock/lock.h>
@@ -8,20 +9,6 @@
 #include <kern/mm/pmm.h>
 #include <kern/mm/vmm.h>
 #include <layouts.h>
-
-#define PLIC_EXTERNAL_INT_CTX 1U
-
-#define PLIC_SOURCE_MIN 1U
-#define PLIC_SOURCE_MAX 53U
-#define PLIC_CONTEXT_MIN 0U
-#define PLIC_CONTEXT_MAX 4U
-#define PLIC_PRIO_MIN 0U
-#define PLIC_PRIO_MAX 7U
-
-enum plic_context_mode_t {
-  M_MODE,
-  S_MODE,
-};
 
 static with_spinlock(plic);
 static unsigned long plic_addr;
