@@ -13,7 +13,7 @@
 
 static unsigned long uart16550a_addr;
 static unsigned long uart16550a_size;
-static unsigned long uart16550a_shift = 0;
+static uint32_t uart16550a_shift = 0;
 
 static inline void uart16550a_write(unsigned long addr, uint8_t data) {
   fence(w, o);
@@ -108,7 +108,10 @@ static long uart16550a_probe(const struct dev_node *node) {
   }
   uint32_t int_num = from_be(*((uint32_t *)prop->pr_values));
 
-  info("%s probed, interrupt %08x registered to intc %08x\n", node->nd_name, int_num, intc);
+  info("%s probed (shift: %08x), interrupt %08x registered to intc %08x\n", node->nd_name,
+       uart16550a_shift, int_num, intc);
+  info("\tuart16550a locates at ");
+  mem_print_range(uart16550a_addr, uart16550a_size, NULL);
   catch_e(phandle(int_num, uart16550a_handle_int));
 
   uart16550a_init();
