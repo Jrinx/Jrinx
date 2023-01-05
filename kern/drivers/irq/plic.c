@@ -24,6 +24,7 @@ static long plic_setup_map() {
   for (; va.val < plic_addr + DEVOFFSET + plic_size; va.val += PGSIZE, pa.val += PGSIZE) {
     catch_e(pt_map(kern_pgdir, va, pa, perm));
   }
+  plic_addr += DEVOFFSET;
   return KER_SUCCESS;
 }
 

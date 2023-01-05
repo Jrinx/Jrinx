@@ -1,7 +1,9 @@
+#include <kern/drivers/chosen.h>
 #include <kern/drivers/cpus.h>
 #include <kern/drivers/device.h>
 #include <kern/drivers/irq/plic.h>
 #include <kern/drivers/mems.h>
+#include <kern/drivers/serial/uart16550a.h>
 #include <kern/lib/debug.h>
 #include <kern/lib/errors.h>
 #include <kern/mm/pmm.h>
@@ -43,6 +45,8 @@ long device_init(void) {
   catch_e(dev_register(&memory_device));
   catch_e(dev_register(&cpus_device));
   catch_e(dev_register(&plic_device));
+  catch_e(dev_register(&uart16550a_device));
+  catch_e(dev_register(&chosen_device));
   return KER_SUCCESS;
 }
 

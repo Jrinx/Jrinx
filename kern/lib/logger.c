@@ -1,3 +1,4 @@
+#include <kern/drivers/serialport.h>
 #include <kern/lib/debug.h>
 #include <kern/lib/sbi.h>
 #include <kern/lock/lock.h>
@@ -6,10 +7,22 @@
 
 static with_spinlock(print);
 
-static void outputk(void *data, const char *buf, size_t len) {
+static void sbi_output(void *data, const char *buf, size_t len) {
   for (int i = 0; i < len; i++) {
     panic_e(sbi_console_putchar(buf[i]));
   }
+}
+
+static void serial_output(void *data, const char *buf, size_t len) {
+  for (int i = 0; i < len; i++) {
+    serial_blocked_putc(buf[i]);
+  }
+}
+
+static void (*outputk)(void *data, const char *buf, size_t len) = sbi_output;
+
+void log_switch_to_local_serial_output(void) {
+  outputk = serial_output;
 }
 
 void printk(const char *restrict fmt, ...) {

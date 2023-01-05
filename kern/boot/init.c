@@ -1,6 +1,8 @@
+#include <kern/drivers/chosen.h>
 #include <kern/drivers/cpus.h>
 #include <kern/drivers/device.h>
 #include <kern/drivers/devicetree.h>
+#include <kern/drivers/serialport.h>
 #include <kern/lib/debug.h>
 #include <kern/lib/logger.h>
 #include <kern/lib/regs.h>
@@ -33,11 +35,15 @@ void kernel_init(unsigned long hartid, union kern_init_arg arg) {
     panic_e(dt_load(arg.dtb_addr, &boot_dt));
     panic_e(device_init());
     panic_e(device_probe(&boot_dt));
+    panic_e(chosen_select_dev());
 
     pmm_init();
     vmm_setup_mmio();
     vmm_setup_kern();
     vmm_start();
+
+    log_switch_to_local_serial_output();
+    info("Use local serial output!\n");
 
     panic_e(lk_acquire(&spinlock_of(init_state)));
     init_state++;

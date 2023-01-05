@@ -8,6 +8,7 @@ static const char *messages[KER_ERR_MAX] = {
     [KER_DEV_ER] = "device error",
     [KER_MEM_ER] = "memory error",
     [KER_INT_ER] = "int error",
+    [KER_SRL_ER] = "serial device error",
 };
 
 inline const char *msg_of(long err) {
