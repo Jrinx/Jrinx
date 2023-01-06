@@ -14,23 +14,23 @@
 #include <lib/string.h>
 
 struct uart16550a {
-  char *uart_name;
-  unsigned long uart_addr;
-  unsigned long uart_size;
-  uint32_t uart_shift;
-  struct lock spinlock_of(uart);
-  LIST_ENTRY(uart16550a) uart_link;
+  char *ur_name;
+  unsigned long ur_addr;
+  unsigned long ur_size;
+  uint32_t ur_shift;
+  struct lock spinlock_of(ur);
+  LIST_ENTRY(uart16550a) ur_link;
 };
 
 static LIST_HEAD(, uart16550a) uart16550a_list;
 
 static inline void uart16550a_write(struct uart16550a *uart, unsigned long addr, uint8_t data) {
   fence(w, o);
-  *((volatile uint8_t *)(uart->uart_addr + addr * (1 << uart->uart_shift))) = data;
+  *((volatile uint8_t *)(uart->ur_addr + addr * (1 << uart->ur_shift))) = data;
 }
 
 static inline uint8_t uart16550a_read(struct uart16550a *uart, unsigned long addr) {
-  uint8_t c = *((volatile uint8_t *)(uart->uart_addr + addr * (1 << uart->uart_shift)));
+  uint8_t c = *((volatile uint8_t *)(uart->ur_addr + addr * (1 << uart->ur_shift)));
   fence(i, r);
   return c;
 }
@@ -63,17 +63,17 @@ static int uart16550a_putc(void *ctx, uint8_t c) {
 
 static long uart16550a_setup_map(void *ctx) {
   struct uart16550a *uart = ctx;
-  unsigned long addr = uart->uart_addr;
-  unsigned long size = uart->uart_size;
+  unsigned long addr = uart->ur_addr;
+  unsigned long size = uart->ur_size;
   vaddr_t va = {.val = addr + DEVOFFSET};
   paddr_t pa = {.val = addr};
   perm_t perm = {.bits = {.a = 1, .d = 1, .r = 1, .w = 1, .g = 1}};
-  info("set up %s mapping at ", uart->uart_name);
+  info("set up %s mapping at ", uart->ur_name);
   mem_print_range(addr + DEVOFFSET, size, NULL);
   for (; va.val < addr + DEVOFFSET + size; va.val += PGSIZE, pa.val += PGSIZE) {
     catch_e(pt_map(kern_pgdir, va, pa, perm));
   }
-  uart->uart_addr += DEVOFFSET;
+  uart->ur_addr += DEVOFFSET;
   return KER_SUCCESS;
 }
 
@@ -93,13 +93,13 @@ static long uart16550a_probe(const struct dev_node *node) {
   if (prop == NULL) {
     return -KER_DTB_ER;
   }
-  unsigned long uart16550a_addr = from_be(*((uint64_t *)prop->pr_values));
-  unsigned long uart16550a_size = from_be(*((uint64_t *)prop->pr_values + 1));
+  unsigned long addr = from_be(*((uint64_t *)prop->pr_values));
+  unsigned long size = from_be(*((uint64_t *)prop->pr_values + 1));
 
-  uint32_t uart16550a_shift = 0;
+  uint32_t shift = 0;
   prop = dt_node_prop_extract(node, "reg-shift");
   if (prop != NULL) {
-    uart16550a_shift = from_be(*((uint32_t *)prop->pr_values));
+    shift = from_be(*((uint32_t *)prop->pr_values));
   }
 
   prop = dt_node_prop_extract(node, "interrupt-parent");
@@ -123,16 +123,16 @@ static long uart16550a_probe(const struct dev_node *node) {
   uint32_t int_num = from_be(*((uint32_t *)prop->pr_values));
 
   struct uart16550a *uart = alloc(sizeof(struct uart16550a), sizeof(struct uart16550a));
-  uart->uart_name = node->nd_name;
-  uart->uart_addr = uart16550a_addr;
-  uart->uart_size = uart16550a_size;
-  uart->uart_shift = uart16550a_shift;
-  LIST_INSERT_HEAD(&uart16550a_list, uart, uart_link);
+  uart->ur_name = node->nd_name;
+  uart->ur_addr = addr;
+  uart->ur_size = size;
+  uart->ur_shift = shift;
+  LIST_INSERT_HEAD(&uart16550a_list, uart, ur_link);
 
   info("%s probed (shift: %08x), interrupt %08x registered to intc %08x\n", node->nd_name,
-       uart16550a_shift, int_num, intc);
+       shift, int_num, intc);
   info("\tlocates at ");
-  mem_print_range(uart16550a_addr, uart16550a_size, NULL);
+  mem_print_range(addr, size, NULL);
   catch_e(phandle(parent_ctx, int_num, uart16550a_handle_int, uart));
 
   uart16550a_init(uart);
