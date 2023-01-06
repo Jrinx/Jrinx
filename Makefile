@@ -41,7 +41,7 @@ export CROSS_COMPILE CFLAGS LDFLAGS
 export CHECK_PREPROC ?= n
 
 .ONESHELL:
-.PHONY: all debug release release-debug build clean run dbg gdb gdb-sbi \
+.PHONY: all debug release release-debug build clean clean-all run dbg gdb gdb-sbi \
 	preprocess objdump objcopy dumpdtb dumpdts \
 	$(JRINX) $(MODULES) \
 	check-style fix-style register-git-hooks
@@ -81,8 +81,12 @@ include mk/compile.mk
 clean:
 	@rm -rf $(TARGET_DIR)
 	@find -- . \( \
-		-name '*.o' -o -name '*.ld' -o -name '*.dtb' -o -name '*.dts' -o \
-		-name '*.i' \
+		-name '*.o' -o -name '*.ld' -o -name '*.i' \
+	\) -type f -delete
+
+clean-all: clean
+	@find -- . \( \
+		-name '*.dtb' -o -name '*.dts' \
 	\) -type f -delete
 
 preprocess: all
@@ -116,10 +120,10 @@ dumpdtb:
 dumpdts: dumpdtb
 	@$(DTC) -I dtb -O dts $(EMU_MACH).dtb -o $(EMU_MACH).dts
 
-check-style: clean
+check-style: clean-all
 	@scripts/check-style
 
-fix-style: clean
+fix-style: clean-all
 	@scripts/check-style -f
 
 register-git-hooks:
