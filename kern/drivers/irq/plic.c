@@ -195,7 +195,7 @@ static long plic_probe(const struct dev_node *node) {
   struct plic *plic = alloc(sizeof(struct plic), sizeof(struct plic));
   plic->plic_name = node->nd_name;
   plic->plic_addr = plic_addr;
-  plic->plic_size = plic->plic_size;
+  plic->plic_size = plic_size;
   spinlock_init(&plic->spinlock_of(plic));
   memset(plic->plic_int_map, 0, sizeof(plic->plic_int_map));
   memset(plic->plic_int_ctx_map, 0, sizeof(plic->plic_int_ctx_map));
