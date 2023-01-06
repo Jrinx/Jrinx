@@ -11,7 +11,7 @@ void panick(const char *restrict fmt, ...) __attribute__((format(printf, 1, 2), 
 void haltk(const char *restrict fmt, ...) __attribute__((noreturn));
 
 #define _log_args(color, msg, ...)                                                             \
-  ANSI_COLOR_WRAP(color, "[ hart %ld ] %s:%d <%s> ")                                           \
+  ANSI_COLOR_WRAP(color, "@hart#%ld %s:%d <%s> ")                                              \
   msg, hrt_get_id(), __FILE__, __LINE__, __func__, ##__VA_ARGS__
 
 #define info(msg, ...) printk(_log_args(ANSI_FG_GREEN, msg, ##__VA_ARGS__))
