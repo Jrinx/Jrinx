@@ -118,21 +118,23 @@ long pt_map(pte_t *pgdir, vaddr_t va, paddr_t pa, perm_t perm) {
 
 struct mmio_setup {
   mmio_setup_func_t mm_setup_func;
+  void *ctx;
   LIST_ENTRY(mmio_setup) mm_link;
 };
 
 static LIST_HEAD(__magic, mmio_setup) vmm_mmio_setup_queue;
 
-void vmm_register_mmio(mmio_setup_func_t setup_func) {
+void vmm_register_mmio(mmio_setup_func_t setup_func, void *ctx) {
   struct mmio_setup *func_node = alloc(sizeof(struct mmio_setup), sizeof(struct mmio_setup));
   func_node->mm_setup_func = setup_func;
+  func_node->ctx = ctx;
   LIST_INSERT_HEAD(&vmm_mmio_setup_queue, func_node, mm_link);
 }
 
 void vmm_setup_mmio(void) {
   struct mmio_setup *func_node;
   LIST_FOREACH (func_node, &vmm_mmio_setup_queue, mm_link) {
-    panic_e(func_node->mm_setup_func());
+    panic_e(func_node->mm_setup_func(func_node->ctx));
   }
 }
 

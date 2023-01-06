@@ -3,10 +3,11 @@
 
 #include <stdint.h>
 
-typedef int (*getc_func_t)(uint8_t *c);
-typedef int (*putc_func_t)(uint8_t c);
+typedef int (*getc_func_t)(void *ctx, uint8_t *c);
+typedef int (*putc_func_t)(void *ctx, uint8_t c);
 
-void serial_register_dev(const char *name, putc_func_t putc_func, getc_func_t getc_func);
+void serial_register_dev(const char *name, putc_func_t putc_func, getc_func_t getc_func,
+                         void *ctx);
 int serial_select_out_dev(const char *name);
 int serial_select_in_dev(const char *name);
 int serial_getc(uint8_t *c);

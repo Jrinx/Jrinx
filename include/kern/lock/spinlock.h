@@ -13,6 +13,13 @@
   struct lock spinlock_of(res) = {                                                             \
       .lk_state = LK_UNLOCKED, .lk_hartid = HARTID_MAX, .lk_type = SPINLOCK_TYPE}
 
+#define spinlock_init(spnlk)                                                                   \
+  ({                                                                                           \
+    (spnlk)->lk_state = LK_UNLOCKED;                                                           \
+    (spnlk)->lk_hartid = HARTID_MAX;                                                           \
+    (spnlk)->lk_type = SPINLOCK_TYPE;                                                          \
+  })
+
 #ifdef _KERN_LOCK_SPINLOCK_FUNCDEF_
 
 long spnlk_acquire(struct lock *lock) __attribute__((warn_unused_result));
