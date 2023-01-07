@@ -1,6 +1,7 @@
 #ifndef _KERN_MM_VMM_H_
 #define _KERN_MM_VMM_H_
 
+#include <currying.h>
 #include <stdint.h>
 
 union sv39_perm_t {
@@ -89,8 +90,9 @@ long pt_map(pte_t *pgdir, vaddr_t va, paddr_t pa, perm_t perm)
     __attribute__((warn_unused_result));
 
 typedef long (*mmio_setup_func_t)(void *ctx);
+typedef cb_typedef(mmio_setup_func_t) mmio_setup_callback_t;
 
-void vmm_register_mmio(mmio_setup_func_t setup_func, void *ctx);
+void vmm_register_mmio(mmio_setup_callback_t callback);
 void vmm_setup_mmio(void);
 void vmm_setup_kern(void);
 void vmm_start(void);

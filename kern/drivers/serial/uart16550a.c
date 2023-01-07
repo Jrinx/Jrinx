@@ -137,7 +137,8 @@ static long uart16550a_probe(const struct dev_node *node) {
 
   uart16550a_init(uart);
   serial_register_dev(node->nd_name, uart16550a_putc, uart16550a_getc, uart);
-  vmm_register_mmio(uart16550a_setup_map, uart);
+  cb_decl(mmio_setup_callback_t, uart16550a_setup_callback, uart16550a_setup_map, uart);
+  vmm_register_mmio(uart16550a_setup_callback);
 
   return KER_SUCCESS;
 }

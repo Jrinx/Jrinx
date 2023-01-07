@@ -211,7 +211,8 @@ static long plic_probe(const struct dev_node *node) {
   intc_set_phandle(phandle, plic_register_irq, plic);
 
   plic_init(plic);
-  vmm_register_mmio(plic_setup_map, plic);
+  cb_decl(mmio_setup_callback_t, plic_setup_callback, plic_setup_map, plic);
+  vmm_register_mmio(plic_setup_callback);
 
   return KER_SUCCESS;
 }
