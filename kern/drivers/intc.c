@@ -21,6 +21,7 @@ long intc_register_handler(void *_, unsigned long trap_num, trap_callback_t call
   }
   return KER_SUCCESS;
 }
+
 void intc_get_register_func(uint32_t phandle_num, irq_register_callback_t *callback) {
   assert(phandle_num < sizeof(phandle_map) / sizeof(irq_register_callback_t));
   *callback = phandle_map[phandle_num];
