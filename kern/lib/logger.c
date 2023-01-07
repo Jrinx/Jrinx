@@ -19,17 +19,17 @@ static void serial_output(void *data, const char *buf, size_t len) {
   }
 }
 
-static void (*outputk)(void *data, const char *buf, size_t len) = sbi_output;
+static cb_decl(fmt_callback_t, output_cb, sbi_output, NULL);
 
 void log_localize_output(void) {
-  outputk = serial_output;
+  output_cb.cb_func = serial_output;
 }
 
 void printk(const char *restrict fmt, ...) {
   va_list ap;
   va_start(ap, fmt);
   panic_e(lk_acquire(&spinlock_of(print)));
-  vprintfmt(outputk, NULL, fmt, ap);
+  vprintfmt(output_cb, fmt, ap);
   panic_e(lk_release(&spinlock_of(print)));
   va_end(ap);
 }
@@ -37,7 +37,7 @@ void printk(const char *restrict fmt, ...) {
 void panick(const char *restrict fmt, ...) {
   va_list ap;
   va_start(ap, fmt);
-  vprintfmt(outputk, NULL, fmt, ap);
+  vprintfmt(output_cb, fmt, ap);
   va_end(ap);
   struct sbiret ret =
       sbi_system_reset(SBI_SRST_RESET_TYPE_SHUTDOWN, SBI_SRST_RESET_REASON_SYSFAIL);
@@ -49,7 +49,7 @@ void panick(const char *restrict fmt, ...) {
 void haltk(const char *restrict fmt, ...) {
   va_list ap;
   va_start(ap, fmt);
-  vprintfmt(outputk, NULL, fmt, ap);
+  vprintfmt(output_cb, fmt, ap);
   va_end(ap);
   sbi_shutdown();
 }

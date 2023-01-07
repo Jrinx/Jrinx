@@ -1,10 +1,10 @@
 #include <lib/printfmt.h>
 
-static void print_char(fmt_callback_t, void *, char, int, int);
-static void print_str(fmt_callback_t, void *, const char *, int, int);
-static void print_num(fmt_callback_t, void *, unsigned long, int, int, int, int, char, int);
+static void print_char(fmt_callback_t, char, int, int);
+static void print_str(fmt_callback_t, const char *, int, int);
+static void print_num(fmt_callback_t, unsigned long, int, int, int, int, char, int);
 
-void vprintfmt(fmt_callback_t out, void *data, const char *restrict fmt, va_list ap) {
+void vprintfmt(fmt_callback_t out, const char *restrict fmt, va_list ap) {
   char c;
   const char *s;
   long num;
@@ -22,14 +22,14 @@ void vprintfmt(fmt_callback_t out, void *data, const char *restrict fmt, va_list
       if (*fmt != '%') {
         length++;
       } else {
-        out(data, s, length);
+        cb_invoke(out)(s, length);
         length = 0;
         fmt++;
         break;
       }
     }
 
-    out(data, s, length);
+    cb_invoke(out)(s, length);
 
     if (!*fmt) {
       break;
@@ -68,7 +68,7 @@ void vprintfmt(fmt_callback_t out, void *data, const char *restrict fmt, va_list
       } else {
         num = va_arg(ap, int);
       }
-      print_num(out, data, num, 2, 0, width, ladjust, padc, 0);
+      print_num(out, num, 2, 0, width, ladjust, padc, 0);
       break;
 
     case 'd':
@@ -80,7 +80,7 @@ void vprintfmt(fmt_callback_t out, void *data, const char *restrict fmt, va_list
       }
       neg_flag = num < 0;
       num = neg_flag ? -num : num;
-      print_num(out, data, num, 10, neg_flag, width, ladjust, padc, 0);
+      print_num(out, num, 10, neg_flag, width, ladjust, padc, 0);
       break;
 
     case 'o':
@@ -90,7 +90,7 @@ void vprintfmt(fmt_callback_t out, void *data, const char *restrict fmt, va_list
       } else {
         num = va_arg(ap, int);
       }
-      print_num(out, data, num, 8, 0, width, ladjust, padc, 0);
+      print_num(out, num, 8, 0, width, ladjust, padc, 0);
       break;
 
     case 'u':
@@ -100,7 +100,7 @@ void vprintfmt(fmt_callback_t out, void *data, const char *restrict fmt, va_list
       } else {
         num = va_arg(ap, int);
       }
-      print_num(out, data, num, 10, 0, width, ladjust, padc, 0);
+      print_num(out, num, 10, 0, width, ladjust, padc, 0);
       break;
 
     case 'x':
@@ -109,7 +109,7 @@ void vprintfmt(fmt_callback_t out, void *data, const char *restrict fmt, va_list
       } else {
         num = va_arg(ap, int);
       }
-      print_num(out, data, num, 16, 0, width, ladjust, padc, 0);
+      print_num(out, num, 16, 0, width, ladjust, padc, 0);
       break;
 
     case 'X':
@@ -118,17 +118,17 @@ void vprintfmt(fmt_callback_t out, void *data, const char *restrict fmt, va_list
       } else {
         num = va_arg(ap, int);
       }
-      print_num(out, data, num, 16, 0, width, ladjust, padc, 1);
+      print_num(out, num, 16, 0, width, ladjust, padc, 1);
       break;
 
     case 'c':
       c = (char)va_arg(ap, int);
-      print_char(out, data, c, width, ladjust);
+      print_char(out, c, width, ladjust);
       break;
 
     case 's':
       s = (char *)va_arg(ap, char *);
-      print_str(out, data, s, width, ladjust);
+      print_str(out, s, width, ladjust);
       break;
 
     case '\0':
@@ -136,13 +136,13 @@ void vprintfmt(fmt_callback_t out, void *data, const char *restrict fmt, va_list
       break;
 
     default:
-      out(data, fmt, 1);
+      cb_invoke(out)(fmt, 1);
     }
     fmt++;
   }
 }
 
-void print_char(fmt_callback_t out, void *data, char c, int length, int ladjust) {
+void print_char(fmt_callback_t out, char c, int length, int ladjust) {
   int i;
 
   if (length < 1) {
@@ -150,19 +150,19 @@ void print_char(fmt_callback_t out, void *data, char c, int length, int ladjust)
   }
   const char space = ' ';
   if (ladjust) {
-    out(data, &c, 1);
+    cb_invoke(out)(&c, 1);
     for (i = 1; i < length; i++) {
-      out(data, &space, 1);
+      cb_invoke(out)(&space, 1);
     }
   } else {
     for (i = 0; i < length - 1; i++) {
-      out(data, &space, 1);
+      cb_invoke(out)(&space, 1);
     }
-    out(data, &c, 1);
+    cb_invoke(out)(&c, 1);
   }
 }
 
-void print_str(fmt_callback_t out, void *data, const char *s, int length, int ladjust) {
+void print_str(fmt_callback_t out, const char *s, int length, int ladjust) {
   int i;
   int len = 0;
   const char *s1 = s;
@@ -174,20 +174,20 @@ void print_str(fmt_callback_t out, void *data, const char *s, int length, int la
   }
 
   if (ladjust) {
-    out(data, s, len);
+    cb_invoke(out)(s, len);
     for (i = len; i < length; i++) {
-      out(data, " ", 1);
+      cb_invoke(out)(" ", sizeof(char));
     }
   } else {
     for (i = 0; i < length - len; i++) {
-      out(data, " ", 1);
+      cb_invoke(out)(" ", sizeof(char));
     }
-    out(data, s, len);
+    cb_invoke(out)(s, len);
   }
 }
 
-void print_num(fmt_callback_t out, void *data, unsigned long u, int base, int neg_flag,
-               int length, int ladjust, char padc, int upcase) {
+void print_num(fmt_callback_t out, unsigned long u, int base, int neg_flag, int length,
+               int ladjust, char padc, int upcase) {
   int actualLength = 0;
   char buf[length + 70];
   char *p = buf;
@@ -244,5 +244,5 @@ void print_num(fmt_callback_t out, void *data, unsigned long u, int base, int ne
     end--;
   }
 
-  out(data, buf, length);
+  cb_invoke(out)(buf, length);
 }
