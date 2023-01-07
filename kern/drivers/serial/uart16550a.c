@@ -129,8 +129,8 @@ static long uart16550a_probe(const struct dev_node *node) {
   uart->ur_shift = shift;
   LIST_INSERT_HEAD(&uart16550a_list, uart, ur_link);
 
-  info("%s probed (shift: %08x), interrupt %08x registered to intc %08x\n", node->nd_name,
-       shift, int_num, intc);
+  info("%s probed (shift: %u), interrupt %08x registered to intc %u\n", node->nd_name, shift,
+       int_num, intc);
   info("\tlocates at ");
   mem_print_range(addr, size, NULL);
   cb_decl(trap_callback_t, trap_callback, uart16550a_handle_int, uart);
