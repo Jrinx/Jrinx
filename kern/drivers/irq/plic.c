@@ -203,7 +203,7 @@ static long plic_probe(const struct dev_node *node) {
   mem_print_range(addr, size, NULL);
 
   cb_decl(trap_callback_t, trap_callback, plic_handle_int, plic);
-  catch_e(intc_register_handler(NULL, CAUSE_INT_OFFSET + CAUSE_INT_U_EXTERNAL, trap_callback));
+  catch_e(intc_register_handler(NULL, CAUSE_INT_OFFSET + CAUSE_INT_S_EXTERNAL, trap_callback));
   cb_decl(irq_register_callback_t, irq_register_callback, plic_register_irq, plic);
   intc_set_register_func(phandle, irq_register_callback);
 
