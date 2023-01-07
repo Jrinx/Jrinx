@@ -1,7 +1,7 @@
 #ifndef _KERN_DRIVERS_INTC_H_
 #define _KERN_DRIVERS_INTC_H_
 
-#include <currying.h>
+#include <callback.h>
 #include <stdint.h>
 
 typedef long (*trap_handler_t)(void *ctx, unsigned long trap_num);

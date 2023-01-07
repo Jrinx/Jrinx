@@ -1,7 +1,7 @@
 #ifndef _LIB_PRINTFMT_H_
 #define _LIB_PRINTFMT_H_
 
-#include <currying.h>
+#include <callback.h>
 #include <stdarg.h>
 #include <stddef.h>
 #include <stdint.h>

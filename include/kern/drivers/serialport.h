@@ -1,7 +1,7 @@
 #ifndef _KERN_DRIVERS_SERIALPORT_H_
 #define _KERN_DRIVERS_SERIALPORT_H_
 
-#include <currying.h>
+#include <callback.h>
 #include <stdint.h>
 
 typedef int (*getc_func_t)(void *ctx, uint8_t *c);

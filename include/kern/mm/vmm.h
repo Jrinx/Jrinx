@@ -1,7 +1,7 @@
 #ifndef _KERN_MM_VMM_H_
 #define _KERN_MM_VMM_H_
 
-#include <currying.h>
+#include <callback.h>
 #include <stdint.h>
 
 union sv39_perm_t {
