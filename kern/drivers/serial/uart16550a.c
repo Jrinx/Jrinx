@@ -136,7 +136,9 @@ static long uart16550a_probe(const struct dev_node *node) {
   catch_e(phandle(parent_ctx, int_num, uart16550a_handle_int, uart));
 
   uart16550a_init(uart);
-  serial_register_dev(node->nd_name, uart16550a_putc, uart16550a_getc, uart);
+  cb_decl(putc_callback_t, putc_callback, uart16550a_putc, uart);
+  cb_decl(getc_callback_t, getc_callback, uart16550a_getc, uart);
+  serial_register_dev(node->nd_name, putc_callback, getc_callback);
   cb_decl(mmio_setup_callback_t, uart16550a_setup_callback, uart16550a_setup_map, uart);
   vmm_register_mmio(uart16550a_setup_callback);
 

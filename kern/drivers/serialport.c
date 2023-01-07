@@ -9,9 +9,8 @@
 
 struct serial_dev {
   char *sr_name;
-  putc_func_t sr_putc_func;
-  getc_func_t sr_getc_func;
-  void *sr_ctx;
+  putc_callback_t sr_putc_callback;
+  getc_callback_t sr_getc_callback;
   LIST_ENTRY(serial_dev) sr_link;
 };
 
@@ -19,15 +18,14 @@ static struct serial_dev *selected_output_dev;
 static struct serial_dev *selected_input_dev;
 static LIST_HEAD(, serial_dev) serial_dev_list;
 
-void serial_register_dev(const char *name, putc_func_t putc_func, getc_func_t getc_func,
-                         void *ctx) {
+void serial_register_dev(const char *name, putc_callback_t putc_callback,
+                         getc_callback_t getc_callback) {
   struct serial_dev *dev = alloc(sizeof(struct serial_dev), sizeof(struct serial_dev));
   size_t name_len = strlen(name);
   dev->sr_name = alloc(sizeof(char) * (name_len + 1), sizeof(char));
   strcpy(dev->sr_name, name);
-  dev->sr_putc_func = putc_func;
-  dev->sr_getc_func = getc_func;
-  dev->sr_ctx = ctx;
+  dev->sr_putc_callback = putc_callback;
+  dev->sr_getc_callback = getc_callback;
   LIST_INSERT_HEAD(&serial_dev_list, dev, sr_link);
   selected_output_dev = dev;
   selected_input_dev = dev;
@@ -62,11 +60,11 @@ int serial_select_in_dev(const char *name) {
 }
 
 int serial_getc(uint8_t *c) {
-  return selected_input_dev->sr_getc_func(selected_input_dev->sr_ctx, c);
+  return cb_invoke(selected_input_dev->sr_getc_callback)(c);
 }
 
 int serial_putc(uint8_t c) {
-  return selected_output_dev->sr_putc_func(selected_output_dev->sr_ctx, c);
+  return cb_invoke(selected_output_dev->sr_putc_callback)(c);
 }
 
 uint8_t serial_blocked_getc(void) {

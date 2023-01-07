@@ -1,13 +1,16 @@
 #ifndef _KERN_DRIVERS_SERIALPORT_H_
 #define _KERN_DRIVERS_SERIALPORT_H_
 
+#include <currying.h>
 #include <stdint.h>
 
 typedef int (*getc_func_t)(void *ctx, uint8_t *c);
 typedef int (*putc_func_t)(void *ctx, uint8_t c);
+typedef cb_typedef(getc_func_t) getc_callback_t;
+typedef cb_typedef(putc_func_t) putc_callback_t;
 
-void serial_register_dev(const char *name, putc_func_t putc_func, getc_func_t getc_func,
-                         void *ctx);
+void serial_register_dev(const char *name, putc_callback_t putc_callback,
+                         getc_callback_t getc_callback);
 int serial_select_out_dev(const char *name);
 int serial_select_in_dev(const char *name);
 int serial_getc(uint8_t *c);
