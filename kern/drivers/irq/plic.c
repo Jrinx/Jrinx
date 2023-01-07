@@ -15,8 +15,7 @@ struct plic {
   char *pl_name;
   unsigned long pl_addr;
   unsigned long pl_size;
-  trap_handler_t pl_int_map[PLIC_SOURCE_MAX + 1];
-  void *pl_int_ctx_map[PLIC_SOURCE_MAX + 1];
+  trap_callback_t pl_int_map[PLIC_SOURCE_MAX + 1];
   struct lock spinlock_of(pl);
   LIST_ENTRY(plic) pl_link;
 };
@@ -126,10 +125,9 @@ static long plic_handle_int(void *ctx, unsigned long trap_num) {
     return -KER_INT_ER;
   }
 
-  trap_handler_t handler = plic->pl_int_map[int_num];
-  void *subctx = plic->pl_int_ctx_map[int_num];
+  trap_callback_t callback = plic->pl_int_map[int_num];
 
-  catch_e(handler(subctx, int_num), {
+  catch_e(cb_invoke(callback)(int_num), {
     catch_e(lk_release(&plic->spinlock_of(pl)));
     return err;
   });
@@ -140,8 +138,7 @@ static long plic_handle_int(void *ctx, unsigned long trap_num) {
   return KER_SUCCESS;
 }
 
-static long plic_register_irq(void *ctx, unsigned long int_num, trap_handler_t handler,
-                              void *subctx) {
+static long plic_register_irq(void *ctx, unsigned long int_num, trap_callback_t callback) {
   if (int_num < PLIC_SOURCE_MIN || int_num > PLIC_SOURCE_MAX) {
     return -KER_INT_ER;
   }
@@ -150,7 +147,7 @@ static long plic_register_irq(void *ctx, unsigned long int_num, trap_handler_t h
   plic_set_source_enable(plic, PLIC_EXTERNAL_INT_CTX,
                          plic_get_source_enable(plic, PLIC_EXTERNAL_INT_CTX) | (1 << int_num));
   plic_set_source_prio(plic, int_num, PLIC_PRIO_MAX);
-  plic->pl_int_map[int_num] = handler;
+  plic->pl_int_map[int_num] = callback;
   catch_e(lk_release(&plic->spinlock_of(pl)));
   return KER_SUCCESS;
 }
@@ -198,7 +195,6 @@ static long plic_probe(const struct dev_node *node) {
   plic->pl_size = size;
   spinlock_init(&plic->spinlock_of(pl));
   memset(plic->pl_int_map, 0, sizeof(plic->pl_int_map));
-  memset(plic->pl_int_ctx_map, 0, sizeof(plic->pl_int_ctx_map));
   LIST_INSERT_HEAD(&plic_list, plic, pl_link);
 
   unsigned int phandle = from_be(*((uint32_t *)prop->pr_values));
@@ -206,9 +202,10 @@ static long plic_probe(const struct dev_node *node) {
   info("\tlocates at ");
   mem_print_range(addr, size, NULL);
 
-  catch_e(intc_register_handler(NULL, CAUSE_INT_OFFSET + CAUSE_INT_U_EXTERNAL, plic_handle_int,
-                                plic));
-  intc_set_phandle(phandle, plic_register_irq, plic);
+  cb_decl(trap_callback_t, trap_callback, plic_handle_int, plic);
+  catch_e(intc_register_handler(NULL, CAUSE_INT_OFFSET + CAUSE_INT_U_EXTERNAL, trap_callback));
+  cb_decl(irq_register_callback_t, irq_register_callback, plic_register_irq, plic);
+  intc_set_register_func(phandle, irq_register_callback);
 
   plic_init(plic);
   cb_decl(mmio_setup_callback_t, plic_setup_callback, plic_setup_map, plic);

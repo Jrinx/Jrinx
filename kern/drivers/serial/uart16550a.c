@@ -107,13 +107,13 @@ static long uart16550a_probe(const struct dev_node *node) {
     return -KER_DTB_ER;
   }
   uint32_t intc = from_be(*((uint32_t *)prop->pr_values));
-  void *parent_ctx;
-  irq_phandle_t phandle = intc_get_phandle(intc, &parent_ctx);
+  irq_register_callback_t irq_register_callback;
+  intc_get_register_func(intc, &irq_register_callback);
 
-  if (phandle == NULL) {
+  if (irq_register_callback.cb_func == NULL) {
     info("intc %08x not found, register %s to root intc\n", intc, node->nd_name);
     intc = 0;
-    phandle = intc_register_handler;
+    irq_register_callback.cb_func = intc_register_handler;
   }
 
   prop = dt_node_prop_extract(node, "interrupts");
@@ -133,7 +133,8 @@ static long uart16550a_probe(const struct dev_node *node) {
        shift, int_num, intc);
   info("\tlocates at ");
   mem_print_range(addr, size, NULL);
-  catch_e(phandle(parent_ctx, int_num, uart16550a_handle_int, uart));
+  cb_decl(trap_callback_t, trap_callback, uart16550a_handle_int, uart);
+  catch_e(cb_invoke(irq_register_callback)(int_num, trap_callback));
 
   uart16550a_init(uart);
   cb_decl(putc_callback_t, putc_callback, uart16550a_putc, uart);
