@@ -111,7 +111,7 @@ static long uart16550a_probe(const struct dev_node *node) {
   intc_get_register_func(intc, &irq_register_callback);
 
   if (irq_register_callback.cb_func == NULL) {
-    info("intc %08x not found, register %s to root intc\n", intc, node->nd_name);
+    info("intc %u not found, register %s to root intc 0\n", intc, node->nd_name);
     intc = 0;
     irq_register_callback.cb_func = intc_register_handler;
   }
