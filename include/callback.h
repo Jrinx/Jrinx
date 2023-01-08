@@ -15,6 +15,6 @@
       .cb_ctx = ctx,                                                                           \
   }
 
-#define cb_invoke(cb_st) CURRYING_1N((cb_st).cb_func, (cb_st).cb_ctx)
+#define cb_invoke(cb_st) CURRYING((cb_st).cb_func, (cb_st).cb_ctx)
 
 #endif
