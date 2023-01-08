@@ -23,6 +23,7 @@ static cb_decl(fmt_callback_t, output_cb, sbi_output, NULL);
 
 void log_localize_output(void) {
   output_cb.cb_func = serial_output;
+  info("switch to local serial output\n");
 }
 
 void printk(const char *restrict fmt, ...) {
