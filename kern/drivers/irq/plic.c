@@ -38,74 +38,39 @@ static long plic_setup_map(void *ctx) {
   return KER_SUCCESS;
 }
 
-static void plic_set_source_prio(struct plic *plic, uint8_t source_id, uint32_t priority) {
+static void plic_set_source_prio(struct plic *plic, uint32_t source_id, uint32_t priority) {
   *((volatile uint32_t *)(plic->pl_addr + 4 * source_id)) = priority;
 }
 
-static uint64_t plic_get_pending_bits(struct plic *plic) {
-  uint64_t lo = *((volatile uint32_t *)(plic->pl_addr + 0x1000));
-  uint64_t hi = *((volatile uint32_t *)(plic->pl_addr + 0x1004));
-  return (hi << 32) | lo;
+static void plic_source_enable(struct plic *plic, uint32_t context_id, uint32_t source_id) {
+  unsigned long ctx_base = plic->pl_addr + 0x2000 + context_id * 0x80;
+  uint32_t quo = source_id / (sizeof(uint32_t) * 8);
+  uint32_t rem = source_id % (sizeof(uint32_t) * 8);
+  uint32_t bits = *((volatile uint32_t *)(ctx_base + quo * 4));
+  bits |= 1U << rem;
+  *((volatile uint32_t *)(ctx_base + quo * 4)) = bits;
 }
 
-static void plic_set_source_enable(struct plic *plic, uint8_t context_id, uint64_t enable) {
-  if (context_id == 0) {
-    *((volatile uint32_t *)(plic->pl_addr + 0x2000)) = enable & 0xffffffffUL;
-  } else {
-    *((volatile uint32_t *)(plic->pl_addr + 0x2000 + 0x80 * context_id)) =
-        enable & 0xffffffffUL;
-    *((volatile uint32_t *)(plic->pl_addr + 0x2004 + 0x80 * context_id)) = enable >> 32;
-  }
+static void plic_source_disable(struct plic *plic, uint32_t context_id, uint32_t source_id) {
+  unsigned long ctx_base = plic->pl_addr + 0x2000 + context_id * 0x80;
+  uint32_t quo = source_id / (sizeof(uint32_t) * 8);
+  uint32_t rem = source_id % (sizeof(uint32_t) * 8);
+  uint32_t bits = *((volatile uint32_t *)(ctx_base + quo * 4));
+  bits &= ~(1U << rem);
+  *((volatile uint32_t *)(ctx_base + quo * 4)) = bits;
 }
 
-static uint64_t plic_get_source_enable(struct plic *plic, uint8_t context_id) {
-  if (context_id == 0) {
-    return *((volatile uint32_t *)(plic->pl_addr + 0x2000));
-  } else {
-    uint64_t lo = *((volatile uint32_t *)(plic->pl_addr + 0x2000 + 0x80 * context_id));
-    uint64_t hi = *((volatile uint32_t *)(plic->pl_addr + 0x2004 + 0x80 * context_id));
-    return (hi << 32) | lo;
-  }
+static void plic_set_context_prio_threshold(struct plic *plic, uint32_t context_id,
+                                            uint32_t threshold) {
+  *((volatile uint32_t *)(plic->pl_addr + 0x200000 + 0x1000 * context_id)) = threshold;
 }
 
-static void plic_set_context_prio_threshold(struct plic *plic, uint8_t context_id,
-                                            enum plic_context_mode_t mode, uint32_t threshold) {
-  if (context_id == 0) {
-    *((volatile uint32_t *)(plic->pl_addr + 0x200000)) = threshold;
-  } else {
-    if (mode == M_MODE) {
-      *((volatile uint32_t *)(plic->pl_addr + 0x201000 + 0x2000 * (context_id - 1))) =
-          threshold;
-    } else {
-      *((volatile uint32_t *)(plic->pl_addr + 0x200000 + 0x2000 * context_id)) = threshold;
-    }
-  }
+static uint32_t plic_claim(struct plic *plic, uint32_t context_id) {
+  return *((volatile uint32_t *)(plic->pl_addr + 0x200004 + 0x1000 * context_id));
 }
 
-static uint32_t plic_claim(struct plic *plic, uint8_t context_id,
-                           enum plic_context_mode_t mode) {
-  if (context_id == 0) {
-    return *((volatile uint32_t *)(plic->pl_addr + 0x200004));
-  } else {
-    if (mode == M_MODE) {
-      return *((volatile uint32_t *)(plic->pl_addr + 0x201004 + 0x2000 * (context_id - 1)));
-    } else {
-      return *((volatile uint32_t *)(plic->pl_addr + 0x200004 + 0x2000 * context_id));
-    }
-  }
-}
-
-static void plic_complete(struct plic *plic, uint8_t context_id,
-                          enum plic_context_mode_t mode) {
-  if (context_id == 0) {
-    *((volatile uint32_t *)(plic->pl_addr + 0x200004)) = 0;
-  } else {
-    if (mode == M_MODE) {
-      *((volatile uint32_t *)(plic->pl_addr + 0x201004 + 0x2000 * (context_id - 1))) = 0;
-    } else {
-      *((volatile uint32_t *)(plic->pl_addr + 0x200004 + 0x2000 * context_id)) = 0;
-    }
-  }
+static void plic_complete(struct plic *plic, uint32_t context_id) {
+  *((volatile uint32_t *)(plic->pl_addr + 0x200004 + 0x1000 * context_id)) = 0;
 }
 
 static long plic_handle_int(void *ctx, unsigned long trap_num) {
@@ -113,13 +78,7 @@ static long plic_handle_int(void *ctx, unsigned long trap_num) {
 
   catch_e(lk_acquire(&plic->spinlock_of(pl)));
 
-  uint64_t pending_bits = plic_get_pending_bits(plic);
-  if (pending_bits == 0) {
-    catch_e(lk_release(&plic->spinlock_of(pl)));
-    return -KER_INT_ER;
-  }
-
-  uint32_t int_num = plic_claim(plic, PLIC_EXTERNAL_INT_CTX, M_MODE);
+  uint32_t int_num = plic_claim(plic, PLIC_EXTERNAL_INT_CTX);
   if (int_num < PLIC_SOURCE_MIN || int_num > PLIC_SOURCE_MAX) {
     catch_e(lk_release(&plic->spinlock_of(pl)));
     return -KER_INT_ER;
@@ -132,41 +91,41 @@ static long plic_handle_int(void *ctx, unsigned long trap_num) {
     return err;
   });
 
-  plic_complete(plic, PLIC_EXTERNAL_INT_CTX, M_MODE);
+  plic_complete(plic, PLIC_EXTERNAL_INT_CTX);
 
   catch_e(lk_release(&plic->spinlock_of(pl)));
   return KER_SUCCESS;
 }
 
-static long plic_register_irq(void *ctx, unsigned long int_num, trap_callback_t callback) {
-  if (int_num < PLIC_SOURCE_MIN || int_num > PLIC_SOURCE_MAX) {
+static long plic_register_irq(void *ctx, unsigned long source_id, trap_callback_t callback) {
+  if (source_id < PLIC_SOURCE_MIN || source_id > PLIC_SOURCE_MAX) {
     return -KER_INT_ER;
   }
   struct plic *plic = ctx;
   catch_e(lk_acquire(&plic->spinlock_of(pl)));
-  plic_set_source_enable(plic, PLIC_EXTERNAL_INT_CTX,
-                         plic_get_source_enable(plic, PLIC_EXTERNAL_INT_CTX) | (1 << int_num));
-  plic_set_source_prio(plic, int_num, PLIC_PRIO_MAX);
-  plic->pl_int_map[int_num] = callback;
+  plic_source_enable(plic, PLIC_EXTERNAL_INT_CTX, source_id);
+  plic_set_source_prio(plic, source_id, PLIC_PRIO_MAX);
+  plic->pl_int_map[source_id] = callback;
   catch_e(lk_release(&plic->spinlock_of(pl)));
   return KER_SUCCESS;
 }
 
 static void plic_init(struct plic *plic) {
-  for (uint8_t i = PLIC_SOURCE_MIN; i < PLIC_SOURCE_MAX; i++) {
+  for (uint32_t i = PLIC_SOURCE_MIN; i < PLIC_SOURCE_MAX; i++) {
     plic_set_source_prio(plic, i, PLIC_PRIO_MIN);
   }
 
-  for (uint8_t i = PLIC_CONTEXT_MIN; i < PLIC_CONTEXT_MAX; i++) {
-    plic_set_source_enable(plic, i, 0);
-    if (i != 0) {
-      plic_set_context_prio_threshold(plic, i, M_MODE, PLIC_PRIO_MAX);
+  uint32_t context_max_id = (plic->pl_size - 0x200000UL) / 0x1000UL - 1UL;
+  assert(context_max_id >= PLIC_EXTERNAL_INT_CTX);
+  for (uint32_t i = 0; i <= context_max_id; i++) {
+    for (uint32_t j = PLIC_SOURCE_MIN; j <= PLIC_SOURCE_MAX; j++) {
+      plic_source_disable(plic, i, j);
     }
-    plic_set_context_prio_threshold(plic, i, S_MODE, PLIC_PRIO_MAX);
+    plic_set_context_prio_threshold(plic, i, PLIC_PRIO_MAX);
   }
 
   info("all external interrupt shall be handled by context %u\n", PLIC_EXTERNAL_INT_CTX);
-  plic_set_context_prio_threshold(plic, PLIC_EXTERNAL_INT_CTX, M_MODE, PLIC_PRIO_MIN);
+  plic_set_context_prio_threshold(plic, PLIC_EXTERNAL_INT_CTX, PLIC_PRIO_MIN);
 }
 
 static long plic_probe(const struct dev_node *node) {
