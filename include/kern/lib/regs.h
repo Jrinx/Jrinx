@@ -30,6 +30,33 @@
 R_REG_DEF(tp)
 W_REG_DEF(tp)
 
+typedef union {
+  uint64_t val;
+  struct {
+    unsigned blank0 : 1;
+    unsigned ssip : 1;
+    unsigned blank1 : 3;
+    unsigned stip : 1;
+    unsigned blank2 : 3;
+    unsigned seip : 1;
+    unsigned blank3 : 6;
+  } __attribute__((packed)) ip_bits;
+  struct {
+    unsigned blank0 : 1;
+    unsigned ssie : 1;
+    unsigned blank1 : 3;
+    unsigned stie : 1;
+    unsigned blank2 : 3;
+    unsigned seie : 1;
+    unsigned blank3 : 6;
+  } __attribute__((packed)) ie_bits;
+} rv64_sipe;
+
+R_CSR_DEF(sip)
+W_CSR_DEF(sip)
+R_CSR_DEF(sie)
+W_CSR_DEF(sie)
+
 #define CAUSE_INT_S_SOFTWARE 1
 #define CAUSE_INT_M_SOFTWARE 3
 #define CAUSE_INT_S_TIMER 5

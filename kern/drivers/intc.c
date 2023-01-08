@@ -16,6 +16,7 @@ const trap_callback_t *intc_get_exc_vec(void) {
 long intc_register_handler(void *_, unsigned long trap_num, trap_callback_t callback) {
   if (trap_num > CAUSE_INT_OFFSET) {
     int_map[trap_num - CAUSE_INT_OFFSET] = callback;
+    csrw_sie(csrr_sie() | (1 << (trap_num - CAUSE_INT_OFFSET)));
   } else {
     exc_map[trap_num] = callback;
   }
