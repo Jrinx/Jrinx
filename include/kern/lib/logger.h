@@ -13,7 +13,7 @@ void printk(const char *restrict fmt, ...) __attribute__((format(printf, 1, 2)))
 void panick(const char *restrict fmt, ...) __attribute__((format(printf, 1, 2), noreturn));
 void haltk(const char *restrict fmt, ...) __attribute__((noreturn));
 
-#define _log_prefix "[ %3lu.%-3lu hart#%ld ] %s:%d <%s> "
+#define _log_prefix "[ %3lu.%03lu hart#%ld ] %s:%d <%s> "
 
 #define _log_args(...) sec, millisec, hrt_get_id(), __FILE__, __LINE__, __func__, ##__VA_ARGS__
 
