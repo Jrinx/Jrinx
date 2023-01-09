@@ -68,7 +68,7 @@ static long goldfish_probe(const struct dev_node *node) {
   mem_print_range(addr, size, NULL);
 
   cb_decl(read_time_callback_t, goldfish_read_time_callback, goldfish_read_time, goldfish);
-  realtime_register_rtc(node->nd_name, goldfish_read_time_callback);
+  rt_register_dev(node->nd_name, goldfish_read_time_callback);
 
   cb_decl(mmio_setup_callback_t, goldfish_setup_callback, goldfish_setup_map, goldfish);
   vmm_register_mmio(goldfish_setup_callback);

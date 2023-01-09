@@ -22,7 +22,7 @@ void haltk(const char *restrict fmt, ...) __attribute__((noreturn));
     uint64_t sec;                                                                              \
     uint64_t millisec;                                                                         \
     conslock_acquire();                                                                        \
-    realtime_read_boot_time_sec_millisec(&sec, &millisec);                                     \
+    rt_read_boot_time_sec_msec(&sec, &millisec);                                               \
     printk(ANSI_COLOR_WRAP(ANSI_FG_GREEN, _log_prefix) msg, _log_args(__VA_ARGS__));           \
     conslock_release();                                                                        \
   })
@@ -31,7 +31,7 @@ void haltk(const char *restrict fmt, ...) __attribute__((noreturn));
   ({                                                                                           \
     uint64_t sec;                                                                              \
     uint64_t millisec;                                                                         \
-    realtime_read_boot_time_sec_millisec(&sec, &millisec);                                     \
+    rt_read_boot_time_sec_msec(&sec, &millisec);                                               \
     panick(ANSI_COLOR_WRAP(ANSI_FG_RED, _log_prefix) msg, _log_args(__VA_ARGS__));             \
   })
 
@@ -39,7 +39,7 @@ void haltk(const char *restrict fmt, ...) __attribute__((noreturn));
   ({                                                                                           \
     uint64_t sec;                                                                              \
     uint64_t millisec;                                                                         \
-    realtime_read_boot_time_sec_millisec(&sec, &millisec);                                     \
+    rt_read_boot_time_sec_msec(&sec, &millisec);                                               \
     haltk(ANSI_COLOR_WRAP(ANSI_FG_YELLOW, _log_prefix) msg, _log_args(__VA_ARGS__));           \
   })
 
