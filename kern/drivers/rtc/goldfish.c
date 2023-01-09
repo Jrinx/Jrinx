@@ -14,7 +14,6 @@ struct goldfish {
   char *gf_name;
   uint64_t gf_addr;
   uint64_t gf_size;
-  struct lock spinlock_of(gf);
   LIST_ENTRY(goldfish) gf_link;
 };
 
@@ -62,7 +61,6 @@ static long goldfish_probe(const struct dev_node *node) {
   goldfish->gf_name = node->nd_name;
   goldfish->gf_addr = addr;
   goldfish->gf_size = size;
-  spinlock_init(&goldfish->spinlock_of(gf));
   LIST_INSERT_HEAD(&goldfish_list, goldfish, gf_link);
 
   info("%s probed\n", node->nd_name);
