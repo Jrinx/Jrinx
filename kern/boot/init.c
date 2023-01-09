@@ -18,19 +18,21 @@
 
 struct dev_tree boot_dt;
 
+static void print_boot_info(void) {
+  printk("\nJrinx OS (revision: %s)\n", CONFIG_REVISON);
+#ifdef CONFIG_JRINX_LOGO
+  printk("%s", CONFIG_JRINX_LOGO);
+#endif
+}
+
 void kernel_init(unsigned long hartid, void *dtb_addr) {
   static volatile unsigned long init_state = 0;
   static with_spinlock(init_state);
   hrt_set_id(hartid);
   if (cpus_stacktop == NULL) {
+    print_boot_info();
+
     lk_init();
-
-#ifdef CONFIG_JRINX_LOGO
-    conslock_acquire();
-    printk("%s", CONFIG_JRINX_LOGO);
-    conslock_release();
-#endif
-
     info("Hello Jrinx, I am master hart!\n");
 
     panic_e(dt_load(dtb_addr, &boot_dt));
