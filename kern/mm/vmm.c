@@ -19,22 +19,48 @@ static void kfree(const void *ptr) {
   UNIMPLEMENTED;
 }
 
+static long pt_boot_frame_alloc(paddr_t *pa) {
+  void *addr = alloc(PGSIZE, PGSIZE);
+  pa->val = (unsigned long)addr;
+  return KER_SUCCESS;
+}
+
+static long pt_boot_frame_free(paddr_t pa) {
+  UNIMPLEMENTED;
+}
+
+static long pt_phy_frame_alloc(paddr_t *pa) {
+  struct phy_frame *pf;
+  catch_e(phy_frame_alloc(&pf));
+  panic_e(phy_frame_ref_inc(pf));
+  panic_e(frame2pa(pf, &pa->val));
+  return KER_SUCCESS;
+}
+
+static long pt_phy_frame_free(paddr_t pa) {
+  struct phy_frame *pf;
+  catch_e(pa2frame(pa.val, &pf));
+  panic_e(phy_frame_ref_dec(pf));
+  return KER_SUCCESS;
+}
+
+static long (*pt_frame_alloc)(paddr_t *pa) = pt_boot_frame_alloc;
+
+static long (*pt_frame_free)(paddr_t pa) = pt_boot_frame_free;
+
 static long pt_walk(pte_t *pgdir, vaddr_t va, int create, pte_t **pte) {
-  struct phy_frame *frame1 = NULL;
-  struct phy_frame *frame2 = NULL;
+  paddr_t pa1 = {.val = 0};
+  paddr_t pa2 = {.val = 0};
   pte_t *ptr = pgdir + va.bits.vpn2;
   if (!ptr->bits.v) {
     if (!create) {
       *pte = NULL;
       return KER_SUCCESS;
     }
-    catch_e(phy_frame_alloc(&frame1));
-    panic_e(phy_frame_ref_inc(frame1));
-    paddr_t pa;
-    panic_e(frame2pa(frame1, &pa.val));
+    catch_e(pt_frame_alloc(&pa1));
     ptr->val = 0;
     ptr->bits.v = 1;
-    ptr->pp.ppn = pa.pp.ppn;
+    ptr->pp.ppn = pa1.pp.ppn;
   }
 
   ptr = (pte_t *)pte2pa(*ptr).val + va.bits.vpn1;
@@ -43,18 +69,15 @@ static long pt_walk(pte_t *pgdir, vaddr_t va, int create, pte_t **pte) {
       *pte = NULL;
       return KER_SUCCESS;
     }
-    catch_e(phy_frame_alloc(&frame2), {
-      if (frame1 != NULL) {
-        panic_e(phy_frame_ref_dec(frame1));
+    catch_e(pt_frame_alloc(&pa2), {
+      if (pa1.val != 0) {
+        panic_e(pt_frame_free(pa1));
       }
       return err;
     });
-    panic_e(phy_frame_ref_inc(frame2));
-    paddr_t pa;
-    panic_e(frame2pa(frame2, &pa.val));
     ptr->val = 0;
     ptr->bits.v = 1;
-    ptr->pp.ppn = pa.pp.ppn;
+    ptr->pp.ppn = pa2.pp.ppn;
   }
 
   *pte = (pte_t *)pte2pa(*ptr).val + va.bits.vpn0;
@@ -160,6 +183,8 @@ void vmm_setup_kern(void) {
 
   alloc = kalloc;
   free = kfree;
+  pt_frame_alloc = pt_phy_frame_alloc;
+  pt_frame_free = pt_phy_frame_free;
 }
 
 void vmm_start(void) {
