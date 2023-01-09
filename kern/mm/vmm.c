@@ -167,15 +167,11 @@ void vmm_setup_kern(void) {
   size_t text_end = align_up((size_t)kern_text_end, PGSIZE);
   size_t free_end = align_up((size_t)freemem_base, PGSIZE);
 
-  info("set up kernel text mapping at ");
-  mem_print_range(KERNBASE, text_end - KERNBASE, NULL);
   for (; va.val < text_end; va.val += PGSIZE, pa.val += PGSIZE) {
     perm_t perm = {.bits = {.a = 1, .d = 1, .r = 1, .x = 1, .w = 1, .g = 1}};
     panic_e(pt_map(kern_pgdir, va, pa, perm));
   }
 
-  info("set up kernel data mapping at ");
-  mem_print_range(text_end, free_end - text_end, NULL);
   for (; va.val < free_end; va.val += PGSIZE, pa.val += PGSIZE) {
     perm_t perm = {.bits = {.a = 1, .d = 1, .r = 1, .w = 1, .g = 1}};
     panic_e(pt_map(kern_pgdir, va, pa, perm));
