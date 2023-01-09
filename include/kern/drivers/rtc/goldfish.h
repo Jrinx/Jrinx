@@ -1,0 +1,12 @@
+#ifndef _KERN_DRIVERS_RTC_GOLDFISH_H_
+#define _KERN_DRIVERS_RTC_GOLDFISH_H_
+
+#define GOLDFISH_TIME_LOW 0x00
+#define GOLDFISH_TIME_HIGH 0x04
+#define GOLDFISH_ALARM_LOW 0x08
+#define GOLDFISH_ALARM_HIGH 0x0c
+#define GOLDFISH_CLEAR_INTERRUPT 0x10
+
+extern struct device goldfish_device;
+
+#endif
