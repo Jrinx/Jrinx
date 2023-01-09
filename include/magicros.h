@@ -11,8 +11,6 @@
 #define _CURRYING_TAIL(...) , ##__VA_ARGS__)
 #define CURRYING(func, ...) (func) _CURRYING_HEAD(__VA_ARGS__) _CURRYING_TAIL
 
-#ifdef fatal
-#define UNIMPLEMENTED fatal("Unimplemented!")
-#endif
+#define UNIMPLEMENTED __builtin_unreachable()
 
 #endif
