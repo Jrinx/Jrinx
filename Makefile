@@ -7,6 +7,7 @@ CPUS		?= 5
 
 COLOR		?= y
 
+JRINX_LOGO	:= jrinx.logo
 CROSS_COMPILE	:= riscv64-unknown-elf-
 
 GDB		:= gdb-multiarch
@@ -17,7 +18,8 @@ CFLAGS		+= --std=gnu99 -nostdlib \
 		-mabi=lp64 -march=rv64g -m$(TARGET_ENDIAN)-endian -mcmodel=medany -mno-relax \
 		-fno-omit-frame-pointer -ffreestanding -fno-common -fno-stack-protector -fno-builtin \
 		-DCONFIG_ENDIAN=$(shell echo $(TARGET_ENDIAN) | tr '[:lower:]' '[:upper:]')_ENDIAN \
-		-DCONFIG_COLOR=$(shell [ "$(COLOR)" = "y" ] && echo 1 || echo 0)
+		-DCONFIG_COLOR=$(shell [ "$(COLOR)" = "y" ] && echo 1 || echo 0) \
+		-DCONFIG_JRINX_LOGO=$(shell scripts/logo-gen $(JRINX_LOGO))
 
 LDFLAGS		+= --fatal-warnings --warn-unresolved-symbols
 
@@ -74,7 +76,7 @@ $(MODULES):
 	$(MAKE) -C $@
 
 $(TARGET_DIR):
-	mkdir -p $(TARGET_DIR)
+	@mkdir -p $@
 
 include mk/compile.mk
 

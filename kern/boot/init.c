@@ -25,6 +25,12 @@ void kernel_init(unsigned long hartid, void *dtb_addr) {
   if (cpus_stacktop == NULL) {
     lk_init();
 
+#ifdef CONFIG_JRINX_LOGO
+    conslock_acquire();
+    printk("%s", CONFIG_JRINX_LOGO);
+    conslock_release();
+#endif
+
     info("Hello Jrinx, I am master hart!\n");
 
     panic_e(dt_load(dtb_addr, &boot_dt));

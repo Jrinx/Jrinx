@@ -1,0 +1,18 @@
+#!/usr/bin/python3
+
+import argparse
+import json
+
+
+def main():
+    args = argparse.ArgumentParser()
+    args.add_argument('logo_path')
+    args = args.parse_args()
+    with open(args.logo_path, 'r', encoding='utf-8') as logo_file:
+        logo = logo_file.read()
+    content = json.dumps(f'"{json.dumps(logo)[1:-1]}"')
+    print(content)
+
+
+if __name__ == '__main__':
+    main()
