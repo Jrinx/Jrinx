@@ -21,12 +21,10 @@ struct dev_tree boot_dt;
 
 static void print_boot_info(void) {
   printk("\nJrinx OS (revision: %s)\n", CONFIG_REVISON);
-#ifdef CONFIG_JRINX_LOGO
   static const char kernel_logo[] = CONFIG_JRINX_LOGO;
   for (size_t i = 0; i < sizeof(kernel_logo); i++) {
     long ret __attribute__((unused)) = sbi_console_putchar(kernel_logo[i]);
   }
-#endif
 }
 
 void kernel_init(unsigned long hartid, void *dtb_addr) {
