@@ -45,13 +45,13 @@ int rt_read_time(uint64_t *re) {
   return 1;
 }
 
-void rt_read_boot_time_sec_msec(uint64_t *sec, uint64_t *millisec) {
+int rt_read_boot_time_sec_msec(uint64_t *sec, uint64_t *millisec) {
   static uint64_t boot_nanosec = 0;
   uint64_t nanosec = 0;
   if (!rt_read_time(&nanosec)) {
     *sec = 0;
     *millisec = 0;
-    return;
+    return 0;
   }
   if (boot_nanosec == 0) {
     boot_nanosec = nanosec;
@@ -59,4 +59,5 @@ void rt_read_boot_time_sec_msec(uint64_t *sec, uint64_t *millisec) {
   nanosec -= boot_nanosec;
   *sec = nanosec / 1000000000UL;
   *millisec = nanosec / 1000000UL - (*sec * 1000UL);
+  return 1;
 }

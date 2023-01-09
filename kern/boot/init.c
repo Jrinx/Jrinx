@@ -6,6 +6,7 @@
 #include <kern/lib/debug.h>
 #include <kern/lib/logger.h>
 #include <kern/lib/regs.h>
+#include <kern/lib/sbi.h>
 #include <kern/lib/sync.h>
 #include <kern/lock/lock.h>
 #include <kern/lock/spinlock.h>
@@ -21,7 +22,10 @@ struct dev_tree boot_dt;
 static void print_boot_info(void) {
   printk("\nJrinx OS (revision: %s)\n", CONFIG_REVISON);
 #ifdef CONFIG_JRINX_LOGO
-  printk("%s", CONFIG_JRINX_LOGO);
+  static const char kernel_logo[] = CONFIG_JRINX_LOGO;
+  for (size_t i = 0; i < sizeof(kernel_logo); i++) {
+    long ret __attribute__((unused)) = sbi_console_putchar(kernel_logo[i]);
+  }
 #endif
 }
 

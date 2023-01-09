@@ -41,11 +41,33 @@ void printk(const char *restrict fmt, ...) {
   va_end(ap);
 }
 
-void panick(const char *restrict fmt, ...) {
-  va_list ap;
-  va_start(ap, fmt);
-  vprintfmt(output_cb, fmt, ap);
-  va_end(ap);
+#define print_timestamp(color)                                                                 \
+  ({                                                                                           \
+    uint64_t sec;                                                                              \
+    uint64_t millisec;                                                                         \
+    conslock_acquire();                                                                        \
+    if (rt_read_boot_time_sec_msec(&sec, &millisec)) {                                         \
+      printk(ANSI_COLOR_WRAP(color, "[ %3lu.%03lu hart#%lu ] %s:%lu <%s> "), sec, millisec,    \
+             hrt_get_id(), file, lineno, func);                                                \
+    } else {                                                                                   \
+      printk(ANSI_COLOR_WRAP(color, "[ ???.??? hart#%lu ] %s:%lu <%s> "), hrt_get_id(), file,  \
+             lineno, func);                                                                    \
+    }                                                                                          \
+    va_list ap;                                                                                \
+    va_start(ap, fmt);                                                                         \
+    vprintfmt(output_cb, fmt, ap);                                                             \
+    va_end(ap);                                                                                \
+    conslock_release();                                                                        \
+  })
+
+void infok(const char *restrict file, unsigned long lineno, const char *restrict func,
+           const char *restrict fmt, ...) {
+  print_timestamp(ANSI_FG_GREEN);
+}
+
+void fatalk(const char *restrict file, unsigned long lineno, const char *restrict func,
+            const char *restrict fmt, ...) {
+  print_timestamp(ANSI_FG_RED);
   struct sbiret ret =
       sbi_system_reset(SBI_SRST_RESET_TYPE_SHUTDOWN, SBI_SRST_RESET_REASON_SYSFAIL);
   info("shutdown failed: (%ld, %ld)\n", ret.error, ret.value);
@@ -53,10 +75,10 @@ void panick(const char *restrict fmt, ...) {
   }
 }
 
-void haltk(const char *restrict fmt, ...) {
-  va_list ap;
-  va_start(ap, fmt);
-  vprintfmt(output_cb, fmt, ap);
-  va_end(ap);
+void haltk(const char *restrict file, unsigned long lineno, const char *restrict func,
+           const char *restrict fmt, ...) {
+  print_timestamp(ANSI_FG_YELLOW);
   sbi_shutdown();
 }
+
+#undef print_timestamp
