@@ -1,7 +1,6 @@
 #!/usr/bin/python3
 
 import argparse
-import json
 
 
 def main():
@@ -10,8 +9,8 @@ def main():
     args = args.parse_args()
     with open(args.logo_path, 'r', encoding='utf-8') as logo_file:
         logo = logo_file.read()
-    content = json.dumps(f'"{json.dumps(logo)[1:-1]}"')
-    print(content)
+    content = logo.encode('unicode-escape').decode('utf-8')
+    print(f'"{content}"')
 
 
 if __name__ == '__main__':
