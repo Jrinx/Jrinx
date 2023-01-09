@@ -65,5 +65,5 @@ long mem_get_size(unsigned i, uint64_t *size) {
 
 struct device memory_device = {
     .d_probe = mem_probe,
-    .d_probe_pri = HIGHEST,
+    .d_probe_pri = HIGH,
 };

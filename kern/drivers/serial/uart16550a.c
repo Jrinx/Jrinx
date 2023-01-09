@@ -148,5 +148,5 @@ static long uart16550a_probe(const struct dev_node *node) {
 
 struct device uart16550a_device = {
     .d_probe = uart16550a_probe,
-    .d_probe_pri = LOWEST,
+    .d_probe_pri = LOW,
 };

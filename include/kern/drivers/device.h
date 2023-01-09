@@ -5,7 +5,9 @@
 
 enum probe_pri_t {
   HIGHEST,
+  HIGH,
   MEDIUM,
+  LOW,
   LOWEST,
 };
 

@@ -79,5 +79,5 @@ static long cpus_probe(const struct dev_node *node) {
 
 struct device cpus_device = {
     .d_probe = cpus_probe,
-    .d_probe_pri = HIGHEST,
+    .d_probe_pri = HIGH,
 };
