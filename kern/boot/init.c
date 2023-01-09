@@ -16,14 +16,9 @@
 #include <stddef.h>
 #include <stdint.h>
 
-union kern_init_arg {
-  void *dtb_addr;         // master
-  unsigned long stacktop; // slave
-};
-
 struct dev_tree boot_dt;
 
-void kernel_init(unsigned long hartid, union kern_init_arg arg) {
+void kernel_init(unsigned long hartid, void *dtb_addr) {
   static volatile unsigned long init_state = 0;
   static with_spinlock(init_state);
   hrt_set_id(hartid);
@@ -32,7 +27,7 @@ void kernel_init(unsigned long hartid, union kern_init_arg arg) {
 
     info("Hello Jrinx, I am master hart!\n");
 
-    panic_e(dt_load(arg.dtb_addr, &boot_dt));
+    panic_e(dt_load(dtb_addr, &boot_dt));
     panic_e(device_init());
     panic_e(device_probe(&boot_dt));
     panic_e(chosen_select_dev());
