@@ -11,7 +11,7 @@ void printk(const char *restrict fmt, ...) __attribute__((format(printf, 1, 2)))
 void panick(const char *restrict fmt, ...) __attribute__((format(printf, 1, 2), noreturn));
 void haltk(const char *restrict fmt, ...) __attribute__((noreturn));
 
-#define _log_prefix "[ %lu.%-3lu hart#%ld ] %s:%d <%s> "
+#define _log_prefix "[ %3lu.%-3lu hart#%ld ] %s:%d <%s> "
 
 #define _log_args(color, msg, ...)                                                             \
   ANSI_COLOR_WRAP(color, "@hart#%ld %s:%d <%s> ")                                              \
