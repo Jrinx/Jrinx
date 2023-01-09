@@ -96,6 +96,6 @@ void vmm_register_mmio(mmio_setup_callback_t callback);
 void vmm_setup_mmio(void);
 void vmm_setup_kern(void);
 void vmm_start(void);
-void vmm_flush(void);
+void vmm_summary(void);
 
 #endif

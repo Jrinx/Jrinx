@@ -188,9 +188,12 @@ void vmm_start(void) {
       .bits = {.mode = SV39, .asid = 0, .ppn = ((unsigned long)&kern_pgdir) / PGSIZE}};
   csrw_satp(satp_reg.val);
   sfence_vma;
-  info("enable virtual memory with satp: %016lx\n", satp_reg.val);
+  info("enable virtual memory (satp: %016lx)\n", satp_reg.val);
 }
 
-void vmm_flush(void) {
-  sfence_vma;
+void vmm_summary(void) {
+  unsigned long freemem_base = mm_get_freemem_base();
+  size_t free_end = align_up((size_t)freemem_base, PGSIZE);
+  info("os kernel reserves memory ");
+  mem_print_range(KERNBASE, free_end - KERNBASE, NULL);
 }

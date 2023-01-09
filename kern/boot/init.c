@@ -46,6 +46,7 @@ void kernel_init(unsigned long hartid, void *dtb_addr) {
     vmm_setup_mmio();
     vmm_setup_kern();
     vmm_start();
+    vmm_summary();
 
     log_localize_output();
 
