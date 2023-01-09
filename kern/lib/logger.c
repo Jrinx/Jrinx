@@ -26,12 +26,18 @@ void log_localize_output(void) {
   info("switch to local serial output\n");
 }
 
+void conslock_acquire(void) {
+  panic_e(lk_acquire(&spinlock_of(print)));
+}
+
+void conslock_release(void) {
+  panic_e(lk_release(&spinlock_of(print)));
+}
+
 void printk(const char *restrict fmt, ...) {
   va_list ap;
   va_start(ap, fmt);
-  panic_e(lk_acquire(&spinlock_of(print)));
   vprintfmt(output_cb, fmt, ap);
-  panic_e(lk_release(&spinlock_of(print)));
   va_end(ap);
 }
 
