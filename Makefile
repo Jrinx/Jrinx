@@ -49,7 +49,7 @@ export CHECK_PREPROC ?= n
 	run dbg gdb gdb-sbi \
 	preprocess objdump objcopy dumpdts \
 	$(JRINX) $(MODULES) \
-	check-style fix-style register-git-hooks
+	check-style fix-style register-git-hooks cloc
 
 all: debug
 
@@ -140,3 +140,6 @@ fix-style:
 
 register-git-hooks:
 	@ln -s ../../scripts/pre-commit .git/hooks/pre-commit
+
+cloc:
+	@cloc --exclude-dir=$(OPENSBI_ROOT) .
