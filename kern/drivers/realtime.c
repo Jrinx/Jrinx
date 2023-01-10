@@ -13,11 +13,9 @@ struct rtc_dev {
 static struct rtc_dev *selected_rtc_dev = NULL;
 static LIST_HEAD(, rtc_dev) rtc_dev_list;
 
-void rt_register_dev(const char *name, read_time_callback_t read_time_callback) {
+void rt_register_dev(char *name, read_time_callback_t read_time_callback) {
   struct rtc_dev *rtc = alloc(sizeof(struct rtc_dev), sizeof(struct rtc_dev));
-  size_t name_len = strlen(name);
-  rtc->rt_name = alloc(sizeof(char) * (name_len + 1), sizeof(char));
-  strcpy(rtc->rt_name, name);
+  rtc->rt_name = name;
   rtc->rt_read_time_callback = read_time_callback;
   LIST_INSERT_HEAD(&rtc_dev_list, rtc, rt_link);
   selected_rtc_dev = rtc;

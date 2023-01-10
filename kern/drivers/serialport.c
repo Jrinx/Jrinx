@@ -18,12 +18,10 @@ static struct serial_dev *selected_output_dev;
 static struct serial_dev *selected_input_dev;
 static LIST_HEAD(, serial_dev) serial_dev_list;
 
-void serial_register_dev(const char *name, putc_callback_t putc_callback,
+void serial_register_dev(char *name, putc_callback_t putc_callback,
                          getc_callback_t getc_callback) {
   struct serial_dev *dev = alloc(sizeof(struct serial_dev), sizeof(struct serial_dev));
-  size_t name_len = strlen(name);
-  dev->sr_name = alloc(sizeof(char) * (name_len + 1), sizeof(char));
-  strcpy(dev->sr_name, name);
+  dev->sr_name = name;
   dev->sr_putc_callback = putc_callback;
   dev->sr_getc_callback = getc_callback;
   LIST_INSERT_HEAD(&serial_dev_list, dev, sr_link);
