@@ -21,6 +21,7 @@ static void kfree(const void *ptr) {
 
 static long pt_boot_frame_alloc(paddr_t *pa) {
   void *addr = alloc(PGSIZE, PGSIZE);
+  memset(addr, 0, PGSIZE);
   pa->val = (unsigned long)addr;
   return KER_SUCCESS;
 }
