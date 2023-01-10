@@ -32,7 +32,7 @@ long device_probe(struct dev_tree *dt) {
     struct device *dev;
     TAILQ_FOREACH (dev, &dev_queue, d_link) {
       if (dev->d_probe_pri == pri) {
-        catch_e(dt_iter(dt, dev->d_probe));
+        catch_e(dt_iter(dt, dev->d_pred, dev->d_probe));
       }
     }
   }

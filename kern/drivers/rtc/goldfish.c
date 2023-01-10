@@ -26,13 +26,13 @@ static long goldfish_read_time(void *ctx, uint64_t *re) {
   return KER_SUCCESS;
 }
 
+static int goldfish_pred(const struct dev_node *node) {
+  struct dev_node_prop *prop = dt_node_prop_extract(node, "compatible");
+  return prop != NULL && dt_match_strlist(prop->pr_values, prop->pr_len, "google,goldfish-rtc");
+}
+
 static long goldfish_probe(const struct dev_node *node) {
   struct dev_node_prop *prop;
-  prop = dt_node_prop_extract(node, "compatible");
-  if (prop == NULL || !dt_match_strlist(prop->pr_values, prop->pr_len, "google,goldfish-rtc")) {
-    return KER_SUCCESS;
-  }
-
   prop = dt_node_prop_extract(node, "reg");
   if (prop == NULL) {
     return -KER_DTB_ER;
@@ -59,6 +59,7 @@ static long goldfish_probe(const struct dev_node *node) {
 }
 
 struct device goldfish_device = {
+    .d_pred = goldfish_pred,
     .d_probe = goldfish_probe,
     .d_probe_pri = HIGHEST,
 };

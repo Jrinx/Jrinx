@@ -9,13 +9,13 @@ static size_t mem_num;
 static uint64_t *mem_addr;
 static uint64_t *mem_size;
 
+static int mem_pred(const struct dev_node *node) {
+  struct dev_node_prop *prop = dt_node_prop_extract(node, "device_type");
+  return prop != NULL && strcmp((char *)prop->pr_values, "memory") == 0;
+}
+
 static long mem_probe(const struct dev_node *node) {
   struct dev_node_prop *prop;
-  prop = dt_node_prop_extract(node, "device_type");
-  if (prop == NULL || strcmp((char *)prop->pr_values, "memory") != 0) {
-    return KER_SUCCESS;
-  }
-
   prop = dt_node_prop_extract(node, "reg");
   if (prop == NULL) {
     return -KER_DTB_ER;
@@ -64,6 +64,7 @@ long mem_get_size(unsigned i, uint64_t *size) {
 }
 
 struct device memory_device = {
+    .d_pred = mem_pred,
     .d_probe = mem_probe,
     .d_probe_pri = HIGH,
 };

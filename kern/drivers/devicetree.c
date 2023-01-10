@@ -160,20 +160,25 @@ int dt_match_strlist(const uint8_t *prop_values, uint32_t prop_len, const char *
   return i == target_bytes_len ? j : 0;
 }
 
-static long dt_iter_node(struct dev_node *node, dt_iter_callback_t callback) {
+static long dt_iter_node(struct dev_node *node, dt_node_pred_t pred,
+                         dt_iter_callback_t callback) {
   struct dev_node *child;
   TAILQ_FOREACH (child, &node->nd_children_tailq, nd_link) {
-    catch_e(callback(child));
-    catch_e(dt_iter_node(child, callback));
+    if (pred(child)) {
+      catch_e(callback(child));
+    }
+    catch_e(dt_iter_node(child, pred, callback));
   }
   return KER_SUCCESS;
 }
 
-long dt_iter(struct dev_tree *dt, dt_iter_callback_t callback) {
+long dt_iter(struct dev_tree *dt, dt_node_pred_t pred, dt_iter_callback_t callback) {
   struct dev_node *node;
   TAILQ_FOREACH (node, &dt->dt_node_tailq, nd_link) {
-    catch_e(callback(node));
-    catch_e(dt_iter_node(node, callback));
+    if (pred(node)) {
+      catch_e(callback(node));
+    }
+    catch_e(dt_iter_node(node, pred, callback));
   }
   return KER_SUCCESS;
 }

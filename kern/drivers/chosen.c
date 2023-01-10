@@ -9,11 +9,11 @@ static const char *chosen_bootargs;
 static const char *chosen_stdout;
 static const char *chosen_stdin;
 
-static long chosen_probe(const struct dev_node *node) {
-  if (strcmp(node->nd_name, "chosen") != 0) {
-    return KER_SUCCESS;
-  }
+static int chosen_pred(const struct dev_node *node) {
+  return strcmp(node->nd_name, "chosen") == 0;
+}
 
+static long chosen_probe(const struct dev_node *node) {
   info("%s probed, props listed:\n", node->nd_name);
 
   struct dev_node_prop *prop;
@@ -39,6 +39,7 @@ static long chosen_probe(const struct dev_node *node) {
 }
 
 struct device chosen_device = {
+    .d_pred = chosen_pred,
     .d_probe = chosen_probe,
     .d_probe_pri = LOWEST,
 };

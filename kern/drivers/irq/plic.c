@@ -111,14 +111,15 @@ static void plic_init(struct plic *plic) {
   plic_set_context_prio_threshold(plic, PLIC_EXTERNAL_INT_CTX, PLIC_PRIO_MIN);
 }
 
+static int plic_pred(const struct dev_node *node) {
+  struct dev_node_prop *prop = dt_node_prop_extract(node, "compatible");
+  return prop != NULL &&
+         (dt_match_strlist(prop->pr_values, prop->pr_len, "sifive,plic-1.0.0") ||
+          dt_match_strlist(prop->pr_values, prop->pr_len, "riscv,plic0"));
+}
+
 static long plic_probe(const struct dev_node *node) {
   struct dev_node_prop *prop;
-  prop = dt_node_prop_extract(node, "compatible");
-  if (prop == NULL || !(dt_match_strlist(prop->pr_values, prop->pr_len, "sifive,plic-1.0.0") ||
-                        dt_match_strlist(prop->pr_values, prop->pr_len, "riscv,plic0"))) {
-    return KER_SUCCESS;
-  }
-
   prop = dt_node_prop_extract(node, "reg");
   if (prop == NULL) {
     return -KER_DTB_ER;
@@ -156,6 +157,7 @@ static long plic_probe(const struct dev_node *node) {
 }
 
 struct device plic_device = {
+    .d_pred = plic_pred,
     .d_probe = plic_probe,
     .d_probe_pri = MEDIUM,
 };

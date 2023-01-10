@@ -17,11 +17,11 @@ unsigned long cpus_get_count(void) {
   return cpus_count;
 }
 
-static long cpus_probe(const struct dev_node *node) {
-  if (strcmp(node->nd_name, "cpus") != 0) {
-    return KER_SUCCESS;
-  }
+static int cpus_pred(const struct dev_node *node) {
+  return strcmp(node->nd_name, "cpus") == 0;
+}
 
+static long cpus_probe(const struct dev_node *node) {
   cpus_count = 0;
   struct dev_node *child;
   TAILQ_FOREACH (child, &node->nd_children_tailq, nd_link) {
@@ -78,6 +78,7 @@ static long cpus_probe(const struct dev_node *node) {
 }
 
 struct device cpus_device = {
+    .d_pred = cpus_pred,
     .d_probe = cpus_probe,
     .d_probe_pri = HIGH,
 };

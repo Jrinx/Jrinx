@@ -65,13 +65,13 @@ static long uart16550a_handle_int(void *ctx, unsigned long trap_num) {
   return KER_SUCCESS;
 }
 
+static int uart16550a_pred(const struct dev_node *node) {
+  struct dev_node_prop *prop = dt_node_prop_extract(node, "compatible");
+  return prop != NULL && dt_match_strlist(prop->pr_values, prop->pr_len, "ns16550a");
+}
+
 static long uart16550a_probe(const struct dev_node *node) {
   struct dev_node_prop *prop;
-  prop = dt_node_prop_extract(node, "compatible");
-  if (prop == NULL || !dt_match_strlist(prop->pr_values, prop->pr_len, "ns16550a")) {
-    return KER_SUCCESS;
-  }
-
   prop = dt_node_prop_extract(node, "reg");
   if (prop == NULL) {
     return -KER_DTB_ER;
@@ -129,6 +129,7 @@ static long uart16550a_probe(const struct dev_node *node) {
 }
 
 struct device uart16550a_device = {
+    .d_pred = uart16550a_pred,
     .d_probe = uart16550a_probe,
     .d_probe_pri = LOW,
 };
