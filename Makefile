@@ -88,12 +88,12 @@ include mk/compile.mk
 
 clean:
 	@rm -rf $(TARGET_DIR)
-	@find -- . \( \
+	@find -- . -not \( -path './$(OPENSBI_ROOT)/*' \) \( \
 		-name '*.o' -o -name '*.ld' -o -name '*.i' \
 	\) -type f -delete
 
 clean-all: clean
-	@find -- . \( \
+	@find -- . -not \( -path './$(OPENSBI_ROOT)/*' \) \( \
 		-name '*.dtb' -o -name '*.dts' \
 	\) -type f -delete
 
