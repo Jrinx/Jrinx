@@ -98,12 +98,6 @@ void pmm_init(void) {
 
   freemem_base = align_up(freemem_base, PGSIZE);
 
-  info("opensbi reserves memory at ");
-  mem_print_range(SBIBASE, KERNBASE - SBIBASE, NULL);
-
-  info("os kernel reserves memory at ");
-  mem_print_range(KERNBASE, freemem_base - KERNBASE, NULL);
-
   for (unsigned long rsvaddr = SBIBASE; rsvaddr < freemem_base; rsvaddr += PGSIZE) {
     struct phy_frame *frame;
     panic_e(pa2frame(rsvaddr, &frame));
