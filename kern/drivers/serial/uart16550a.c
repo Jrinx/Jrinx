@@ -10,7 +10,6 @@
 #include <kern/lock/spinlock.h>
 #include <kern/mm/pmm.h>
 #include <kern/mm/vmm.h>
-#include <layouts.h>
 #include <lib/string.h>
 
 struct uart16550a {
@@ -59,22 +58,6 @@ static int uart16550a_putc(void *ctx, uint8_t c) {
   }
   uart16550a_write(uart, COM_THR, c);
   return 1;
-}
-
-static long uart16550a_setup_map(void *ctx) {
-  struct uart16550a *uart = ctx;
-  unsigned long addr = uart->ur_addr;
-  unsigned long size = uart->ur_size;
-  vaddr_t va = {.val = addr + DEVOFFSET};
-  paddr_t pa = {.val = addr};
-  perm_t perm = {.bits = {.a = 1, .d = 1, .r = 1, .w = 1, .g = 1}};
-  info("set up %s mapping at ", uart->ur_name);
-  mem_print_range(addr + DEVOFFSET, size, NULL);
-  for (; va.val < addr + DEVOFFSET + size; va.val += PGSIZE, pa.val += PGSIZE) {
-    catch_e(pt_map(kern_pgdir, va, pa, perm));
-  }
-  uart->ur_addr += DEVOFFSET;
-  return KER_SUCCESS;
 }
 
 static long uart16550a_handle_int(void *ctx, unsigned long trap_num) {
@@ -140,8 +123,7 @@ static long uart16550a_probe(const struct dev_node *node) {
   cb_decl(putc_callback_t, putc_callback, uart16550a_putc, uart);
   cb_decl(getc_callback_t, getc_callback, uart16550a_getc, uart);
   serial_register_dev(node->nd_name, putc_callback, getc_callback);
-  cb_decl(mmio_setup_callback_t, uart16550a_setup_callback, uart16550a_setup_map, uart);
-  vmm_register_mmio(uart16550a_setup_callback);
+  vmm_register_mmio(uart->ur_name, &uart->ur_addr, uart->ur_size);
 
   return KER_SUCCESS;
 }

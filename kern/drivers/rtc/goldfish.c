@@ -8,7 +8,6 @@
 #include <kern/lock/spinlock.h>
 #include <kern/mm/pmm.h>
 #include <kern/mm/vmm.h>
-#include <layouts.h>
 
 struct goldfish {
   char *gf_name;
@@ -18,22 +17,6 @@ struct goldfish {
 };
 
 static LIST_HEAD(, goldfish) goldfish_list;
-
-static long goldfish_setup_map(void *ctx) {
-  struct goldfish *goldfish = ctx;
-  uint64_t addr = goldfish->gf_addr;
-  uint64_t size = goldfish->gf_size;
-  vaddr_t va = {.val = addr + DEVOFFSET};
-  paddr_t pa = {.val = addr};
-  perm_t perm = {.bits = {.a = 1, .d = 1, .r = 1, .w = 1, .g = 1}};
-  info("set up %s mapping at ", goldfish->gf_name);
-  mem_print_range(addr + DEVOFFSET, size, NULL);
-  for (; va.val < addr + DEVOFFSET + size; va.val += PGSIZE, pa.val += PGSIZE) {
-    catch_e(pt_map(kern_pgdir, va, pa, perm));
-  }
-  goldfish->gf_addr += DEVOFFSET;
-  return KER_SUCCESS;
-}
 
 static long goldfish_read_time(void *ctx, uint64_t *re) {
   struct goldfish *goldfish = ctx;
@@ -70,8 +53,7 @@ static long goldfish_probe(const struct dev_node *node) {
   cb_decl(read_time_callback_t, goldfish_read_time_callback, goldfish_read_time, goldfish);
   rt_register_dev(node->nd_name, goldfish_read_time_callback);
 
-  cb_decl(mmio_setup_callback_t, goldfish_setup_callback, goldfish_setup_map, goldfish);
-  vmm_register_mmio(goldfish_setup_callback);
+  vmm_register_mmio(goldfish->gf_name, &goldfish->gf_addr, goldfish->gf_size);
 
   return KER_SUCCESS;
 }

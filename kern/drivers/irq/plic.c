@@ -8,7 +8,6 @@
 #include <kern/lock/spinlock.h>
 #include <kern/mm/pmm.h>
 #include <kern/mm/vmm.h>
-#include <layouts.h>
 #include <lib/string.h>
 
 struct plic {
@@ -21,22 +20,6 @@ struct plic {
 };
 
 static LIST_HEAD(, plic) plic_list;
-
-static long plic_setup_map(void *ctx) {
-  struct plic *plic = ctx;
-  unsigned long addr = plic->pl_addr;
-  unsigned long size = plic->pl_size;
-  vaddr_t va = {.val = addr + DEVOFFSET};
-  paddr_t pa = {.val = addr};
-  perm_t perm = {.bits = {.a = 1, .d = 1, .r = 1, .w = 1, .g = 1}};
-  info("set up %s mapping at ", plic->pl_name);
-  mem_print_range(addr + DEVOFFSET, size, NULL);
-  for (; va.val < addr + DEVOFFSET + size; va.val += PGSIZE, pa.val += PGSIZE) {
-    catch_e(pt_map(kern_pgdir, va, pa, perm));
-  }
-  plic->pl_addr += DEVOFFSET;
-  return KER_SUCCESS;
-}
 
 static void plic_set_source_prio(struct plic *plic, uint32_t source_id, uint32_t priority) {
   *((volatile uint32_t *)(plic->pl_addr + 4 * source_id)) = priority;
@@ -167,8 +150,7 @@ static long plic_probe(const struct dev_node *node) {
   intc_set_register_func(phandle, irq_register_callback);
 
   plic_init(plic);
-  cb_decl(mmio_setup_callback_t, plic_setup_callback, plic_setup_map, plic);
-  vmm_register_mmio(plic_setup_callback);
+  vmm_register_mmio(plic->pl_name, &plic->pl_addr, plic->pl_size);
 
   return KER_SUCCESS;
 }

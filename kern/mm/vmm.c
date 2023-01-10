@@ -141,22 +141,34 @@ long pt_map(pte_t *pgdir, vaddr_t va, paddr_t pa, perm_t perm) {
 }
 
 struct mmio_setup {
-  mmio_setup_callback_t mm_callback;
+  char *mm_name;
+  unsigned long *mm_addr;
+  unsigned long mm_size;
   LIST_ENTRY(mmio_setup) mm_link;
 };
 
 static LIST_HEAD(__magic, mmio_setup) vmm_mmio_setup_queue;
 
-void vmm_register_mmio(mmio_setup_callback_t callback) {
-  struct mmio_setup *cb_node = alloc(sizeof(struct mmio_setup), sizeof(struct mmio_setup));
-  cb_node->mm_callback = callback;
-  LIST_INSERT_HEAD(&vmm_mmio_setup_queue, cb_node, mm_link);
+void vmm_register_mmio(char *name, unsigned long *addr, unsigned long size) {
+  struct mmio_setup *mmio = alloc(sizeof(struct mmio_setup), sizeof(struct mmio_setup));
+  mmio->mm_name = name;
+  mmio->mm_addr = addr;
+  mmio->mm_size = size;
+  LIST_INSERT_HEAD(&vmm_mmio_setup_queue, mmio, mm_link);
 }
 
 void vmm_setup_mmio(void) {
-  struct mmio_setup *cb_node;
-  LIST_FOREACH (cb_node, &vmm_mmio_setup_queue, mm_link) {
-    panic_e(cb_invoke(cb_node->mm_callback)());
+  struct mmio_setup *mmio;
+  LIST_FOREACH (mmio, &vmm_mmio_setup_queue, mm_link) {
+    info("set up %s mmio at ", mmio->mm_name);
+    mem_print_range(*mmio->mm_addr + DEVOFFSET, mmio->mm_size, NULL);
+    vaddr_t va = {.val = *mmio->mm_addr + DEVOFFSET};
+    paddr_t pa = {.val = *mmio->mm_addr};
+    perm_t perm = {.bits = {.a = 1, .d = 1, .r = 1, .w = 1, .g = 1}};
+    for (; pa.val < *mmio->mm_addr + mmio->mm_size; pa.val += PGSIZE, va.val += PGSIZE) {
+      panic_e(pt_map(kern_pgdir, va, pa, perm));
+    }
+    *mmio->mm_addr += DEVOFFSET;
   }
 }
 
