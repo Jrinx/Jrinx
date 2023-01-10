@@ -109,18 +109,18 @@ objdump:
 objcopy:
 	@$(OBJCOPY) -O binary $(JRINX) $(JRINX).bin
 
-run: EMU_OPTS		+= -kernel $(JRINX) -bios $(BOOTLOADER)
+run: EMU_OPTS			+= -kernel $(JRINX) -bios $(BOOTLOADER)
 run: $(BOOTLOADER)
 	@$(EMU) $(EMU_OPTS)
 
-dbg: EMU_OPTS		+= -s -S
+dbg: EMU_OPTS			+= -s -S
 dbg: run
 
 gdb:
 	@$(GDB) $(GDB_EVAL_CMD) $(JRINX)
 
-gdb-sbi: GDB_EVAL_CMD	+= -ex 'set confirm off' -ex 'add-symbol-file $(BOOTLOADER)' \
-			-ex 'set confirm on'
+gdb-sbi: GDB_EVAL_CMD		+= -ex 'set confirm off' -ex 'add-symbol-file $(BOOTLOADER)' \
+				-ex 'set confirm on'
 gdb-sbi: gdb
 
 dumpdts: $(EMU_MACH).dts
@@ -128,7 +128,7 @@ dumpdts: $(EMU_MACH).dts
 %.dts: %.dtb
 	@$(DTC) -I dtb -O dts $< -o $@
 
-$(EMU_MACH).dtb: EMU_OPTS += -M $(EMU_MACH),dumpdtb=$(EMU_MACH).dtb
+$(EMU_MACH).dtb: EMU_OPTS	+= -M $(EMU_MACH),dumpdtb=$(EMU_MACH).dtb
 $(EMU_MACH).dtb:
 	@$(EMU) $(EMU_OPTS)
 
