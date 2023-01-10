@@ -9,5 +9,6 @@ size_t strlen(const char *s);
 char *strcpy(char *restrict dst, const char *restrict src);
 const char *strchr(const char *restrict s, int c);
 int strcmp(const char *restrict p, const char *restrict q);
+int atoi(const char *str);
 
 #endif

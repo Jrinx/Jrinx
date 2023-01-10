@@ -3,6 +3,7 @@
 
 enum {
   KER_SUCCESS = 0,
+  KER_ARG_ER,
   KER_LOCK_ER,
   KER_DTB_ER,
   KER_DEV_ER,

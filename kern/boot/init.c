@@ -3,6 +3,7 @@
 #include <kern/drivers/device.h>
 #include <kern/drivers/devicetree.h>
 #include <kern/drivers/serialport.h>
+#include <kern/lib/bootargs.h>
 #include <kern/lib/debug.h>
 #include <kern/lib/logger.h>
 #include <kern/lib/regs.h>
@@ -41,6 +42,8 @@ void kernel_init(unsigned long hartid, void *dtb_addr) {
     panic_e(device_init());
     panic_e(device_probe(&boot_dt));
     panic_e(chosen_select_dev());
+
+    panic_e(args_evaluate(chosen_get_bootargs()));
 
     vmm_setup_mmio();
     pmm_init();

@@ -92,3 +92,19 @@ int strcmp(const char *restrict p, const char *restrict q) {
 
   return 0;
 }
+
+static long strtol(const char *str) {
+  long sign = 1L;
+  long res = 0;
+  for (; *str == '-' || *str == '+'; str++) {
+    sign = *str == '-' ? -sign : sign;
+  }
+  for (; *str; str++) {
+    res = res * 10 + *str - '0';
+  }
+  return sign * res;
+}
+
+int atoi(const char *str) {
+  return (int)strtol(str);
+}
