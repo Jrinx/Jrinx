@@ -1,5 +1,3 @@
-OPENSBI_FW_PATH	?= ../archive/opensbi/build/platform/generic/firmware
-
 # Qemu does not support big endian now.
 TARGET_ENDIAN	?= little
 
@@ -36,6 +34,9 @@ OBJECTS		:= $(addsuffix /**/*.o, $(MODULES))
 LDSCRIPT	:= kern.ld
 TARGET_DIR	:= target
 JRINX		:= $(TARGET_DIR)/jrinx
+
+OPENSBI_ROOT	:= opensbi
+OPENSBI_FW_PATH	:= $(OPENSBI_ROOT)/build/platform/generic/firmware
 BOOTLOADER	:= $(OPENSBI_FW_PATH)/fw_jump.elf
 
 DTC		:= dtc
@@ -44,7 +45,8 @@ export CROSS_COMPILE CFLAGS LDFLAGS
 export CHECK_PREPROC ?= n
 
 .ONESHELL:
-.PHONY: all debug release release-debug build clean clean-all run dbg gdb gdb-sbi \
+.PHONY: all debug release release-debug build clean clean-all clean-opensbi \
+	run dbg gdb gdb-sbi \
 	preprocess objdump objcopy dumpdtb dumpdts \
 	$(JRINX) $(MODULES) \
 	check-style fix-style register-git-hooks
@@ -76,6 +78,9 @@ $(JRINX): $(MODULES) $(LDSCRIPT) $(TARGET_DIR)
 $(MODULES):
 	$(MAKE) -C $@
 
+$(BOOTLOADER):
+	$(MAKE) -C $(OPENSBI_ROOT) all PLATFORM=generic PLATFORM_RISCV_XLEN=64
+
 $(TARGET_DIR):
 	@mkdir -p $@
 
@@ -92,6 +97,9 @@ clean-all: clean
 		-name '*.dtb' -o -name '*.dts' \
 	\) -type f -delete
 
+clean-opensbi:
+	@$(MAKE) -C $(OPENSBI_ROOT) distclean
+
 preprocess: all
 
 objdump:
@@ -102,7 +110,7 @@ objcopy:
 	@$(OBJCOPY) -O binary $(JRINX) $(JRINX).bin
 
 run: EMU_OPTS		+= -kernel $(JRINX) -bios $(BOOTLOADER)
-run:
+run: $(BOOTLOADER)
 	@$(EMU) $(EMU_OPTS)
 
 dbg: EMU_OPTS		+= -s -S
