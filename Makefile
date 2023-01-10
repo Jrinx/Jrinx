@@ -47,7 +47,7 @@ export CHECK_PREPROC ?= n
 .ONESHELL:
 .PHONY: all debug release release-debug build clean clean-all clean-opensbi \
 	run dbg gdb gdb-sbi \
-	preprocess objdump objcopy dumpdtb dumpdts \
+	preprocess objdump objcopy dumpdts \
 	$(JRINX) $(MODULES) \
 	check-style fix-style register-git-hooks
 
@@ -123,12 +123,14 @@ gdb-sbi: GDB_EVAL_CMD	+= -ex 'set confirm off' -ex 'add-symbol-file $(BOOTLOADER
 			-ex 'set confirm on'
 gdb-sbi: gdb
 
-dumpdtb: EMU_OPTS	+= -M $(EMU_MACH),dumpdtb=$(EMU_MACH).dtb
-dumpdtb:
-	@$(EMU) $(EMU_OPTS)
+dumpdts: $(EMU_MACH).dts
 
-dumpdts: dumpdtb
-	@$(DTC) -I dtb -O dts $(EMU_MACH).dtb -o $(EMU_MACH).dts
+%.dts: %.dtb
+	@$(DTC) -I dtb -O dts $< -o $@
+
+$(EMU_MACH).dtb: EMU_OPTS += -M $(EMU_MACH),dumpdtb=$(EMU_MACH).dtb
+$(EMU_MACH).dtb:
+	@$(EMU) $(EMU_OPTS)
 
 check-style:
 	@scripts/check-style
