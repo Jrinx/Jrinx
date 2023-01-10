@@ -10,4 +10,5 @@
     "C_Cpp.default.includePath": [
         "${workspaceFolder}/include",
     ],
+    "editor.tabSize": 2,
 }
