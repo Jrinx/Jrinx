@@ -9,8 +9,8 @@ def main():
     args = args.parse_args()
     with open(args.logo_path, 'r', encoding='utf-8') as logo_file:
         logo = logo_file.read()
-    content = logo.encode('unicode-escape').decode('utf-8')
-    print(f'"{content}"')
+    content = ','.join([f'0x{int(b):x}' for b in bytes(logo, 'utf-8')])
+    print('{' + content + '}')
 
 
 if __name__ == '__main__':
