@@ -16,6 +16,7 @@ set -e
 
 fix="no"
 opt="lescp"
+dry="no"
 line_len_max=96
 
 while [[ $# -gt 0 ]]
@@ -43,6 +44,10 @@ do
     fi
     shift
     ;;
+  -d|--dry-run)
+    dry="yes"
+    shift
+    ;;
   *)
     echo "Unknown option $1"
     exit 1
@@ -50,10 +55,22 @@ do
   esac
 done
 
-source "${0%/*}"/bash/utils.sh
+source "${0%/*}"/bash/utils.bash
+
+all_files=$(git ls-tree -r HEAD --name-only | xargs ls -d 2>/dev/null)
+all_files=$(echo -e "$all_files\n$(git diff --name-only --staged)")
+all_files=$(
+  echo "$all_files" | \
+  grep -Fxv "$(grep '^\s*\[submodule ' .gitmodules | cut -d '"' -f2)"
+)
 
 function check-ln() {
-  green '[ line-length-max checker ] begin'
+  if [ "$dry" = 'yes' ]; then
+    green '[ line-length-max checker ] just show files:'
+  else
+    green '[ line-length-max checker ] begin'
+  fi
+
   line_len_max_check="$(cat <<-EOF
 BEGIN {
   cnt = 0
@@ -69,82 +86,100 @@ END {
 }
 EOF
 )"
-  if ! find -- * ! -path .git -type f -print0 | xargs -0 -n1 awk "$line_len_max_check" ; then
+
+  if [ "$dry" = 'yes' ]; then
+    echo "$all_files"
+  elif ! echo "$all_files" | xargs -n1 awk "$line_len_max_check" ; then
     fatal '[ line-length-max checker ] failed'
     return 1
   else
     green '[ line-length-max checker ] passed'
-    return 0
   fi
+  return 0
 }
 
 function check-ec() {
-  green '[ editor-config checker ] begin'
-  if ! $EC ; then
+  if [ "$dry" = 'yes' ]; then
+    green '[ editor-config checker ] just show files'
+  else
+    green '[ editor-config checker ] begin'
+  fi
+
+  if [ "$dry" = 'yes' ]; then
+    $EC -dry-run
+  elif ! $EC ; then
     fatal '[ editor-config checker ] failed'
     return 1
   else
     green '[ editor-config checker ] passed'
-    return 0
   fi
+  return 0
 }
 
 function check-sh() {
-  green '[ shellcheck ] begin'
-  bash_files=$(grep --exclude-dir=.git -m 1 -rIzl '^#!/bin/bash')
-  # shellcheck disable=2086
-  if ! $SHELLCHECK -x $bash_files -e 1090,1091 ; then
+  if [ "$dry" = 'yes' ]; then
+    green '[ shellcheck ] just show bash files:'
+  else
+    green '[ shellcheck ] begin'
+  fi
+
+  bash_files=$(echo "$all_files" | grep '[a-zA-Z_-]\+\.bash$')
+  if [ -z "$bash_files" ]; then
+    green '[ shellcheck ] no bash files found'
+  elif [ "$dry" = 'yes' ]; then
+    echo "$bash_files"
+  elif # shellcheck disable=2086
+    ! $SHELLCHECK -x $bash_files -e 1090,1091 ; then
     fatal '[ shellcheck ] failed'
     return 1
   else
     green '[ shellcheck ] passed'
-    return 0
   fi
+  return 0
 }
 
 function check-cl() {
-  green '[ clang-format ] begin'
-  c_files=$(find -- * -regextype sed -regex '.*\.[ch]' -print)
-
-  if [ -z "$c_files" ]; then
-    green '[ clang-format ] no c language files found'
-    return 0
+  if [ "$dry" = 'yes' ]; then
+    green '[ clang-format ] just show c files:'
+  else
+    green '[ clang-format ] begin'
   fi
 
-  if [ "$fix" = "yes" ]; then
+  c_files=$(echo "$all_files" | grep '[a-zA-Z_-]\+\.\(c\|h\)$')
+  if [  -z "$c_files" ]; then
+    green '[ clang-format ] no c files found'
+  elif [ "$dry" = 'yes' ]; then
+    echo "$c_files"
+  elif [ "$fix" = 'yes' ]; then
     # shellcheck disable=2086
-    if ! $CLANG_FORMAT -i $c_files ; then
-      warning '[ clang-format ] maybe version too low?'
-    fi
+    $CLANG_FORMAT -i $c_files
     green '[ clang-format ] fix end'
-    return 0
   else
     # shellcheck disable=2086
-    cnt=$($CLANG_FORMAT $c_files --output-replacements-xml | \
-            grep -c "<replacement "; exit "${PIPESTATUS[0]}")
-    if [ "${PIPESTATUS[0]}" -ne 0 ] && [ "$cnt" -eq 0 ]; then
-      warning '[ clang-format ] maybe version too low?'
-    fi
+    cnt=$($CLANG_FORMAT $c_files --output-replacements-xml | grep -c "<replacement ")
     if [ "$cnt" -eq 0 ]; then
       green '[ clang-format ] check passed'
-      return 0
     else
       fatal "[ clang-format ] check failed"
       return 1
     fi
   fi
+  return 0
 }
 
 function check-py() {
-  green '[ autopep8 ] begin'
-  py_files=$(grep --exclude-dir=.git -m 1 -rIzl '^#!/usr/bin/python.*')
-
-  if [ -z "$py_files" ]; then
-    green '[ autopep8 ] no python files found'
-    return 0
+  if [ "$dry" = 'yes' ]; then
+    green '[ autopep8 ] just show py files:'
+  else
+    green '[ autopep8 ] begin'
   fi
 
-  if [ "$fix" = "yes" ]; then
+  py_files=$(echo "$all_files" | grep '[a-zA-Z_-]\+\.py$')
+  if [ -z "$py_files" ]; then
+    green '[ autopep8 ] no python files found'
+  elif [ "$dry" = 'yes' ]; then
+    echo "$py_files"
+  elif [ "$fix" = 'yes' ]; then
     # shellcheck disable=2086
     $AUTOPEP8 --max-line-length $line_len_max -i -j 0 $py_files
     green '[ autopep8 ] fix end'

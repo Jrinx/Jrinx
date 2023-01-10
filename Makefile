@@ -130,10 +130,10 @@ dumpdtb:
 dumpdts: dumpdtb
 	@$(DTC) -I dtb -O dts $(EMU_MACH).dtb -o $(EMU_MACH).dts
 
-check-style: clean-all
+check-style:
 	@scripts/check-style
 
-fix-style: clean-all
+fix-style:
 	@scripts/check-style -f
 
 register-git-hooks:
