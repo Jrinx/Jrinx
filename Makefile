@@ -106,7 +106,6 @@ run:
 	@$(EMU) $(EMU_OPTS)
 
 dbg: EMU_OPTS		+= -s -S
-dbg: CFLAGS		+= -DJRINX=$(JRINX)
 dbg: run
 
 gdb:
