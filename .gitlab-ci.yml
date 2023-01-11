@@ -1,0 +1,26 @@
+stages:
+  - check
+  - test
+
+default:
+  tags:
+    - docker
+  image: $CI_JRINX_DEVEL_IMAGE
+
+variables:
+  CROSS_COMPILE: riscv64-linux-gnu-
+  GIT_SUBMODULE_STRATEGY: recursive
+
+check-style:
+  stage: check
+  script:
+    - make check-style
+
+regression-test:
+  stage: test
+  parallel:
+    matrix:
+      - MODE: [debug, release]
+        TEST: [pmm-test]
+  script:
+    - ./scripts/run-kern-test
