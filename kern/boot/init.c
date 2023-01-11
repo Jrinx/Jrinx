@@ -43,8 +43,6 @@ void kernel_init(unsigned long hartid, void *dtb_addr) {
     panic_e(device_probe(&boot_dt));
     panic_e(chosen_select_dev());
 
-    panic_e(args_evaluate(chosen_get_bootargs()));
-
     vmm_setup_mmio();
     pmm_init();
     vmm_setup_kern();
@@ -52,6 +50,9 @@ void kernel_init(unsigned long hartid, void *dtb_addr) {
     vmm_summary();
 
     log_localize_output();
+
+    panic_e(args_evaluate(chosen_get_bootargs()));
+    panic_e(args_action());
 
     panic_e(lk_acquire(&spinlock_of(init_state)));
     init_state++;

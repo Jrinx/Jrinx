@@ -2,8 +2,9 @@
 TARGET_ENDIAN	?= little
 
 CPUS		?= 5
-
 COLOR		?= y
+TEST		?=
+ARGS		?=
 
 JRINX_LOGO	:= jrinx.logo
 CROSS_COMPILE	:= riscv64-unknown-elf-
@@ -26,11 +27,17 @@ EMU 		:= qemu-system-riscv64
 EMU_MACH 	:= virt
 EMU_CPUS 	:= $(CPUS)
 EMU_RAM_SIZE	:= 1G
+EMU_ARGS	?=
+EMU_TEST_CONF	:= .test.conf
+ifneq ($(wildcard $(EMU_TEST_CONF)),)
+EMU_ARGS	+= --test $(shell cat $(EMU_TEST_CONF))
+endif
 EMU_OPTS	:= -M $(EMU_MACH) -m $(EMU_RAM_SIZE) -nographic -smp $(EMU_CPUS)
 
 INCLUDES	:= -I./include
 MODULES		:= kern lib
-OBJECTS		:= $(addsuffix /**/*.o, $(MODULES))
+KERNTESTS_DIR	:= kern-tests
+OBJECTS		:= $(addsuffix /**/*.o, $(MODULES) $(KERNTESTS_DIR))
 LDSCRIPT	:= kern.ld
 TARGET_DIR	:= target
 JRINX		:= $(TARGET_DIR)/jrinx
@@ -43,12 +50,17 @@ DTC		:= dtc
 
 export CROSS_COMPILE CFLAGS LDFLAGS
 export CHECK_PREPROC ?= n
+export TEST_NAME := $(shell echo "$(TEST)" | tr - _)
+
+ifneq ($(TEST_NAME),)
+$(shell echo '$(TEST)' > $(EMU_TEST_CONF))
+endif
 
 .ONESHELL:
 .PHONY: all debug release release-debug build clean clean-all clean-opensbi \
 	run dbg gdb gdb-sbi \
 	preprocess objdump objcopy dumpdts \
-	$(JRINX) $(MODULES) \
+	$(JRINX) $(MODULES) $(KERNTESTS_DIR) \
 	check-style fix-style register-git-hooks cloc
 
 all: debug
@@ -71,11 +83,14 @@ build: clean
 	@$(MAKE) $(JRINX)
 
 $(JRINX): SHELL := $(shell which bash)
-$(JRINX): $(MODULES) $(LDSCRIPT) $(TARGET_DIR)
+$(JRINX): $(MODULES) $(KERNTESTS_DIR) $(LDSCRIPT) $(TARGET_DIR)
 	shopt -s nullglob globstar
 	$(LD) $(LDFLAGS) -T $(LDSCRIPT) -o $(JRINX) $(OBJECTS)
 
 $(MODULES):
+	$(MAKE) -C $@
+
+$(KERNTESTS_DIR):
 	$(MAKE) -C $@
 
 $(BOOTLOADER):
@@ -89,7 +104,7 @@ include mk/compile.mk
 clean:
 	@rm -rf $(TARGET_DIR)
 	@find -- . -not \( -path './$(OPENSBI_ROOT)/*' \) \( \
-		-name '*.o' -o -name '*.ld' -o -name '*.i' \
+		-name '*.o' -o -name '*.ld' -o -name '*.i' -o -name '$(EMU_TEST_CONF)' \
 	\) -type f -delete
 
 clean-all: clean
@@ -109,7 +124,7 @@ objdump:
 objcopy:
 	@$(OBJCOPY) -O binary $(JRINX) $(JRINX).bin
 
-run: EMU_OPTS			+= -kernel $(JRINX) -bios $(BOOTLOADER)
+run: EMU_OPTS			+= -kernel $(JRINX) -bios $(BOOTLOADER) -append '$(EMU_ARGS)'
 run: $(BOOTLOADER)
 	@$(EMU) $(EMU_OPTS)
 

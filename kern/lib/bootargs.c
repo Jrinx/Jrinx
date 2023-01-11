@@ -1,4 +1,5 @@
 #include <kern/lib/errors.h>
+#include <kern/tests.h>
 #include <lib/argparser.h>
 #include <lib/string.h>
 
@@ -54,4 +55,12 @@ long args_evaluate(const char *bootargs) {
 
   parse_ret_t ret = args_parse(args_collections, args_cnt, args_list);
   return ret.error == ARGP_SUCCESS ? KER_SUCCESS : -KER_ARG_ER;
+}
+
+long args_action(void) {
+  if (args_test != NULL) {
+    do_test(args_test);
+    halt("arg-driven test done, halt!\n");
+  }
+  return KER_SUCCESS;
 }
