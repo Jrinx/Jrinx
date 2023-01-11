@@ -5,7 +5,7 @@
 #include <stdint.h>
 
 union sv39_perm_t {
-  unsigned val : 10;
+  unsigned val;
   struct {
     unsigned v : 1;
     unsigned r : 1;
@@ -16,6 +16,7 @@ union sv39_perm_t {
     unsigned a : 1;
     unsigned d : 1;
     unsigned rsw : 2;
+    unsigned blank0 : 22;
   } __attribute__((packed)) bits;
 };
 
@@ -26,10 +27,12 @@ union sv39_va_t {
     unsigned vpn0 : 9;
     unsigned vpn1 : 9;
     unsigned vpn2 : 9;
+    unsigned blank0 : 25;
   } __attribute__((packed)) bits;
   struct {
     unsigned off : 12;
     unsigned vpn : 27;
+    unsigned blank0 : 25;
   } __attribute__((packed)) pp;
 };
 
@@ -40,10 +43,12 @@ union sv39_pa_t {
     unsigned ppn0 : 9;
     unsigned ppn1 : 9;
     unsigned ppn2 : 26;
+    unsigned blank0 : 8;
   } __attribute__((packed)) bits;
   struct {
     unsigned off : 12;
     unsigned long ppn : 44;
+    unsigned blank0 : 8;
   } __attribute__((packed)) pp;
 };
 

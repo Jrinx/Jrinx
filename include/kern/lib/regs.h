@@ -40,6 +40,7 @@ typedef union {
     unsigned blank2 : 3;
     unsigned seip : 1;
     unsigned blank3 : 6;
+    unsigned long blank4 : 48;
   } __attribute__((packed)) ip_bits;
   struct {
     unsigned blank0 : 1;
@@ -49,6 +50,7 @@ typedef union {
     unsigned blank2 : 3;
     unsigned seie : 1;
     unsigned blank3 : 6;
+    unsigned long blank4 : 48;
   } __attribute__((packed)) ie_bits;
 } rv64_sipe;
 
