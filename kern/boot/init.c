@@ -11,7 +11,6 @@
 #include <kern/lib/sync.h>
 #include <kern/lock/lock.h>
 #include <kern/lock/spinlock.h>
-#include <kern/mm/pmm.h>
 #include <kern/mm/vmm.h>
 #include <layouts.h>
 #include <lib/string.h>
@@ -44,7 +43,6 @@ void kernel_init(unsigned long hartid, void *dtb_addr) {
     panic_e(chosen_select_dev());
 
     vmm_setup_mmio();
-    pmm_init();
     vmm_setup_kern();
     vmm_start();
     vmm_summary();

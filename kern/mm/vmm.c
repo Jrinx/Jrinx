@@ -1,4 +1,5 @@
 #include <aligns.h>
+#include <kern/drivers/mems.h>
 #include <kern/lib/debug.h>
 #include <kern/lib/errors.h>
 #include <kern/lib/regs.h>
@@ -26,8 +27,12 @@ static long pt_boot_frame_alloc(paddr_t *pa) {
   return KER_SUCCESS;
 }
 
-static long pt_boot_frame_free(paddr_t pa) {
-  UNIMPLEMENTED;
+static long pt_boot_frame_ref_inc(paddr_t pa) {
+  return KER_SUCCESS;
+}
+
+static long pt_boot_frame_ref_dec(paddr_t pa) {
+  return KER_SUCCESS;
 }
 
 static long pt_phy_frame_alloc(paddr_t *pa) {
@@ -38,16 +43,29 @@ static long pt_phy_frame_alloc(paddr_t *pa) {
   return KER_SUCCESS;
 }
 
-static long pt_phy_frame_free(paddr_t pa) {
+static long pt_phy_frame_ref_inc(paddr_t pa) {
   struct phy_frame *pf;
-  catch_e(pa2frame(pa.val, &pf));
+  catch_e(pa2frame(pa.val, &pf), {
+    // pa locates at mmio region
+    return KER_SUCCESS;
+  });
+  panic_e(phy_frame_ref_inc(pf));
+  return KER_SUCCESS;
+}
+
+static long pt_phy_frame_ref_dec(paddr_t pa) {
+  struct phy_frame *pf;
+  catch_e(pa2frame(pa.val, &pf), {
+    // pa locates at mmio region
+    return KER_SUCCESS;
+  });
   panic_e(phy_frame_ref_dec(pf));
   return KER_SUCCESS;
 }
 
 static long (*pt_frame_alloc)(paddr_t *pa) = pt_boot_frame_alloc;
-
-static long (*pt_frame_free)(paddr_t pa) = pt_boot_frame_free;
+static long (*pt_frame_ref_inc)(paddr_t pa) = pt_boot_frame_ref_inc;
+static long (*pt_frame_ref_dec)(paddr_t pa) = pt_boot_frame_ref_dec;
 
 static long pt_walk(pte_t *pgdir, vaddr_t va, int create, pte_t **pte) {
   paddr_t pa1 = {.val = 0};
@@ -72,7 +90,7 @@ static long pt_walk(pte_t *pgdir, vaddr_t va, int create, pte_t **pte) {
     }
     catch_e(pt_frame_alloc(&pa2), {
       if (pa1.val != 0) {
-        panic_e(pt_frame_free(pa1));
+        panic_e(pt_frame_ref_dec(pa1));
       }
       return err;
     });
@@ -106,12 +124,7 @@ long pt_unmap(pte_t *pgdir, vaddr_t va) {
 
   pte->val = 0;
   paddr_t pa = pte2pa(*pte);
-  struct phy_frame *frame;
-  catch_e(pa2frame(pa.val, &frame), {
-    // pa locates at mmio region
-    return KER_SUCCESS;
-  });
-  catch_e(phy_frame_ref_dec(frame));
+  catch_e(pt_frame_ref_dec(pa));
   return KER_SUCCESS;
 }
 
@@ -129,14 +142,7 @@ long pt_map(pte_t *pgdir, vaddr_t va, paddr_t pa, perm_t perm) {
   perm.bits.d = 1;
   perm.bits.v = 1;
   pte->pp.perm = perm.val;
-
-  struct phy_frame *frame;
-  catch_e(pa2frame(pa.val, &frame), {
-    // pa locates at mmio region
-    return KER_SUCCESS;
-  });
-
-  panic_e(phy_frame_ref_inc(frame));
+  panic_e(pt_frame_ref_inc(pa));
   return KER_SUCCESS;
 }
 
@@ -174,26 +180,41 @@ void vmm_setup_mmio(void) {
 
 void vmm_setup_kern(void) {
   extern uint8_t kern_text_end[];
-  unsigned long freemem_base = mm_get_freemem_base();
   vaddr_t va = {.val = KERNBASE};
   paddr_t pa = {.val = KERNBASE};
   size_t text_end = align_up((size_t)kern_text_end, PGSIZE);
-  size_t free_end = align_up((size_t)freemem_base, PGSIZE);
 
   for (; va.val < text_end; va.val += PGSIZE, pa.val += PGSIZE) {
     perm_t perm = {.bits = {.a = 1, .d = 1, .r = 1, .x = 1, .w = 1, .g = 1}};
     panic_e(pt_map(kern_pgdir, va, pa, perm));
   }
 
-  for (; va.val < free_end; va.val += PGSIZE, pa.val += PGSIZE) {
+  size_t mem_num = mem_get_num();
+  for (size_t i = 0; i < mem_num; i++) {
+    uint64_t mem_addr;
+    uint64_t mem_size;
+    panic_e(mem_get_addr(i, &mem_addr));
+    panic_e(mem_get_size(i, &mem_size));
+    vaddr_t va;
     perm_t perm = {.bits = {.a = 1, .d = 1, .r = 1, .w = 1, .g = 1}};
-    panic_e(pt_map(kern_pgdir, va, pa, perm));
+    if (text_end >= mem_addr && text_end < mem_addr + mem_size) {
+      va.val = text_end;
+    } else {
+      va.val = mem_addr;
+    }
+    paddr_t pa = {.val = va.val};
+    for (; va.val < mem_addr + mem_size; va.val += PGSIZE, pa.val += PGSIZE) {
+      panic_e(pt_map(kern_pgdir, va, pa, perm));
+    }
   }
+
+  pmm_init();
 
   alloc = kalloc;
   free = kfree;
   pt_frame_alloc = pt_phy_frame_alloc;
-  pt_frame_free = pt_phy_frame_free;
+  pt_frame_ref_inc = pt_phy_frame_ref_inc;
+  pt_frame_ref_dec = pt_phy_frame_ref_dec;
 }
 
 void vmm_start(void) {
