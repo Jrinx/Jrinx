@@ -1,13 +1,13 @@
 # Qemu does not support big endian now.
-TARGET_ENDIAN	?= little
+TARGET_ENDIAN	:= little
 
 CPUS		?= 5
 COLOR		?= y
 TEST		?=
 ARGS		?=
+CROSS_COMPILE	?= riscv64-unknown-elf-
 
 JRINX_LOGO	:= jrinx.logo
-CROSS_COMPILE	:= riscv64-unknown-elf-
 
 GDB		:= gdb-multiarch
 GDB_EVAL_CMD	:= -ex 'target remote :1234'
