@@ -89,7 +89,7 @@ EOF
 
   if [ "$dry" = 'yes' ]; then
     echo "$all_files"
-  elif ! echo "$all_files" | xargs -n1 awk "$line_len_max_check" ; then
+  elif ! echo "$all_files" | xargs -n1 gawk "$line_len_max_check" ; then
     fatal '[ line-length-max checker ] failed'
     return 1
   else
