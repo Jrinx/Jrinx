@@ -8,7 +8,9 @@ struct kern_test {
   kern_test_func_t kt_test_func;
 };
 
-static struct kern_test kern_testset[] = {};
+static struct kern_test kern_testset[] = {
+    {"pmm-test", pmm_test},
+};
 
 void do_test(const char *name) {
   int found = 0;

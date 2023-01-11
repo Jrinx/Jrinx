@@ -1,3 +1,4 @@
+#include <kern/lib/debug.h>
 #include <kern/lib/errors.h>
 #include <kern/tests.h>
 #include <lib/argparser.h>
