@@ -23,4 +23,4 @@ regression-test:
       - MODE: [debug, release]
         TEST: [pmm-test]
   script:
-    - ./scripts/run-kern-test
+    - timeout 40 ./scripts/run-kern-test
