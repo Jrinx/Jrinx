@@ -94,12 +94,15 @@ static long plic_register_irq(void *ctx, unsigned long source_id, trap_callback_
 }
 
 static void plic_init(struct plic *plic) {
+  info("set all interrupt sources priority to MIN\n");
   for (uint32_t i = PLIC_SOURCE_MIN; i < PLIC_SOURCE_MAX; i++) {
     plic_set_source_prio(plic, i, PLIC_PRIO_MIN);
   }
 
   uint32_t context_max_id = (plic->pl_size - 0x200000UL) / 0x1000UL - 1UL;
   assert(context_max_id >= PLIC_EXTERNAL_INT_CTX);
+  info("disable all interrupt sources for all context (0 - %d)\n", context_max_id);
+  info("set all context priority threshold to MAX\n");
   for (uint32_t i = 0; i <= context_max_id; i++) {
     for (uint32_t j = PLIC_SOURCE_MIN; j <= PLIC_SOURCE_MAX; j++) {
       plic_source_disable(plic, i, j);
@@ -107,7 +110,7 @@ static void plic_init(struct plic *plic) {
     plic_set_context_prio_threshold(plic, i, PLIC_PRIO_MAX);
   }
 
-  info("all external interrupt shall be handled by context %u\n", PLIC_EXTERNAL_INT_CTX);
+  info("all interrupt sources shall be handled by context %u\n", PLIC_EXTERNAL_INT_CTX);
   plic_set_context_prio_threshold(plic, PLIC_EXTERNAL_INT_CTX, PLIC_PRIO_MIN);
 }
 
