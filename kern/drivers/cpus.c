@@ -21,34 +21,39 @@ static int cpus_pred(const struct dev_node *node) {
   return strcmp(node->nd_name, "cpus") == 0;
 }
 
+static int cpus_check(const struct dev_node *node) {
+  struct dev_node_prop *prop;
+  prop = dt_node_prop_extract(node, "device_type");
+  if (prop == NULL || strcmp((char *)prop->pr_values, "cpu") != 0) {
+    return 0;
+  }
+  prop = dt_node_prop_extract(node, "compatible");
+  if (prop == NULL || !dt_match_strlist(prop->pr_values, prop->pr_len, "riscv")) {
+    return 0;
+  }
+  prop = dt_node_prop_extract(node, "mmu-type");
+  if (prop == NULL) {
+    return 0;
+  }
+  return 1;
+}
+
 static long cpus_probe(const struct dev_node *node) {
   cpus_count = 0;
   struct dev_node *child;
   TAILQ_FOREACH (child, &node->nd_children_tailq, nd_link) {
-    struct dev_node_prop *prop;
-    prop = dt_node_prop_extract(child, "device_type");
-    if (prop == NULL || strcmp((char *)prop->pr_values, "cpu") != 0) {
-      continue;
+    if (cpus_check(child)) {
+      cpus_count++;
     }
-    prop = dt_node_prop_extract(child, "compatible");
-    if (prop == NULL || !dt_match_strlist(prop->pr_values, prop->pr_len, "riscv")) {
-      continue;
-    }
-    cpus_count++;
   }
 
   cpus_stacktop = alloc(sizeof(unsigned long) * cpus_count, sizeof(unsigned long));
 
   TAILQ_FOREACH (child, &node->nd_children_tailq, nd_link) {
+    if (!cpus_check(child)) {
+      continue;
+    }
     struct dev_node_prop *prop;
-    prop = dt_node_prop_extract(child, "device_type");
-    if (prop == NULL || strcmp((char *)prop->pr_values, "cpu") != 0) {
-      continue;
-    }
-    prop = dt_node_prop_extract(child, "compatible");
-    if (prop == NULL || !dt_match_strlist(prop->pr_values, prop->pr_len, "riscv")) {
-      continue;
-    }
     prop = dt_node_prop_extract(child, "reg");
     if (prop == NULL) {
       return -KER_DTB_ER;
