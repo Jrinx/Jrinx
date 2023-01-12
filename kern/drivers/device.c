@@ -4,6 +4,7 @@
 #include <kern/drivers/irq/plic.h>
 #include <kern/drivers/mems.h>
 #include <kern/drivers/rtc/goldfish.h>
+#include <kern/drivers/serial/sifiveuart0.h>
 #include <kern/drivers/serial/uart16550a.h>
 #include <kern/lib/debug.h>
 #include <kern/lib/errors.h>
@@ -21,6 +22,7 @@ long device_init(void) {
   catch_e(dev_register(&memory_device));
   catch_e(dev_register(&cpus_device));
   catch_e(dev_register(&plic_device));
+  catch_e(dev_register(&sifiveuart0_device));
   catch_e(dev_register(&uart16550a_device));
   catch_e(dev_register(&chosen_device));
   catch_e(dev_register(&goldfish_device));
