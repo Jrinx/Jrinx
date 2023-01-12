@@ -122,9 +122,9 @@ long pt_unmap(pte_t *pgdir, vaddr_t va) {
     return KER_SUCCESS;
   }
 
-  pte->val = 0;
   paddr_t pa = pte2pa(*pte);
   catch_e(pt_frame_ref_dec(pa));
+  pte->val = 0;
   return KER_SUCCESS;
 }
 
