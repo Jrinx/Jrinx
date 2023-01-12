@@ -79,9 +79,11 @@ def check_output(lines, verbose):
 
 def main():
     args = argparse.ArgumentParser()
+    args.add_argument('-n', '--suppress-emu-out', action='store_true')
     args.add_argument('-s', '--silent', action='store_true')
     args = args.parse_args()
 
+    suppress_emu_out = args.suppress_emu_out
     verbose = not args.silent
     if verbose:
         info('Judge begin')
@@ -106,7 +108,7 @@ def main():
 
     try:
         for out in ch.stdout:
-            if verbose:
+            if verbose and not suppress_emu_out:
                 sys.stdout.buffer.write(out)
                 sys.stdout.flush()
             ch_out += out.decode('utf-8')

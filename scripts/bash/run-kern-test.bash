@@ -61,7 +61,7 @@ for test_case in $test_list; do
     fatal "$prefix failed to build Jrinx with $test_case"
     exit $r
   fi
-  scripts/judge || r=$?
+  scripts/judge -n || r=$?
   if [ "$r" -ne 0 ]; then
     fatal "$prefix judge failed on $test_case"
     exit $r
