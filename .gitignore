@@ -1,4 +1,5 @@
 target
+__pycache__
 
 .test.conf
 *.test-out

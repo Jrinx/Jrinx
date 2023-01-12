@@ -20,7 +20,6 @@ regression-test:
   stage: test
   parallel:
     matrix:
-      - MODE: [debug, release]
-        TEST: [pmm-test]
+      - COMPILE_MODE: [debug, release]
   script:
-    - timeout 40 ./scripts/run-kern-test
+    - ./scripts/run-kern-test

@@ -2,12 +2,11 @@
 
 set -e
 
-[ ! -v MODE ] && MODE=debug
+[ ! -v COMPILE_MODE ] && COMPILE_MODE=debug
 
-debug='no'
+test_name=''
 
-while [[ $# -gt 0 ]]
-do
+while [[ $# -gt 0 ]]; do
   case $1 in
   -t|--test)
     if [ $# -lt 2 ]; then
@@ -15,11 +14,7 @@ do
       exit 1
     fi
     shift
-    TEST="$1"
-    shift
-    ;;
-  -d|--debug)
-    debug='yes'
+    test_name="$1"
     shift
     ;;
   *)
@@ -31,35 +26,46 @@ done
 
 source "${0%/*}"/bash/utils.bash
 
-if [ -z "$TEST" ]; then
-  fatal 'Expect test name as argument'
-  exit 1
+prefix="[ $COMPILE_MODE mode ]"
+
+r=0
+
+make $COMPILE_MODE > /dev/null || r=$?
+if [ "$r" -ne 0 ]; then
+  fatal "$prefix failed to build Jrinx"
+  exit $r
 fi
 
-if [ "$debug" = 'yes' ]; then
-  test_out="$TEST.test-out"
-  touch "$test_out"
+make sbi-fw > /dev/null || r=$?
+if [ "$r" -ne 0 ]; then
+  fatal "$prefix failed to build opensbi firmware"
+  exit $r
+fi
+
+test_list="$test_name"
+
+if [ -z "$test_name" ]; then
+  test_list=$(
+    find kern-tests -maxdepth 1 -name '*-test.c' | \
+    sort | \
+    sed -rne 's/kern-tests\/(.+?-test)\.c/\1/p'
+  )
 else
-  test_out="$(mktemp)"
+  test_list="$test_name"
 fi
 
-function runtest() {
-  make $MODE COLOR=n TEST="$TEST"
-  make run | tee "$test_out"
-  if grep -q 'arg-driven test done, halt!' "$test_out"; then
-    return 0
-  else
-    return 1
+for test_case in $test_list; do
+  green "$prefix run $test_case"
+  make TEST="$test_case" COLOR=n > /dev/null || r=$?
+  if [ "$r" -ne 0 ]; then
+    fatal "$prefix failed to build Jrinx with $test_case"
+    exit $r
   fi
-}
-
-prefix="[ run-test ($MODE: $TEST) ]"
-
-green "$prefix begin"
-if runtest; then
-  green "$prefix passed"
-  exit 0
-else
-  fatal "$prefix failed"
-  exit 1
-fi
+  scripts/judge || r=$?
+  if [ "$r" -ne 0 ]; then
+    fatal "$prefix judge failed on $test_case"
+    exit $r
+  else
+    green "$prefix judge passed on $test_case"
+  fi
+done

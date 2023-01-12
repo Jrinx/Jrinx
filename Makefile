@@ -50,14 +50,14 @@ DTC		:= dtc
 
 export CROSS_COMPILE CFLAGS LDFLAGS
 export CHECK_PREPROC ?= n
-export TEST_NAME := $(shell echo "$(TEST)" | tr - _)
+export TEST
 
-ifneq ($(TEST_NAME),)
+ifneq ($(TEST),)
 $(shell echo '$(TEST)' > $(EMU_TEST_CONF))
 endif
 
 .ONESHELL:
-.PHONY: all debug release release-debug build clean clean-all clean-opensbi \
+.PHONY: all debug release release-debug build sbi-fw clean clean-all clean-opensbi \
 	run dbg gdb gdb-sbi \
 	preprocess objdump objcopy dumpdts \
 	$(JRINX) $(MODULES) $(KERNTESTS_DIR) \
@@ -82,6 +82,8 @@ build: clean
 	@export MAKEFLAGS="-j$$(nproc) -s $$MAKEFLAGS"
 	@$(MAKE) $(JRINX)
 
+sbi-fw: $(BOOTLOADER)
+
 $(JRINX): SHELL := $(shell which bash)
 $(JRINX): $(MODULES) $(KERNTESTS_DIR) $(LDSCRIPT) $(TARGET_DIR)
 	shopt -s nullglob globstar
@@ -94,7 +96,7 @@ $(KERNTESTS_DIR):
 	$(MAKE) -C $@
 
 $(BOOTLOADER):
-	$(MAKE) -C $(OPENSBI_ROOT) all PLATFORM=generic PLATFORM_RISCV_XLEN=64
+	@$(MAKE) -C $(OPENSBI_ROOT) all PLATFORM=generic PLATFORM_RISCV_XLEN=64
 
 $(TARGET_DIR):
 	@mkdir -p $@

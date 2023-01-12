@@ -4,12 +4,12 @@ include ../mk/compile.mk
 
 COMPILE_TARGETS		:= testkits.o
 
-ifneq ($(TEST_NAME),)
+ifneq ($(TEST),)
 
-ifeq ($(wildcard $(TEST_NAME).c),)
-$(error test file '$(TEST_NAME)' not found)
+ifeq ($(wildcard $(TEST).c),)
+$(error test file '$(TEST)' not found)
 endif
-COMPILE_TARGETS		+= $(TEST_NAME).o
+COMPILE_TARGETS		+= $(TEST).o
 
 endif
 
