@@ -8,7 +8,7 @@ import subprocess
 
 from utils import *
 
-CHILD_TIMEOUT = 10
+CHILD_TIMEOUT = 30
 CHILD_TERM_TIMEOUT = 5
 
 
@@ -98,7 +98,7 @@ def main():
 
     def on_timeout(*_):
         if ch:
-            warn(f'{cmd} timed out after {CHILD_TIMEOUT} seconds')
+            warn(f'{cmd} stucked {CHILD_TIMEOUT} seconds')
             eliminate_child(ch, verbose)
 
     signal.signal(signal.SIGALRM, on_timeout)
@@ -112,6 +112,8 @@ def main():
                 sys.stdout.buffer.write(out)
                 sys.stdout.flush()
             ch_out += out.decode('utf-8')
+            if len(out) != 0:
+                signal.alarm(CHILD_TIMEOUT)
     finally:
         signal.alarm(0)
         if ch:
