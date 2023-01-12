@@ -5,8 +5,10 @@
 
 struct kern_test {
   char *kt_name;
-  kern_test_func_t kt_test_func;
+  void (*kt_test_func)(void);
 };
+
+void pmm_test(void) __attribute__((weak));
 
 static struct kern_test kern_testset[] = {
     {"pmm-test", pmm_test},
