@@ -8,7 +8,7 @@
 #define assert(expr)                                                                           \
   ({                                                                                           \
     if (unlikely(!(expr))) {                                                                   \
-      fatal("assertion failed: " #expr);                                                       \
+      fatal("assertion failed: " #expr "\n");                                                  \
     }                                                                                          \
   })
 
