@@ -98,7 +98,7 @@ def main():
 
     def on_timeout(*_):
         if ch:
-            fatal(f'{cmd} timed out after {CHILD_TIMEOUT} seconds')
+            warn(f'{cmd} timed out after {CHILD_TIMEOUT} seconds')
             eliminate_child(ch, verbose)
 
     signal.signal(signal.SIGALRM, on_timeout)

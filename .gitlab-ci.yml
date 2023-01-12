@@ -21,5 +21,6 @@ regression-test:
   parallel:
     matrix:
       - COMPILE_MODE: [debug, release]
+        BOARD: [virt, sifive_u]
   script:
     - ./scripts/run-kern-test

@@ -5,6 +5,7 @@ CPUS		?= 5
 COLOR		?= y
 TEST		?=
 ARGS		?=
+BOARD		?= virt
 CROSS_COMPILE	?= riscv64-unknown-elf-
 
 JRINX_LOGO	:= jrinx.logo
@@ -24,7 +25,7 @@ CFLAGS		+= --std=gnu99 -nostdlib \
 LDFLAGS		+= --fatal-warnings --warn-unresolved-symbols
 
 EMU 		:= qemu-system-riscv64
-EMU_MACH 	:= virt
+EMU_MACH 	:= $(BOARD)
 EMU_CPUS 	:= $(CPUS)
 EMU_RAM_SIZE	:= 1G
 EMU_ARGS	:= $(ARGS)
