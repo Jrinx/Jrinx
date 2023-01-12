@@ -86,13 +86,13 @@ def main():
     suppress_emu_out = args.suppress_emu_out
     verbose = not args.silent
     if verbose:
-        info('Judge begin')
+        info(f'Judge begin with args {args}')
 
     cmd = ['make', 'run']
     ch = subprocess.Popen(cmd,
                           stdin=None,
                           stdout=subprocess.PIPE,
-                          stderr=None,
+                          stderr=subprocess.STDOUT,
                           start_new_session=True,
                           )
 
