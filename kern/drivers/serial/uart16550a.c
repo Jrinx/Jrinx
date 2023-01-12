@@ -6,8 +6,6 @@
 #include <kern/lib/debug.h>
 #include <kern/lib/errors.h>
 #include <kern/lib/sync.h>
-#include <kern/lock/lock.h>
-#include <kern/lock/spinlock.h>
 #include <kern/mm/pmm.h>
 #include <kern/mm/vmm.h>
 #include <lib/string.h>
@@ -17,7 +15,6 @@ struct uart16550a {
   unsigned long ur_addr;
   unsigned long ur_size;
   uint32_t ur_shift;
-  struct lock spinlock_of(ur);
   LIST_ENTRY(uart16550a) ur_link;
 };
 
