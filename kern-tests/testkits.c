@@ -22,7 +22,7 @@ void do_test(const char *name) {
     struct kern_test *test = &kern_testset[i];
     if (strcmp(test->kt_name, name) == 0) {
       if (test->kt_test_func == NULL) {
-        fatal("%s not linked into kernel\n");
+        fatal("%s not linked into kernel\n", test->kt_name);
       }
       info("<<< %s begin\n", name);
       test->kt_test_func();
