@@ -5,7 +5,7 @@ import sys
 if sys.stdout.isatty() or 'GITLAB_CI' in os.environ:
     def make_printer(prefix, level, *, file=sys.stdout):
         def wrapper(s, file=file):
-            print(f'{prefix}[ {s} ]\033[0m', file=file)
+            print(f'{prefix}!> {s}\033[0m', file=file)
 
         return wrapper
 else:
