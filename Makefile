@@ -27,7 +27,7 @@ EMU 		:= qemu-system-riscv64
 EMU_MACH 	:= virt
 EMU_CPUS 	:= $(CPUS)
 EMU_RAM_SIZE	:= 1G
-EMU_ARGS	?=
+EMU_ARGS	:= $(ARGS)
 EMU_TEST_CONF	:= .test.conf
 ifneq ($(wildcard $(EMU_TEST_CONF)),)
 EMU_ARGS	+= --test $(shell cat $(EMU_TEST_CONF))

@@ -1,3 +1,4 @@
+#include <kern/drivers/devicetree.h>
 #include <kern/lib/debug.h>
 #include <kern/lib/errors.h>
 #include <kern/tests.h>
@@ -11,9 +12,25 @@ static char args_raw[BOOTARGS_MAX_LEN];
 static const char *args_list[BOOTARGS_MAX_NUM];
 static size_t args_cnt = 0;
 static const char *args_test;
+static int args_dt_print = 0;
 static struct arg_opt args_collections[] = {
     arg_of_str('t', "test", &args_test),
+    arg_of_bool('d', "dt-print", &args_dt_print),
+    arg_of_end,
 };
+
+static long args_action(void) {
+  if (args_test != NULL) {
+    do_test(args_test);
+    halt("arg-driven test done, halt!\n");
+  }
+  if (args_dt_print) {
+    extern struct dev_tree boot_dt;
+    dt_print_tree(&boot_dt);
+    halt("arg-dirven print boot device tree done, halt!\n");
+  }
+  return KER_SUCCESS;
+}
 
 long args_evaluate(const char *bootargs) {
   if (bootargs == NULL) {
@@ -55,13 +72,8 @@ long args_evaluate(const char *bootargs) {
   }
 
   parse_ret_t ret = args_parse(args_collections, args_cnt, args_list);
-  return ret.error == ARGP_SUCCESS ? KER_SUCCESS : -KER_ARG_ER;
-}
-
-long args_action(void) {
-  if (args_test != NULL) {
-    do_test(args_test);
-    halt("arg-driven test done, halt!\n");
+  if (ret.error != ARGP_SUCCESS) {
+    return -KER_ARG_ER;
   }
-  return KER_SUCCESS;
+  return args_action();
 }

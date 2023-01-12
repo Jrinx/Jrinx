@@ -50,7 +50,6 @@ void kernel_init(unsigned long hartid, void *dtb_addr) {
     log_localize_output();
 
     panic_e(args_evaluate(chosen_get_bootargs()));
-    panic_e(args_action());
 
     panic_e(lk_acquire(&spinlock_of(init_state)));
     init_state++;
