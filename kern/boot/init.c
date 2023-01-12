@@ -38,7 +38,6 @@ void kernel_init(unsigned long hartid, void *dtb_addr) {
     info("Hello Jrinx, I am master hart!\n");
 
     panic_e(dt_load(dtb_addr, &boot_dt));
-    panic_e(device_init());
     panic_e(device_probe(&boot_dt));
     panic_e(chosen_select_dev());
 

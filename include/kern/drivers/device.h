@@ -15,13 +15,8 @@ struct device {
   dt_node_pred_t d_pred;
   dt_iter_callback_t d_probe;
   enum probe_pri_t d_probe_pri;
-  TAILQ_ENTRY(device) d_link;
 };
 
-TAILQ_HEAD(dev_queue_t, device);
-
-long dev_register(struct device *dev) __attribute__((warn_unused_result));
-long device_init(void) __attribute__((warn_unused_result));
 long device_probe(struct dev_tree *dt) __attribute__((warn_unused_result));
 
 #endif

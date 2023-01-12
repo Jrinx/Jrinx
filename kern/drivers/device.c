@@ -10,29 +10,15 @@
 #include <kern/lib/errors.h>
 #include <kern/mm/pmm.h>
 
-static struct dev_queue_t dev_queue;
-
-long dev_register(struct device *dev) {
-  TAILQ_INSERT_TAIL(&dev_queue, dev, d_link);
-  return KER_SUCCESS;
-}
-
-long device_init(void) {
-  TAILQ_INIT(&dev_queue);
-  catch_e(dev_register(&memory_device));
-  catch_e(dev_register(&cpus_device));
-  catch_e(dev_register(&plic_device));
-  catch_e(dev_register(&sifiveuart0_device));
-  catch_e(dev_register(&uart16550a_device));
-  catch_e(dev_register(&chosen_device));
-  catch_e(dev_register(&goldfish_device));
-  return KER_SUCCESS;
-}
+static struct device *dev_queue[] = {
+    &memory_device,     &cpus_device,   &plic_device,     &sifiveuart0_device,
+    &uart16550a_device, &chosen_device, &goldfish_device, NULL,
+};
 
 long device_probe(struct dev_tree *dt) {
   for (unsigned int pri = HIGHEST; pri <= LOWEST; pri++) {
-    struct device *dev;
-    TAILQ_FOREACH (dev, &dev_queue, d_link) {
+    for (size_t i = 0; dev_queue[i] != NULL; i++) {
+      struct device *dev = dev_queue[i];
       if (dev->d_probe_pri == pri) {
         catch_e(dt_iter(dt, dev->d_pred, dev->d_probe));
       }
