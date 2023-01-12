@@ -20,15 +20,11 @@ RUN ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime && \
 
 ENV LANG=zh_CN.UTF-8 LANGUAGE=zh_CN:zh:en_US:en LC_ALL=zh_CN.UTF-8
 
-# Toolchains
+# Basic Toolchains
 RUN apt-get -y install git \
                        build-essential \
                        gcc-riscv64-linux-gnu \
-                       qemu-system-misc \
-                       gawk \
-                       shellcheck \
-                       python3 \
-                       python3-autopep8
+                       qemu-system-misc
 
 ARG LLVM_VERSION=15
 ARG LLVM_MIRROR=https://${MIRROR}/llvm-apt
@@ -56,3 +52,10 @@ RUN file=$(wget -qO - ${EC_REPO} | grep -om 1 'editorconfig-checker-[^"<]*' | he
     wget -O /tmp/"$file" "${EC_REPO}$file" && \
     tar -xvf /tmp/"$file" -C / usr/bin/editorconfig-checker usr/bin/ec && \
     rm /tmp/"$file"
+
+# Another Toolchains
+RUN apt-get -y install gawk \
+                       shellcheck \
+                       python3 \
+                       python3-autopep8 \
+                       python3-psutil
