@@ -12,13 +12,13 @@ void conslock_release(void);
 void printk(const char *restrict fmt, ...) __attribute__((format(printf, 1, 2)));
 
 void infok(const char *restrict file, unsigned long lineno, const char *restrict func,
-           const char *restrict fmt, ...);
+           const char *restrict fmt, ...) __attribute__((format(printf, 4, 5)));
 
 void fatalk(const char *restrict file, unsigned long lineno, const char *restrict func,
-            const char *restrict fmt, ...) __attribute__((noreturn));
+            const char *restrict fmt, ...) __attribute__((format(printf, 4, 5), noreturn));
 
 void haltk(const char *restrict file, unsigned long lineno, const char *restrict func,
-           const char *restrict fmt, ...) __attribute__((noreturn));
+           const char *restrict fmt, ...) __attribute__((format(printf, 4, 5), noreturn));
 
 #define info(msg, ...) infok(__FILE__, __LINE__, __func__, msg, ##__VA_ARGS__)
 #define fatal(msg, ...) fatalk(__FILE__, __LINE__, __func__, msg, ##__VA_ARGS__)
