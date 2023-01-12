@@ -57,10 +57,13 @@ done
 
 source "${0%/*}"/bash/utils.bash
 
-all_files=$(git ls-tree -r HEAD --name-only | xargs ls -d 2>/dev/null)
-all_files=$(echo -e "$all_files\n$(git diff --name-only --staged)")
+all_files=$(git ls-tree -r HEAD --name-only | \
+  while IFS= read -r f; do \
+    [[ -f "$f" ]] && echo "$f"; \
+  done
+)
 all_files=$(
-  echo "$all_files" | \
+  echo -e "$all_files\n$(git diff --name-only --staged)" | \
   grep -Fxv "$(grep '^\s*\[submodule ' .gitmodules | cut -d '"' -f2)"
 )
 
