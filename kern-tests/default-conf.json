@@ -1,0 +1,9 @@
+{
+  "expected": [
+    "switch to local serial output",
+    "arg-driven test done, halt!"
+  ],
+  "unexpected": [
+    "assertion failed:"
+  ]
+}

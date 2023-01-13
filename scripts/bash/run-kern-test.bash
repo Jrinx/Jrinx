@@ -61,7 +61,11 @@ for test_case in $test_list; do
     fatal "$prefix failed to build Jrinx with $test_case"
     exit $r
   fi
-  scripts/judge -n || r=$?
+  conf_file='kern-tests/default-conf.json'
+  if [ -f "kern-tests/$test_case-conf.json" ]; then
+    conf_file="kern-tests/$test_case-conf.json"
+  fi
+  scripts/judge "$conf_file" -n || r=$?
   if [ "$r" -ne 0 ]; then
     fatal "$prefix judge failed on $test_case"
     exit $r
