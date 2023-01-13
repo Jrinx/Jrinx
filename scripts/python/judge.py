@@ -13,21 +13,21 @@ CHILD_FINAL_STUCK_TIMEOUT = 5
 CHILD_TERM_TIMEOUT = 5
 
 
-class JudgeError(Exception):
+class JudgeException(Exception):
     def __init__(self, title: str, message: str) -> None:
         self.__title = title
         self.__message = message
 
     def __str__(self) -> str:
-        return f'[ Judge Error ] {self.__title}: {self.__message}'
+        return f'[ Judge Exception ] {self.__title}: {self.__message}'
 
 
-class RulesNotSatisified(JudgeError):
+class RulesNotSatisified(JudgeException):
     def __init__(self, message: str) -> None:
         super().__init__('Rules Not Satisified', message)
 
 
-class JudgeTimeout(JudgeError):
+class JudgeTimeout(JudgeException):
     def __init__(self, message: str) -> None:
         super().__init__('Judge Timeout', message)
 
