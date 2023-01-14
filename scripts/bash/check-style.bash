@@ -58,8 +58,7 @@ done
 source "${0%/*}"/bash/utils.bash
 
 all_files=$(
-  echo -e "$(git ls-tree -r HEAD --name-only)\n
-           $(git diff --name-only --staged)" | \
+  echo -e "$(git ls-files --full-name)" | \
   while IFS= read -r f; do \
     [[ -f "$f" ]] && echo "$f"; \
   done | \
