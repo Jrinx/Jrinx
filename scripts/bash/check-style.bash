@@ -62,6 +62,7 @@ all_files=$(
   while IFS= read -r f; do \
     [[ -f "$f" ]] && echo "$f"; \
   done | \
+  grep -ve '\.md$' | \
   grep -Fxv "$(grep '^\s*\[submodule ' .gitmodules | cut -d '"' -f2)"
 )
 
