@@ -14,8 +14,16 @@ struct lock {
 
 typedef long (*lk_aqrl_t)(struct lock *lock);
 
+struct lock_impl_t {
+  char *lk_type;
+  lk_aqrl_t lk_aq_func;
+  lk_aqrl_t lk_rl_func;
+};
+
 long lk_acquire(struct lock *lock) __attribute__((warn_unused_result));
 long lk_release(struct lock *lock) __attribute__((warn_unused_result));
-void lk_init(void);
+
+#define lock_init(impl)                                                                        \
+  struct lock_impl_t *impl##_impl __attribute__((section(".ksec.lock_impl." #impl))) = &impl
 
 #endif

@@ -35,6 +35,9 @@ SECTIONS {
     *(.ksec.dev_init_low.*)
     *(.ksec.dev_init_lowest.*)
     PROVIDE(kern_dev_init_end = .);
+    PROVIDE(kern_lock_impl_begin = .);
+    *(.ksec.lock_impl.*)
+    PROVIDE(kern_lock_impl_end = .);
   }
 
   PROVIDE(kern_end = .);

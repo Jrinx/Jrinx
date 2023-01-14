@@ -34,7 +34,6 @@ void kernel_init(unsigned long hartid, void *dtb_addr) {
   if (cpus_stacktop == NULL) {
     print_boot_info();
 
-    lk_init();
     info("Hello Jrinx, I am master hart!\n");
 
     panic_e(dt_load(dtb_addr, &boot_dt));

@@ -1,44 +1,21 @@
 #include <kern/lib/debug.h>
+#include <kern/lib/errors.h>
 #include <kern/lock/lock.h>
-#define _KERN_LOCK_SPINLOCK_FUNCDEF_
-#include <kern/lock/spinlock.h>
 #include <lib/string.h>
 #include <stddef.h>
 
-#define LOCK_MAP_MAX_SIZE 32U
-
-static size_t lk_map_size = 0;
-
-static const char *lk_type_map[LOCK_MAP_MAX_SIZE];
-
-static lk_aqrl_t lk_aq_map[LOCK_MAP_MAX_SIZE];
-
-static lk_aqrl_t lk_rl_map[LOCK_MAP_MAX_SIZE];
-
-static size_t lk_match_type(const char *type) {
-  for (size_t i = 0; i < lk_map_size; i++) {
-    if (strcmp(lk_type_map[i], type) == 0) {
-      return i;
+static int lk_match_type(const char *type, lk_aqrl_t *aq_func, lk_aqrl_t *rl_func) {
+  extern struct lock_impl_t *kern_lock_impl_begin[];
+  extern struct lock_impl_t *kern_lock_impl_end[];
+  for (struct lock_impl_t **ptr = kern_lock_impl_begin; ptr < kern_lock_impl_end; ptr++) {
+    struct lock_impl_t *impl = *ptr;
+    if (strcmp(impl->lk_type, type) == 0) {
+      *aq_func = impl->lk_aq_func;
+      *rl_func = impl->lk_rl_func;
+      return 1;
     }
   }
-  return lk_map_size;
-}
-
-static long lk_register(const char *type, lk_aqrl_t aq_func, lk_aqrl_t rl_func) {
-  assert(lk_map_size < LOCK_MAP_MAX_SIZE);
-
-  size_t i = lk_match_type(type);
-  if (i != lk_map_size) {
-    return -KER_LOCK_ER;
-  }
-
-  lk_type_map[lk_map_size] = type;
-  lk_aq_map[lk_map_size] = aq_func;
-  lk_rl_map[lk_map_size] = rl_func;
-
-  lk_map_size++;
-
-  return KER_SUCCESS;
+  return 0;
 }
 
 long lk_acquire(struct lock *lock) {
@@ -46,10 +23,14 @@ long lk_acquire(struct lock *lock) {
     return -KER_LOCK_ER;
   }
 
-  size_t i = lk_match_type(lock->lk_type);
-  assert(i < lk_map_size);
+  lk_aqrl_t aq_func;
+  lk_aqrl_t rl_func;
 
-  catch_e(lk_aq_map[i](lock));
+  if (!lk_match_type(lock->lk_type, &aq_func, &rl_func)) {
+    return -KER_LOCK_ER;
+  }
+
+  catch_e(aq_func(lock));
   lock->lk_hartid = hrt_get_id();
 
   return KER_SUCCESS;
@@ -62,14 +43,14 @@ long lk_release(struct lock *lock) {
 
   lock->lk_hartid = HARTID_MAX;
 
-  size_t i = lk_match_type(lock->lk_type);
-  assert(i < lk_map_size);
+  lk_aqrl_t aq_func;
+  lk_aqrl_t rl_func;
 
-  catch_e(lk_rl_map[i](lock));
+  if (!lk_match_type(lock->lk_type, &aq_func, &rl_func)) {
+    return -KER_LOCK_ER;
+  }
+
+  catch_e(rl_func(lock));
 
   return KER_SUCCESS;
-}
-
-void lk_init(void) {
-  lk_register(SPINLOCK_TYPE, spnlk_acquire, spnlk_release);
 }
