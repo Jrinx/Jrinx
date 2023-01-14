@@ -22,6 +22,4 @@
 #define COM_IPE_TXWM 0x1U
 #define COM_IPE_RXWM 0x2U
 
-extern struct device sifiveuart0_device;
-
 #endif

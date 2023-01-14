@@ -7,6 +7,4 @@
 #define GOLDFISH_ALARM_HIGH 0x0c
 #define GOLDFISH_CLEAR_INTERRUPT 0x10
 
-extern struct device goldfish_device;
-
 #endif

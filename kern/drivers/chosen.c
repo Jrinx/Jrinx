@@ -38,11 +38,12 @@ static long chosen_probe(const struct dev_node *node) {
   return KER_SUCCESS;
 }
 
-struct device chosen_device = {
+static struct device chosen_device = {
     .d_pred = chosen_pred,
     .d_probe = chosen_probe,
-    .d_probe_pri = LOWEST,
 };
+
+device_init(chosen_device, lowest);
 
 const char *chosen_get_bootargs(void) {
   return chosen_bootargs;

@@ -82,8 +82,9 @@ static long cpus_probe(const struct dev_node *node) {
   return KER_SUCCESS;
 }
 
-struct device cpus_device = {
+static struct device cpus_device = {
     .d_pred = cpus_pred,
     .d_probe = cpus_probe,
-    .d_probe_pri = HIGH,
 };
+
+device_init(cpus_device, high);

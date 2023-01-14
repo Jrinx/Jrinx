@@ -63,8 +63,9 @@ long mem_get_size(unsigned i, uint64_t *size) {
   return KER_SUCCESS;
 }
 
-struct device memory_device = {
+static struct device memory_device = {
     .d_pred = mem_pred,
     .d_probe = mem_probe,
-    .d_probe_pri = HIGH,
 };
+
+device_init(memory_device, high);

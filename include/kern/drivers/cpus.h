@@ -3,7 +3,6 @@
 
 #include <kern/drivers/device.h>
 
-extern struct device cpus_device;
 extern unsigned long *cpus_stacktop;
 
 unsigned long cpus_get_count(void);

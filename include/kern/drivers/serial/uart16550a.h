@@ -67,6 +67,4 @@
 #define COM_MSR_RING_INDIC 0b01000000
 #define COM_MSR_CARRIAR_DETECT 0b10000000
 
-extern struct device uart16550a_device;
-
 #endif

@@ -125,8 +125,9 @@ static long uart16550a_probe(const struct dev_node *node) {
   return KER_SUCCESS;
 }
 
-struct device uart16550a_device = {
+static struct device uart16550a_device = {
     .d_pred = uart16550a_pred,
     .d_probe = uart16550a_probe,
-    .d_probe_pri = LOW,
 };
+
+device_init(uart16550a_device, low);

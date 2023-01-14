@@ -58,8 +58,9 @@ static long goldfish_probe(const struct dev_node *node) {
   return KER_SUCCESS;
 }
 
-struct device goldfish_device = {
+static struct device goldfish_device = {
     .d_pred = goldfish_pred,
     .d_probe = goldfish_probe,
-    .d_probe_pri = HIGHEST,
 };
+
+device_init(goldfish_device, highest);

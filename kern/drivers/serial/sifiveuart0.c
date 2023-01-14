@@ -116,8 +116,9 @@ static long sifiveuart0_probe(const struct dev_node *node) {
   return KER_SUCCESS;
 }
 
-struct device sifiveuart0_device = {
+static struct device sifiveuart0_device = {
     .d_pred = sifiveuart0_pred,
     .d_probe = sifiveuart0_probe,
-    .d_probe_pri = LOW,
 };
+
+device_init(sifiveuart0_device, low);

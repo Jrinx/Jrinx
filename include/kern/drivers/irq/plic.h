@@ -10,6 +10,4 @@
 #define PLIC_PRIO_MIN 0U
 #define PLIC_PRIO_MAX 7U
 
-extern struct device plic_device;
-
 #endif

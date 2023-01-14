@@ -9,6 +9,4 @@ size_t mem_get_num(void);
 long mem_get_addr(unsigned i, uint64_t *addr);
 long mem_get_size(unsigned i, uint64_t *size);
 
-extern struct device memory_device;
-
 #endif

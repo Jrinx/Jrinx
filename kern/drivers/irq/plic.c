@@ -159,8 +159,9 @@ static long plic_probe(const struct dev_node *node) {
   return KER_SUCCESS;
 }
 
-struct device plic_device = {
+static struct device plic_device = {
     .d_pred = plic_pred,
     .d_probe = plic_probe,
-    .d_probe_pri = MEDIUM,
 };
+
+device_init(plic_device, medium);
