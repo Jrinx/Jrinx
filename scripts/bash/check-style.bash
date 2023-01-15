@@ -28,7 +28,7 @@ do
     ;;
   -c|--check)
     if [ $# -lt 2 ]; then
-      echo "Expect spec check following -c/--check (choose from 'escp')"
+      echo "Expect spec check following -c/--check (choose from 'lescp')"
       echo "  l  line-length-max check"
       echo "  e  editorconfig check"
       echo "  s  shellscript check"
