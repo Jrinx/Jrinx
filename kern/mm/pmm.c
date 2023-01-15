@@ -106,7 +106,7 @@ void pmm_init(void) {
   }
 }
 
-long pa2sel(unsigned long addr, unsigned long *sel) {
+static long __attribute__((warn_unused_result)) pa2sel(unsigned long addr, unsigned long *sel) {
   size_t mem_num = mem_get_num();
   for (size_t i = 0; i < mem_num; i++) {
     uint64_t mem_addr;
@@ -121,7 +121,8 @@ long pa2sel(unsigned long addr, unsigned long *sel) {
   return -KER_MEM_ER;
 }
 
-long frame2sel(struct phy_frame *frame, unsigned long *sel) {
+static long __attribute__((warn_unused_result))
+frame2sel(struct phy_frame *frame, unsigned long *sel) {
   size_t mem_num = mem_get_num();
   for (size_t i = 0; i < mem_num; i++) {
     if (frame >= pf_array[i] && frame < pf_array[i] + pf_array_len[i]) {

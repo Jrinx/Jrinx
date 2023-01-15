@@ -18,8 +18,6 @@ extern void *(*alloc)(size_t size, size_t align);
 extern void (*free)(const void *ptr);
 
 void pmm_init(void);
-long pa2sel(unsigned long addr, unsigned long *sel) __attribute__((warn_unused_result));
-long frame2sel(struct phy_frame *frame, unsigned long *sel) __attribute__((warn_unused_result));
 long pa2frame(unsigned long addr, struct phy_frame **frame) __attribute__((warn_unused_result));
 long frame2pa(struct phy_frame *frame, unsigned long *addr) __attribute__((warn_unused_result));
 long phy_frame_alloc(struct phy_frame **frame) __attribute__((warn_unused_result));
