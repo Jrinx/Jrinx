@@ -3,29 +3,13 @@
 #include <lib/string.h>
 #include <stddef.h>
 
-struct kern_test {
-  char *kt_name;
-  void (*kt_test_func)(void);
-};
-
-void pmm_test(void) __attribute__((weak));
-void serial_test(void) __attribute__((weak));
-void vmm_test(void) __attribute__((weak));
-
-static struct kern_test kern_testset[] = {
-    {"pmm-test", pmm_test},
-    {"serial-test", serial_test},
-    {"vmm-test", vmm_test},
-};
-
 void do_test(const char *name) {
+  extern struct kern_test *kern_testset_begin[];
+  extern struct kern_test *kern_testset_end[];
   int found = 0;
-  for (size_t i = 0; i < sizeof(kern_testset) / sizeof(struct kern_test); i++) {
-    struct kern_test *test = &kern_testset[i];
+  for (struct kern_test **ptr = kern_testset_begin; ptr < kern_testset_end; ptr++) {
+    struct kern_test *test = *ptr;
     if (strcmp(test->kt_name, name) == 0) {
-      if (test->kt_test_func == NULL) {
-        fatal("%s not linked into kernel\n", test->kt_name);
-      }
       info("<<< %s begin\n", name);
       test->kt_test_func();
       info(">>> %s end\n", name);

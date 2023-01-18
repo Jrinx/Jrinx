@@ -1,10 +1,11 @@
 #include <kern/drivers/serialport.h>
 #include <kern/lib/debug.h>
+#include <kern/tests.h>
 #include <lib/string.h>
 
 #define SERIAL_TEST_BUFFER 512
 
-void serial_test(void) {
+static void serial_test(void) {
   size_t len = 0;
   char buffer[SERIAL_TEST_BUFFER];
   const char *std = "abcdefgh1234567890";
@@ -22,3 +23,10 @@ void serial_test(void) {
   buffer[len] = '\0';
   assert(strcmp(buffer, std) == 0);
 }
+
+static struct kern_test serial_testcase = {
+    .kt_name = "serial-test",
+    .kt_test_func = serial_test,
+};
+
+kern_test_def(serial_testcase);

@@ -3,9 +3,10 @@
 #include <kern/lib/sync.h>
 #include <kern/mm/pmm.h>
 #include <kern/mm/vmm.h>
+#include <kern/tests.h>
 #include <layouts.h>
 
-void vmm_test(void) {
+static void vmm_test(void) {
   struct phy_frame *frame;
 
   info("test page mapping\n");
@@ -36,3 +37,10 @@ void vmm_test(void) {
   assert(frame->pf_ref == ref);
   sfence_vma;
 }
+
+static struct kern_test vmm_testcase = {
+    .kt_name = "vmm-test",
+    .kt_test_func = vmm_test,
+};
+
+kern_test_def(vmm_testcase);

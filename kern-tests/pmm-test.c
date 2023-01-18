@@ -3,7 +3,7 @@
 #include <kern/mm/pmm.h>
 #include <kern/tests.h>
 
-void pmm_test(void) {
+static void pmm_test(void) {
   struct phy_frame *frame1;
   struct phy_frame *frame2;
   struct phy_frame *tmp_frame;
@@ -44,3 +44,10 @@ void pmm_test(void) {
   assert(phy_frame_ref_dec(frame1) == KER_SUCCESS);
   assert(phy_frame_alloc(&tmp_frame) == KER_SUCCESS);
 }
+
+static struct kern_test pmm_testcase = {
+    .kt_name = "pmm-test",
+    .kt_test_func = pmm_test,
+};
+
+kern_test_def(pmm_testcase);

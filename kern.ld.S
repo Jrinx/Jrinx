@@ -38,6 +38,9 @@ SECTIONS {
     PROVIDE(kern_lock_impl_begin = .);
     *(.ksec.lock_impl.*)
     PROVIDE(kern_lock_impl_end = .);
+    PROVIDE(kern_testset_begin = .);
+    *(.ksec.testcase.*)
+    PROVIDE(kern_testset_end = .);
   }
 
   PROVIDE(kern_end = .);
