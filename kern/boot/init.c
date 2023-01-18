@@ -27,7 +27,7 @@ static void print_boot_info(void) {
   }
 }
 
-void kernel_init(unsigned long hartid, void *dtb_addr) {
+void __attribute__((noreturn)) kernel_init(unsigned long hartid, void *dtb_addr) {
   static volatile unsigned long init_state = 0;
   static with_spinlock(init_state);
   hrt_set_id(hartid);

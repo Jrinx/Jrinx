@@ -9,6 +9,11 @@
 #include <layouts.h>
 #include <lib/string.h>
 
+static uint8_t kern_master_stack[KSTKSIZE]
+    __attribute__((aligned(PGSIZE), section(".ksec.master_stack")));
+
+const uint8_t *kern_master_stacktop = kern_master_stack + KSTKSIZE;
+
 unsigned long *cpus_stacktop = NULL;
 
 static unsigned long cpus_count;
@@ -75,8 +80,9 @@ static long cpus_probe(const struct dev_node *node) {
       info("%s (slave)  probed (stack top: %016lx)\n", child->nd_name, stack_top);
       catch_e(sbi_hart_start(id, KERNBASE, 0));
     } else {
-      cpus_stacktop[id] = KSTKTOP;
-      info("%s (master) probed (stack top: %016lx)\n", child->nd_name, (unsigned long)KSTKTOP);
+      cpus_stacktop[id] = (unsigned long)kern_master_stacktop;
+      info("%s (master) probed (stack top: %016lx)\n", child->nd_name,
+           (unsigned long)kern_master_stacktop);
     }
   }
   return KER_SUCCESS;

@@ -27,7 +27,7 @@ SECTIONS {
 
   . = ALIGN(PGSIZE);
   .ksec : {
-    *(.ksec.stack)
+    *(.ksec.master_stack)
     PROVIDE(kern_dev_init_begin = .);
     *(.ksec.dev_init_highest.*)
     *(.ksec.dev_init_high.*)

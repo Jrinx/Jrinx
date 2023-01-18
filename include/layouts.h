@@ -13,8 +13,6 @@
 #define KSTKSHIFT 4
 #define KSTKSIZE (PGSIZE << KSTKSHIFT)
 
-#define KSTKTOP (KERNBASE + KSTKSIZE)
-
 #define DEVOFFSET 0xffffffff40000000UL
 
 #endif
