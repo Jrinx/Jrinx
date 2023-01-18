@@ -9,10 +9,12 @@ struct kern_test {
 };
 
 void pmm_test(void) __attribute__((weak));
+void serial_test(void) __attribute__((weak));
 void vmm_test(void) __attribute__((weak));
 
 static struct kern_test kern_testset[] = {
     {"pmm-test", pmm_test},
+    {"serial-test", serial_test},
     {"vmm-test", vmm_test},
 };
 

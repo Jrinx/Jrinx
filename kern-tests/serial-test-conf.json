@@ -1,0 +1,9 @@
+{
+  "extends": "default-conf.json",
+  "interactive": [
+    {
+      "when": " and press enter:",
+      "send": "abcdefgh1234567890\r"
+    }
+  ]
+}
