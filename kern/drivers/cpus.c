@@ -75,7 +75,7 @@ static long cpus_probe(const struct dev_node *node) {
       return -KER_DTB_ER;
     }
     if (id != hrt_get_id()) {
-      unsigned long stack_top = (unsigned long)alloc(KSTKSIZE, PGSIZE);
+      unsigned long stack_top = (unsigned long)alloc(KSTKSIZE, PGSIZE) + KSTKSIZE;
       cpus_stacktop[id] = stack_top;
       info("%s (slave)  probed (stack top: %016lx)\n", child->nd_name, stack_top);
       catch_e(sbi_hart_start(id, KERNBASE, 0));
