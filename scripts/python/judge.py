@@ -4,6 +4,7 @@ from __future__ import annotations
 from abc import abstractmethod
 import argparse
 import json
+import os
 import psutil
 import signal
 import subprocess
@@ -180,22 +181,33 @@ def main():
     if verbose:
         info(f'Judge begin with args {args}')
 
-    if os.path.isfile(args.rules_file):
-        with open(args.rules_file, 'r', encoding='utf-8') as rf:
-            rules = json.load(rf)
-    else:
-        raise NotADirectoryError(args.rules_file)
+    if not os.path.isfile(args.rules_file):
+        raise FileNotFoundError(args.rules_file)
+    with open(args.rules_file, 'r', encoding='utf-8') as rf:
+        conf = json.load(rf)
+    extends_rules_file = conf.pop('extends', None)
+    while extends_rules_file:
+        extends_rules_path = os.path.join(os.path.dirname(args.rules_file), extends_rules_file)
+        if not os.path.isfile(extends_rules_path):
+            raise FileNotFoundError(extends_rules_path)
+        with open(extends_rules_path, 'r', encoding='utf-8') as erf:
+            extended_conf = json.load(erf)
+        for key in extended_conf.keys():
+            if key not in conf.keys():
+                conf[key] = extended_conf[key]
+        extends_rules_file = conf.pop('extends', None)
 
     cmd = ['make', 'run']
+    interactive = conf.get('interactive')
     ch = subprocess.Popen(cmd,
-                          stdin=None,
+                          stdin=subprocess.PIPE if interactive else None,
                           stdout=subprocess.PIPE,
                           stderr=subprocess.STDOUT,
                           start_new_session=True,
                           )
 
     try:
-        with Rules(verbose, rules) as rules_check:
+        with Rules(verbose, conf) as rules_check:
             final_stuck = False
 
             def on_timeout(*_):
@@ -216,7 +228,11 @@ after all expected strings detected'
             for out in ch.stdout:
                 line = out if isinstance(out, str) else out.decode('utf-8')
                 if verbose and not suppress_emu_out:
-                    sys.stdout.buffer.write(out)
+                    sys.stdout.write(line)
+                if interactive and interactive[0]['when'] in line:
+                    ch.stdin.write(interactive[0]['send'].encode('utf-8'))
+                    ch.stdin.flush()
+                    interactive = interactive[1:]
                 if final_stuck and len(line) != 0:
                     rules_check(line)
                 if not final_stuck and rules_check(line) == 0:
