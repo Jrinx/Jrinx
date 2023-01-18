@@ -5,6 +5,7 @@ set -e
 [ ! -v COMPILE_MODE ] && COMPILE_MODE=debug
 
 test_name=''
+verbose='n'
 
 while [[ $# -gt 0 ]]; do
   case $1 in
@@ -15,6 +16,10 @@ while [[ $# -gt 0 ]]; do
     fi
     shift
     test_name="$1"
+    shift
+    ;;
+  -v|--verbose)
+    verbose='y'
     shift
     ;;
   *)
@@ -65,7 +70,11 @@ for test_case in $test_list; do
   if [ -f "kern-tests/$test_case-conf.json" ]; then
     conf_file="kern-tests/$test_case-conf.json"
   fi
-  scripts/judge "$conf_file" -n || r=$?
+  if [ "$verbose" = 'y' ]; then
+    scripts/judge "$conf_file" || r=$?
+  else
+    scripts/judge "$conf_file" -n || r=$?
+  fi
   if [ "$r" -ne 0 ]; then
     fatal "$prefix judge failed on $test_case"
     exit $r
