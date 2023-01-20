@@ -47,7 +47,7 @@ void printk(const char *restrict fmt, ...) {
     uint64_t millisec;                                                                         \
     conslock_acquire();                                                                        \
     if (rt_read_boot_time_sec_msec(&sec, &millisec)) {                                         \
-      printk(ANSI_COLOR_WRAP(color, "[ %3lu.%03lu hart#%lu ] %s:%lu <%s> "), sec, millisec,    \
+      printk(ANSI_COLOR_WRAP(color, "[ %lu.%03lu hart#%lu ] %s:%lu <%s> "), sec, millisec,     \
              hrt_get_id(), file, lineno, func);                                                \
     } else {                                                                                   \
       printk(ANSI_COLOR_WRAP(color, "[ hart#%lu ] %s:%lu <%s> "), hrt_get_id(), file, lineno,  \
