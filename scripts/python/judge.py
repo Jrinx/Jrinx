@@ -111,13 +111,15 @@ class UnorderedPattern(Pattern):
 
     def __call__(self, s: str) -> tuple[bool, bool]:
         rmset = set()
+        is_picked = False
         for p in self.__wait:
             retire, pick = p(s)
             if pick:
+                is_picked = True
                 if retire:
                     rmset.add(p)
         self.__wait -= rmset
-        return len(self.__wait) == 0, len(rmset) != 0
+        return len(self.__wait) == 0, is_picked
 
 
 class Rules:
@@ -134,11 +136,11 @@ class Rules:
                 if self.__verbose:
                     fatal(f'detecting unexpected pattern \
 "{self.__unexpected_patterns}"', file=sys.stdout)
-                raise RulesNotSatisified(f'unexpected pattern detected')
+                raise RulesNotSatisified('unexpected pattern detected')
         retire, pick = self.__expected_patterns(line)
         if pick:
             if self.__verbose:
-                info(f'picking expected string')
+                info('picking expected string')
             if retire:
                 if self.__verbose:
                     info(f'detecting expected pattern "{self.__expected_patterns}"')
@@ -150,7 +152,7 @@ class Rules:
 
     def __exit__(self, *_):
         if not self.__done:
-            raise RulesNotSatisified(f'missing expected pattern')
+            raise RulesNotSatisified('missing expected pattern')
 
 
 def eliminate_child(ch: subprocess.Popen[bytes], verbose: bool):
@@ -246,7 +248,7 @@ def main():
                     eliminate_child(ch, verbose and not suppress_emu_out)
                 if final_stuck:
                     message = f'Command {cmd} stucked {CHILD_FINAL_STUCK_TIMEOUT} seconds \
-after all expected strings detected'
+after expected patterns detected'
                 else:
                     message = f'Command {cmd} timed out after {CHILD_TIMEOUT} seconds'
                 raise JudgeTimeout(message)
