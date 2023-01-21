@@ -53,7 +53,7 @@ RUN file=$(wget -qO - ${EC_REPO} | grep -om 1 'editorconfig-checker-[^"<]*' | he
     tar -xvf /tmp/"$file" -C / usr/bin/editorconfig-checker usr/bin/ec && \
     rm /tmp/"$file"
 
-# Another Toolchains
+# Extra Toolchains
 RUN apt-get -y install gawk \
                        shellcheck \
                        python3 \
