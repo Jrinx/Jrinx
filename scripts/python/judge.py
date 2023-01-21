@@ -46,7 +46,7 @@ class Pattern:
         self._pattern = pattern
 
     @abstractmethod
-    def __call__(self, s: str) -> tuple[bool, bool]:  # Retire, Pick
+    def __call__(self, s: str) -> tuple[bool, tuple[str]]:  # Retire, Picked-Strings
         pass
 
     @abstractmethod
@@ -75,11 +75,11 @@ class StringPattern(Pattern):
     def __str__(self) -> str:
         return f'(re: {self.__regex})'
 
-    def __call__(self, s: str) -> tuple[bool, bool]:
+    def __call__(self, s: str) -> tuple[bool, tuple[str]]:
         mat = self.__regex.search(s)
         if mat:
-            return True, True
-        return False, False
+            return True, (mat[0],)
+        return False, ()
 
 
 class OrderedPattern(Pattern):
@@ -91,13 +91,13 @@ class OrderedPattern(Pattern):
     def __str__(self) -> str:
         return f'(ordered: {self.__vals})'
 
-    def __call__(self, s: str) -> tuple[bool, bool]:
+    def __call__(self, s: str) -> tuple[bool, tuple[str]]:
         retire, pick = self.__vals[self.__next](s)
         if pick:
             if retire:
                 self.__next += 1
-            return self.__next >= len(self.__vals), True
-        return False, False
+            return self.__next >= len(self.__vals), pick
+        return False, ()
 
 
 class UnorderedPattern(Pattern):
@@ -109,17 +109,17 @@ class UnorderedPattern(Pattern):
     def __str__(self) -> str:
         return f'(unordered: {self.__all})'
 
-    def __call__(self, s: str) -> tuple[bool, bool]:
+    def __call__(self, s: str) -> tuple[bool, tuple[str]]:
         rmset = set()
-        is_picked = False
+        all_pick = []
         for p in self.__wait:
             retire, pick = p(s)
             if pick:
-                is_picked = True
+                all_pick += pick
                 if retire:
                     rmset.add(p)
         self.__wait -= rmset
-        return len(self.__wait) == 0, is_picked
+        return len(self.__wait) == 0, tuple(all_pick)
 
 
 class Rules:
@@ -140,7 +140,7 @@ class Rules:
         retire, pick = self.__expected_patterns(line)
         if pick:
             if self.__verbose:
-                info('picking expected string')
+                info(f'picking expected string {pick}')
             if retire:
                 if self.__verbose:
                     info(f'detecting expected pattern "{self.__expected_patterns}"')
@@ -272,9 +272,6 @@ after expected patterns detected'
                     signal.alarm(CHILD_FINAL_STUCK_TIMEOUT)
     except JudgeTimeout as e:
         warn(e)
-    except RulesNotSatisified as e:
-        fatal(e)
-        exit(1)
     finally:
         signal.alarm(0)
         if ch:
