@@ -37,13 +37,13 @@ r=0
 
 make $COMPILE_MODE > /dev/null || r=$?
 if [ "$r" -ne 0 ]; then
-  fatal "$prefix failed to build Jrinx"
+  bfatal "$prefix failed to build Jrinx"
   exit $r
 fi
 
 make sbi-fw > /dev/null || r=$?
 if [ "$r" -ne 0 ]; then
-  fatal "$prefix failed to build opensbi firmware"
+  bfatal "$prefix failed to build opensbi firmware"
   exit $r
 fi
 
@@ -60,7 +60,7 @@ else
 fi
 
 for test_case in $test_list; do
-  green "$prefix run $test_case"
+  bgreen "$prefix run $test_case"
   make TEST="$test_case" COLOR=n > /dev/null || r=$?
   if [ "$r" -ne 0 ]; then
     fatal "$prefix failed to build Jrinx with $test_case"
@@ -76,9 +76,9 @@ for test_case in $test_list; do
     scripts/judge "$conf_file" -n || r=$?
   fi
   if [ "$r" -ne 0 ]; then
-    fatal "$prefix judge failed on $test_case"
+    bfatal "$prefix judge failed on $test_case"
     exit $r
   else
-    green "$prefix judge passed on $test_case"
+    bgreen "$prefix judge passed on $test_case"
   fi
 done
