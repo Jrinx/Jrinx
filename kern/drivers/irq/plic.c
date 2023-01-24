@@ -16,10 +16,7 @@ struct plic {
   unsigned long pl_size;
   trap_callback_t pl_int_map[PLIC_SOURCE_MAX + 1];
   struct lock spinlock_of(pl);
-  LIST_ENTRY(plic) pl_link;
 };
-
-static LIST_HEAD(, plic) plic_list;
 
 static void plic_set_source_prio(struct plic *plic, uint32_t source_id, uint32_t priority) {
   *((volatile uint32_t *)(plic->pl_addr + 4 * source_id)) = priority;
@@ -141,7 +138,6 @@ static long plic_probe(const struct dev_node *node) {
   plic->pl_size = size;
   spinlock_init(&plic->spinlock_of(pl));
   memset(plic->pl_int_map, 0, sizeof(plic->pl_int_map));
-  LIST_INSERT_HEAD(&plic_list, plic, pl_link);
 
   unsigned int phandle = from_be(*((uint32_t *)prop->pr_values));
   info("%s probed (phandle: %u) to handle user external int\n", node->nd_name, phandle);
@@ -151,7 +147,7 @@ static long plic_probe(const struct dev_node *node) {
   cb_decl(trap_callback_t, trap_callback, plic_handle_int, plic);
   catch_e(intc_register_handler(NULL, CAUSE_INT_OFFSET + CAUSE_INT_S_EXTERNAL, trap_callback));
   cb_decl(irq_register_callback_t, irq_register_callback, plic_register_irq, plic);
-  intc_set_register_func(phandle, irq_register_callback);
+  intc_register_irq_reg(phandle, irq_register_callback);
 
   plic_init(plic);
   vmm_register_mmio(plic->pl_name, &plic->pl_addr, plic->pl_size);

@@ -20,11 +20,4 @@
     (spnlk)->lk_type = SPINLOCK_TYPE;                                                          \
   })
 
-#ifdef _KERN_LOCK_SPINLOCK_FUNCDEF_
-
-long spnlk_acquire(struct lock *lock) __attribute__((warn_unused_result));
-long spnlk_release(struct lock *lock) __attribute__((warn_unused_result));
-
-#endif
-
 #endif

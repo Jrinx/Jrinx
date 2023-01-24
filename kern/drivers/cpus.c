@@ -1,4 +1,3 @@
-#include <bitmap.h>
 #include <endian.h>
 #include <kern/drivers/device.h>
 #include <kern/lib/debug.h>
@@ -46,7 +45,7 @@ static int cpus_check(const struct dev_node *node) {
 static long cpus_probe(const struct dev_node *node) {
   cpus_count = 0;
   struct dev_node *child;
-  TAILQ_FOREACH (child, &node->nd_children_tailq, nd_link) {
+  LINKED_NODE_ITER (node->nd_children_list.l_first, child, nd_link) {
     if (cpus_check(child)) {
       cpus_count++;
     }
@@ -54,7 +53,7 @@ static long cpus_probe(const struct dev_node *node) {
 
   cpus_stacktop = alloc(sizeof(unsigned long) * cpus_count, sizeof(unsigned long));
 
-  TAILQ_FOREACH (child, &node->nd_children_tailq, nd_link) {
+  LINKED_NODE_ITER (node->nd_children_list.l_first, child, nd_link) {
     if (!cpus_check(child)) {
       continue;
     }

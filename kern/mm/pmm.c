@@ -73,38 +73,10 @@ void mem_print_range(unsigned long addr, unsigned long size, const char *suffix)
 void *(*alloc)(size_t size, size_t align) = bare_alloc;
 void (*free)(const void *ptr) = bare_free;
 
-static struct phy_frame_list *pf_free_list;
+static struct list_head *pf_free_list;
 static with_spinlock(pf_free_list);
 static struct phy_frame **pf_array;
 static size_t *pf_array_len;
-
-void pmm_init(void) {
-  size_t mem_num = mem_get_num();
-  pf_free_list = alloc(sizeof(struct phy_frame_list) * mem_num, sizeof(struct phy_frame_list));
-  pf_array = alloc(sizeof(struct phy_frame *) * mem_num, sizeof(struct phy_frame *));
-  pf_array_len = alloc(sizeof(size_t) * mem_num, sizeof(size_t));
-  for (size_t i = 0; i < mem_num; i++) {
-    LIST_INIT(&pf_free_list[i]);
-    uint64_t mem_size;
-    panic_e(mem_get_size(i, &mem_size));
-    pf_array_len[i] = mem_size / PGSIZE;
-    pf_array[i] = alloc(sizeof(struct phy_frame) * pf_array_len[i],
-                        PGSIZE >= sizeof(struct phy_frame) ? PGSIZE : sizeof(struct phy_frame));
-    for (size_t j = 0; j < pf_array_len[i]; j++) {
-      pf_array[i][j].pf_ref = 0;
-      LIST_INSERT_HEAD(&pf_free_list[i], &pf_array[i][j], pf_link);
-    }
-  }
-
-  freemem_base = align_up(freemem_base, PGSIZE);
-
-  for (unsigned long rsvaddr = SBIBASE; rsvaddr < freemem_base; rsvaddr += PGSIZE) {
-    struct phy_frame *frame;
-    panic_e(pa2frame(rsvaddr, &frame));
-    LIST_REMOVE(frame, pf_link);
-    frame->pf_ref = 1;
-  }
-}
 
 static long __attribute__((warn_unused_result)) pa2sel(unsigned long addr, unsigned long *sel) {
   size_t mem_num = mem_get_num();
@@ -133,6 +105,36 @@ frame2sel(struct phy_frame *frame, unsigned long *sel) {
   return -KER_MEM_ER;
 }
 
+void pmm_init(void) {
+  size_t mem_num = mem_get_num();
+  pf_free_list = alloc(sizeof(struct list_head) * mem_num, sizeof(struct list_head));
+  pf_array = alloc(sizeof(struct phy_frame *) * mem_num, sizeof(struct phy_frame *));
+  pf_array_len = alloc(sizeof(size_t) * mem_num, sizeof(size_t));
+  for (size_t i = 0; i < mem_num; i++) {
+    list_init(&pf_free_list[i]);
+    uint64_t mem_size;
+    panic_e(mem_get_size(i, &mem_size));
+    pf_array_len[i] = mem_size / PGSIZE;
+    pf_array[i] = alloc(sizeof(struct phy_frame) * pf_array_len[i],
+                        PGSIZE >= sizeof(struct phy_frame) ? PGSIZE : sizeof(struct phy_frame));
+    for (size_t j = 0; j < pf_array_len[i]; j++) {
+      pf_array[i][j].pf_ref = 0;
+      list_insert_tail(&pf_free_list[i], &pf_array[i][j].pf_link);
+    }
+  }
+
+  freemem_base = align_up(freemem_base, PGSIZE);
+
+  for (unsigned long rsvaddr = SBIBASE; rsvaddr < freemem_base; rsvaddr += PGSIZE) {
+    struct phy_frame *frame;
+    panic_e(pa2frame(rsvaddr, &frame));
+    unsigned long sel;
+    panic_e(pa2sel(rsvaddr, &sel));
+    list_remove_node(&pf_free_list[sel], &frame->pf_link);
+    frame->pf_ref = 1;
+  }
+}
+
 long pa2frame(unsigned long addr, struct phy_frame **frame) {
   unsigned long sel;
   catch_e(pa2sel(addr, &sel));
@@ -157,9 +159,10 @@ long phy_frame_alloc(struct phy_frame **frame) {
   size_t mem_num = mem_get_num();
   catch_e(lk_acquire(&spinlock_of(pf_free_list)));
   for (size_t i = 0; i < mem_num; i++) {
-    if (!LIST_EMPTY(&pf_free_list[i])) {
-      *frame = LIST_FIRST(&pf_free_list[i]);
-      LIST_REMOVE(*frame, pf_link);
+    if (!list_empty(&pf_free_list[i])) {
+      struct linked_node *first = pf_free_list[i].l_first;
+      list_remove_node(&pf_free_list[i], first);
+      *frame = CONTAINER_OF(first, struct phy_frame, pf_link);
       unsigned long pa;
       panic_e(frame2pa(*frame, &pa));
       memset((void *)pa, 0, PGSIZE);
@@ -175,7 +178,7 @@ static long phy_frame_free(struct phy_frame *frame) {
   unsigned long sel;
   catch_e(frame2sel(frame, &sel));
   catch_e(lk_acquire(&spinlock_of(pf_free_list)));
-  LIST_INSERT_HEAD(&pf_free_list[sel], frame, pf_link);
+  list_insert_tail(&pf_free_list[sel], &frame->pf_link);
   catch_e(lk_release(&spinlock_of(pf_free_list)));
   return KER_SUCCESS;
 }

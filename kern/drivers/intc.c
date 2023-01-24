@@ -2,33 +2,75 @@
 #include <kern/lib/debug.h>
 #include <kern/lib/errors.h>
 #include <kern/lib/regs.h>
+#include <kern/mm/pmm.h>
+#include <lib/hashmap.h>
+#include <lib/string.h>
 #include <stdint.h>
 
-static trap_callback_t exc_map[CAUSE_EXC_NUM];
-static trap_callback_t int_map[CAUSE_INT_NUM];
+struct exc_st {
+  uint32_t exc_trap_num;
+  trap_callback_t exc_callback;
+  struct linked_node exc_link;
+};
 
-static irq_register_callback_t phandle_map[1U << (sizeof(uint8_t) * 8)];
-
-const trap_callback_t *intc_get_exc_vec(void) {
-  return exc_map;
+static const void *exc_key_of(const struct linked_node *node) {
+  const struct exc_st *exc = CONTAINER_OF(node, struct exc_st, exc_link);
+  return &exc->exc_trap_num;
 }
 
+static struct hlist_head exc_map_array[64];
+static struct hashmap exc_map = {
+    .h_array = exc_map_array,
+    .h_cap = 64,
+    .h_code = hash_code_uint32,
+    .h_equals = hash_eq_uint32,
+    .h_key = exc_key_of,
+};
+
+struct irq_reg_st {
+  uint32_t irq_phandle_num;
+  irq_register_callback_t irq_reg_callback;
+  struct linked_node irq_link;
+};
+
+static const void *irq_reg_key_of(const struct linked_node *node) {
+  const struct irq_reg_st *irq_reg = CONTAINER_OF(node, struct irq_reg_st, irq_link);
+  return &irq_reg->irq_phandle_num;
+}
+
+static struct hlist_head irq_reg_map_array[16];
+static struct hashmap irq_reg_map = {
+    .h_array = irq_reg_map_array,
+    .h_cap = 16,
+    .h_code = hash_code_uint32,
+    .h_equals = hash_eq_uint32,
+    .h_key = irq_reg_key_of,
+};
+
 long intc_register_handler(void *_, unsigned long trap_num, trap_callback_t callback) {
+  struct exc_st *exc = alloc(sizeof(struct exc_st), sizeof(struct exc_st));
+  exc->exc_trap_num = trap_num;
+  exc->exc_callback = callback;
+  hashmap_put(&exc_map, &exc->exc_link);
   if (trap_num > CAUSE_INT_OFFSET) {
-    int_map[trap_num - CAUSE_INT_OFFSET] = callback;
     csrw_sie(csrr_sie() | (1 << (trap_num - CAUSE_INT_OFFSET)));
-  } else {
-    exc_map[trap_num] = callback;
   }
   return KER_SUCCESS;
 }
 
-void intc_get_register_func(uint32_t phandle_num, irq_register_callback_t *callback) {
-  assert(phandle_num < sizeof(phandle_map) / sizeof(irq_register_callback_t));
-  *callback = phandle_map[phandle_num];
+void intc_get_irq_reg(uint32_t phandle_num, irq_register_callback_t *callback) {
+  struct linked_node *node = hashmap_get(&irq_reg_map, &phandle_num);
+  if (node == NULL) {
+    memset(callback, 0, sizeof(irq_register_callback_t));
+    return;
+  }
+  struct irq_reg_st *irq_reg = CONTAINER_OF(node, struct irq_reg_st, irq_link);
+  memcpy(callback, &irq_reg->irq_reg_callback, sizeof(irq_register_callback_t));
 }
 
-void intc_set_register_func(uint32_t phandle_num, irq_register_callback_t callback) {
-  assert(phandle_num < sizeof(phandle_map) / sizeof(irq_register_callback_t));
-  phandle_map[phandle_num] = callback;
+void intc_register_irq_reg(uint32_t phandle_num, irq_register_callback_t callback) {
+  struct irq_reg_st *irq_reg = alloc(sizeof(struct irq_reg_st), sizeof(struct irq_reg_st));
+  irq_reg->irq_phandle_num = phandle_num;
+  irq_reg->irq_reg_callback = callback;
+  hashmap_put(&irq_reg_map, &irq_reg->irq_link);
 }

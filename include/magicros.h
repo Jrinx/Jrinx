@@ -13,4 +13,11 @@
 
 #define UNIMPLEMENTED __builtin_unreachable()
 
+#define OFFSET_OF(st, mb) ((unsigned long)(&((st *)0)->mb))
+#define CONTAINER_OF(ptr, st, mb)                                                              \
+  ({                                                                                           \
+    const typeof(((st *)0)->mb) *_ptr = (ptr);                                                 \
+    (st *)((char *)_ptr - OFFSET_OF(st, mb));                                                  \
+  })
+
 #endif

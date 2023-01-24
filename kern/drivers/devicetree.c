@@ -20,8 +20,13 @@ static inline long fdt_from(void *dtb_addr, struct fdt_header **pfhdr) {
   return KER_SUCCESS;
 }
 
+static const void *prop_key_of(const struct linked_node *node) {
+  const struct dev_node_prop *prop = CONTAINER_OF(node, struct dev_node_prop, pr_link);
+  return prop->pr_name;
+}
+
 static long dt_node_load(void *dtb_addr, size_t pos, size_t *nxt_pos,
-                         struct dev_node_tailq *queue) {
+                         struct list_head *child_list) {
   struct fdt_header *fhdr = dtb_addr;
   uint32_t dtb_struct_off = from_be(fhdr->h_off_dt_struct);
   uint32_t dtb_strings_off = from_be(fhdr->h_off_dt_strings);
@@ -46,9 +51,16 @@ static long dt_node_load(void *dtb_addr, size_t pos, size_t *nxt_pos,
   size_t node_name_len = strlen(node_name);
   node->nd_name = alloc(sizeof(char) * (node_name_len + 1), sizeof(char));
   strcpy(node->nd_name, node_name);
-  TAILQ_INIT(&node->nd_prop_tailq);
-  TAILQ_INIT(&node->nd_children_tailq);
-  TAILQ_INSERT_TAIL(queue, node, nd_link);
+  struct hlist_head *prop_map_array =
+      alloc(sizeof(struct hlist_head) * 32, sizeof(struct hlist_head));
+  node->nd_prop_map.h_array = prop_map_array;
+  node->nd_prop_map.h_cap = 32;
+  node->nd_prop_map.h_code = hash_code_str;
+  node->nd_prop_map.h_equals = hash_eq_str;
+  node->nd_prop_map.h_key = prop_key_of;
+  hashmap_init(&node->nd_prop_map);
+  list_init(&node->nd_children_list);
+  list_insert_tail(child_list, &node->nd_link);
 
   pos = (pos * sizeof(uint32_t) + node_name_len) / sizeof(uint32_t) + 1;
 
@@ -75,7 +87,7 @@ static long dt_node_load(void *dtb_addr, size_t pos, size_t *nxt_pos,
     } else {
       prop->pr_values = NULL;
     }
-    TAILQ_INSERT_TAIL(&node->nd_prop_tailq, prop, pr_link);
+    hashmap_put(&node->nd_prop_map, &prop->pr_link);
 
     pos = (pos * sizeof(uint32_t) + prop_len - 1) / sizeof(uint32_t) + 1;
 
@@ -86,7 +98,7 @@ static long dt_node_load(void *dtb_addr, size_t pos, size_t *nxt_pos,
 
   do {
     if (struct_token == FDT_BEGIN_NODE) {
-      catch_e(dt_node_load(dtb_addr, pos, &pos, &node->nd_children_tailq));
+      catch_e(dt_node_load(dtb_addr, pos, &pos, &node->nd_children_list));
     } else if (struct_token == FDT_NOP) {
       pos++;
     } else {
@@ -109,8 +121,8 @@ long dt_load(void *dtb_addr, struct dev_tree *dt) {
 
   uint32_t dtb_memrsv_off = from_be(fhdr->h_off_mem_rsvmap);
 
-  TAILQ_INIT(&dt->dt_rsvmem_tailq);
-  TAILQ_INIT(&dt->dt_node_tailq);
+  list_init(&dt->dt_rsvmem_list);
+  list_init(&dt->dt_node_list);
 
   for (size_t pos = dtb_memrsv_off;;) {
     struct fdt_reserve_entry *rsvent = (struct fdt_reserve_entry *)(dtb_addr + pos);
@@ -122,22 +134,21 @@ long dt_load(void *dtb_addr, struct dev_tree *dt) {
         alloc(sizeof(struct dev_rsvmem), sizeof(struct dev_rsvmem));
     dev_rsvmem_ent->r_addr = rsvent->e_addr;
     dev_rsvmem_ent->r_size = rsvent->e_size;
-    TAILQ_INSERT_TAIL(&dt->dt_rsvmem_tailq, dev_rsvmem_ent, r_link);
+    list_insert_tail(&dt->dt_rsvmem_list, &dev_rsvmem_ent->r_link);
   }
 
-  catch_e(dt_node_load(dtb_addr, 0, NULL, &dt->dt_node_tailq));
+  catch_e(dt_node_load(dtb_addr, 0, NULL, &dt->dt_node_list));
 
   return KER_SUCCESS;
 }
 
 struct dev_node_prop *dt_node_prop_extract(const struct dev_node *node, const char *prop_name) {
-  struct dev_node_prop *prop;
-  TAILQ_FOREACH (prop, &node->nd_prop_tailq, pr_link) {
-    if (strcmp(prop->pr_name, prop_name) == 0) {
-      return prop;
-    }
+  struct linked_node *linked_node = hashmap_get(&node->nd_prop_map, prop_name);
+  if (linked_node == NULL) {
+    return NULL;
   }
-  return NULL;
+  struct dev_node_prop *prop = CONTAINER_OF(linked_node, struct dev_node_prop, pr_link);
+  return prop;
 }
 
 int dt_match_strlist(const uint8_t *prop_values, uint32_t prop_len, const char *target) {
@@ -163,7 +174,7 @@ int dt_match_strlist(const uint8_t *prop_values, uint32_t prop_len, const char *
 static long dt_iter_node(struct dev_node *node, dt_node_pred_t pred,
                          dt_iter_callback_t callback) {
   struct dev_node *child;
-  TAILQ_FOREACH (child, &node->nd_children_tailq, nd_link) {
+  LINKED_NODE_ITER (node->nd_children_list.l_first, child, nd_link) {
     if (pred(child)) {
       catch_e(callback(child));
     }
@@ -174,7 +185,7 @@ static long dt_iter_node(struct dev_node *node, dt_node_pred_t pred,
 
 long dt_iter(struct dev_tree *dt, dt_node_pred_t pred, dt_iter_callback_t callback) {
   struct dev_node *node;
-  TAILQ_FOREACH (node, &dt->dt_node_tailq, nd_link) {
+  LINKED_NODE_ITER (dt->dt_node_list.l_first, node, nd_link) {
     if (pred(node)) {
       catch_e(callback(node));
     }
@@ -209,7 +220,7 @@ static void dt_print_node(struct dev_node *node, unsigned long layer) {
   })
 
   struct dev_node_prop *prop;
-  TAILQ_FOREACH (prop, &node->nd_prop_tailq, pr_link) {
+  LINKED_NODE_ITER (node->nd_prop_map.h_array->h_first, prop, pr_link) {
     dt_printl("%s: ", prop->pr_name);
     for (size_t i = 0; i < prop->pr_len; i++) {
       printk("%02x", prop->pr_values[i]);
@@ -221,7 +232,7 @@ static void dt_print_node(struct dev_node *node, unsigned long layer) {
   }
 
   struct dev_node *child;
-  TAILQ_FOREACH (child, &node->nd_children_tailq, nd_link) {
+  LINKED_NODE_ITER (node->nd_children_list.l_first, child, nd_link) {
     dt_printl("%s {\n", child->nd_name);
     dt_print_node(child, layer + 1);
     dt_printl("}\n");
@@ -233,12 +244,12 @@ void dt_print_tree(struct dev_tree *dt) {
   printk("/dts-v1/;\n\n");
 
   struct dev_rsvmem *rsvmem;
-  TAILQ_FOREACH (rsvmem, &dt->dt_rsvmem_tailq, r_link) {
+  LINKED_NODE_ITER (dt->dt_rsvmem_list.l_first, rsvmem, r_link) {
     printk("/memreserve/\t0x%16lx 0x%16lx;\n", rsvmem->r_addr, rsvmem->r_size);
   }
 
   struct dev_node *node;
-  TAILQ_FOREACH (node, &dt->dt_node_tailq, nd_link) {
+  LINKED_NODE_ITER (dt->dt_node_list.l_first, node, nd_link) {
     dt_print_indention(0);
     dt_print_node_header(node->nd_name);
     dt_print_node(node, 1);

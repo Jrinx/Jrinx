@@ -150,22 +150,22 @@ struct mmio_setup {
   char *mm_name;
   unsigned long *mm_addr;
   unsigned long mm_size;
-  LIST_ENTRY(mmio_setup) mm_link;
+  struct linked_node mm_link;
 };
 
-static LIST_HEAD(__magic, mmio_setup) vmm_mmio_setup_queue;
+static struct list_head vmm_mmio_setup_list;
 
 void vmm_register_mmio(char *name, unsigned long *addr, unsigned long size) {
   struct mmio_setup *mmio = alloc(sizeof(struct mmio_setup), sizeof(struct mmio_setup));
   mmio->mm_name = name;
   mmio->mm_addr = addr;
   mmio->mm_size = size;
-  LIST_INSERT_HEAD(&vmm_mmio_setup_queue, mmio, mm_link);
+  list_insert_head(&vmm_mmio_setup_list, &mmio->mm_link);
 }
 
 void vmm_setup_mmio(void) {
   struct mmio_setup *mmio;
-  LIST_FOREACH (mmio, &vmm_mmio_setup_queue, mm_link) {
+  LINKED_NODE_ITER (vmm_mmio_setup_list.l_first, mmio, mm_link) {
     info("set up %s mmio at ", mmio->mm_name);
     mem_print_range(*mmio->mm_addr + DEVOFFSET, mmio->mm_size, NULL);
     vaddr_t va = {.val = *mmio->mm_addr + DEVOFFSET};

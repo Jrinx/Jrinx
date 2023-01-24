@@ -1,38 +1,33 @@
 #ifndef _KERN_DRIVERS_DEVICETREE_H_
 #define _KERN_DRIVERS_DEVICETREE_H_
 
+#include <lib/hashmap.h>
+#include <list.h>
 #include <stdint.h>
-#include <sys/queue.h>
 
 struct dev_rsvmem {
   unsigned long r_addr;
   unsigned long r_size;
-  TAILQ_ENTRY(dev_rsvmem) r_link;
+  struct linked_node r_link;
 };
-
-TAILQ_HEAD(dev_rsvmem_tailq, dev_rsvmem);
 
 struct dev_node_prop {
   char *pr_name;
   uint32_t pr_len;
   uint8_t *pr_values;
-  TAILQ_ENTRY(dev_node_prop) pr_link;
+  struct linked_node pr_link;
 };
-
-TAILQ_HEAD(dev_node_prop_tailq, dev_node_prop);
-
-TAILQ_HEAD(dev_node_tailq, dev_node);
 
 struct dev_node {
   char *nd_name;
-  struct dev_node_prop_tailq nd_prop_tailq;
-  struct dev_node_tailq nd_children_tailq;
-  TAILQ_ENTRY(dev_node) nd_link;
+  struct hashmap nd_prop_map;
+  struct list_head nd_children_list;
+  struct linked_node nd_link;
 };
 
 struct dev_tree {
-  struct dev_rsvmem_tailq dt_rsvmem_tailq;
-  struct dev_node_tailq dt_node_tailq;
+  struct list_head dt_rsvmem_list;
+  struct list_head dt_node_list;
 };
 
 typedef int (*dt_node_pred_t)(const struct dev_node *node);

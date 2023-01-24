@@ -15,10 +15,7 @@ struct uart16550a {
   unsigned long ur_addr;
   unsigned long ur_size;
   uint32_t ur_shift;
-  LIST_ENTRY(uart16550a) ur_link;
 };
-
-static LIST_HEAD(, uart16550a) uart16550a_list;
 
 static inline void uart16550a_write(struct uart16550a *uart, unsigned long addr, uint8_t data) {
   fence(w, o);
@@ -88,7 +85,7 @@ static long uart16550a_probe(const struct dev_node *node) {
   }
   uint32_t intc = from_be(*((uint32_t *)prop->pr_values));
   irq_register_callback_t irq_register_callback;
-  intc_get_register_func(intc, &irq_register_callback);
+  intc_get_irq_reg(intc, &irq_register_callback);
 
   if (irq_register_callback.cb_func == NULL) {
     info("intc %u not found, register %s to root intc 0\n", intc, node->nd_name);
@@ -107,7 +104,6 @@ static long uart16550a_probe(const struct dev_node *node) {
   uart->ur_addr = addr;
   uart->ur_size = size;
   uart->ur_shift = shift;
-  LIST_INSERT_HEAD(&uart16550a_list, uart, ur_link);
 
   info("%s probed (shift: %u), interrupt %08x registered to intc %u\n", node->nd_name, shift,
        int_num, intc);

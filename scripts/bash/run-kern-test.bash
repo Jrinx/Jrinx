@@ -35,6 +35,7 @@ prefix="[ $COMPILE_MODE mode ]"
 
 r=0
 
+# shellcheck disable=2086
 make $COMPILE_MODE > /dev/null || r=$?
 if [ "$r" -ne 0 ]; then
   bfatal "$prefix failed to build Jrinx"

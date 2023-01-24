@@ -13,10 +13,7 @@ struct goldfish {
   char *gf_name;
   uint64_t gf_addr;
   uint64_t gf_size;
-  LIST_ENTRY(goldfish) gf_link;
 };
-
-static LIST_HEAD(, goldfish) goldfish_list;
 
 static long goldfish_read_time(void *ctx, uint64_t *re) {
   struct goldfish *goldfish = ctx;
@@ -44,7 +41,6 @@ static long goldfish_probe(const struct dev_node *node) {
   goldfish->gf_name = node->nd_name;
   goldfish->gf_addr = addr;
   goldfish->gf_size = size;
-  LIST_INSERT_HEAD(&goldfish_list, goldfish, gf_link);
 
   info("%s probed\n", node->nd_name);
   info("\tlocates at ");

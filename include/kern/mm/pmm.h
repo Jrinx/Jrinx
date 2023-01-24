@@ -1,15 +1,13 @@
 #ifndef _KERN_MM_PMM_H_
 #define _KERN_MM_PMM_H_
 
+#include <list.h>
 #include <stddef.h>
-#include <sys/queue.h>
 
 struct phy_frame {
   unsigned long pf_ref;
-  LIST_ENTRY(phy_frame) pf_link;
+  struct linked_node pf_link;
 };
-
-LIST_HEAD(phy_frame_list, phy_frame);
 
 unsigned long mm_get_freemem_base(void);
 void mem_print_range(unsigned long addr, unsigned long size, const char *suffix);

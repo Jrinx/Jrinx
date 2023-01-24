@@ -13,10 +13,7 @@ struct sifiveuart0 {
   char *su_name;
   unsigned long su_addr;
   unsigned long su_size;
-  LIST_ENTRY(sifiveuart0) su_link;
 };
-
-static LIST_HEAD(, sifiveuart0) sifiveuart0_list;
 
 static inline void sifiveuart0_write(struct sifiveuart0 *uart, unsigned long addr,
                                      uint32_t data) {
@@ -81,7 +78,7 @@ static long sifiveuart0_probe(const struct dev_node *node) {
   }
   uint32_t intc = from_be(*((uint32_t *)prop->pr_values));
   irq_register_callback_t irq_register_callback;
-  intc_get_register_func(intc, &irq_register_callback);
+  intc_get_irq_reg(intc, &irq_register_callback);
 
   if (irq_register_callback.cb_func == NULL) {
     info("intc %u not found, register %s to root intc 0\n", intc, node->nd_name);
@@ -99,7 +96,6 @@ static long sifiveuart0_probe(const struct dev_node *node) {
   uart->su_name = node->nd_name;
   uart->su_addr = addr;
   uart->su_size = size;
-  LIST_INSERT_HEAD(&sifiveuart0_list, uart, su_link);
 
   info("%s probed, interrupt %08x registered to intc %u\n", node->nd_name, int_num, intc);
   info("\tlocates at ");

@@ -1,38 +1,47 @@
 #include <kern/drivers/realtime.h>
 #include <kern/lib/debug.h>
 #include <kern/mm/pmm.h>
+#include <lib/hashmap.h>
 #include <lib/string.h>
-#include <sys/queue.h>
 
 struct rtc_dev {
   char *rt_name;
   read_time_callback_t rt_read_time_callback;
-  LIST_ENTRY(rtc_dev) rt_link;
+  struct linked_node rt_link;
 };
 
 static struct rtc_dev *selected_rtc_dev = NULL;
-static LIST_HEAD(, rtc_dev) rtc_dev_list;
+
+static const void *rtc_key_of(const struct linked_node *node) {
+  const struct rtc_dev *rtc = CONTAINER_OF(node, struct rtc_dev, rt_link);
+  return rtc->rt_name;
+}
+
+static struct hlist_head rtc_map_array[32];
+static struct hashmap rtc_map = {
+    .h_array = rtc_map_array,
+    .h_cap = 32,
+    .h_code = hash_code_str,
+    .h_equals = hash_eq_str,
+    .h_key = rtc_key_of,
+};
 
 void rt_register_dev(char *name, read_time_callback_t read_time_callback) {
   struct rtc_dev *rtc = alloc(sizeof(struct rtc_dev), sizeof(struct rtc_dev));
   rtc->rt_name = name;
   rtc->rt_read_time_callback = read_time_callback;
-  LIST_INSERT_HEAD(&rtc_dev_list, rtc, rt_link);
+  hashmap_put(&rtc_map, &rtc->rt_link);
   selected_rtc_dev = rtc;
 }
 
 int rt_select_dev(const char *name) {
-  int found = 0;
-  struct rtc_dev *rtc;
-  LIST_FOREACH (rtc, &rtc_dev_list, rt_link) {
-    if (strcmp(rtc->rt_name, name) == 0) {
-      info("select %s as rtc\n", name);
-      found = 1;
-      selected_rtc_dev = rtc;
-      break;
-    }
+  struct linked_node *node = hashmap_get(&rtc_map, name);
+  if (node == NULL) {
+    return 0;
   }
-  return found;
+  struct rtc_dev *rtc = CONTAINER_OF(node, struct rtc_dev, rt_link);
+  selected_rtc_dev = rtc;
+  return 1;
 }
 
 int rt_read_time(uint64_t *re) {
