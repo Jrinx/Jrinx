@@ -18,16 +18,6 @@ SECTIONS {
   . = ALIGN(PGSIZE);
   .data : {
     *(.data .data.*)
-  }
-
-  . = ALIGN(PGSIZE);
-  .bss : {
-    *(.bss .bss.* .sbss .sbss.*)
-  }
-
-  . = ALIGN(PGSIZE);
-  .ksec : {
-    *(.ksec.master_stack)
     PROVIDE(kern_dev_init_begin = .);
     *(.ksec.dev_init_highest.*)
     *(.ksec.dev_init_high.*)
@@ -41,6 +31,16 @@ SECTIONS {
     PROVIDE(kern_testset_begin = .);
     *(.ksec.testcase.*)
     PROVIDE(kern_testset_end = .);
+  }
+
+  . = ALIGN(PGSIZE);
+  .bss : {
+    *(.bss .bss.* .sbss .sbss.*)
+  }
+
+  . = ALIGN(PGSIZE);
+  .kern_master_stack : {
+    *(.ksec.master_stack)
   }
 
   PROVIDE(kern_end = .);
