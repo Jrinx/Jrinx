@@ -1,8 +1,6 @@
 #ifndef _KERN_DRIVERS_SERIAL_UART16550A_H_
 #define _KERN_DRIVERS_SERIAL_UART16550A_H_
 
-#include <kern/drivers/device.h>
-
 #define COM_RBR 0
 #define COM_THR 0
 #define COM_DLL 0
