@@ -69,7 +69,7 @@ void fatalk(const char *restrict file, unsigned long lineno, const char *restric
             const char *restrict fmt, ...) {
   print_timestamp(ANSI_FG_RED);
   struct sbiret ret =
-      sbi_system_reset(SBI_SRST_RESET_TYPE_SHUTDOWN, SBI_SRST_RESET_REASON_SYSFAIL);
+      sbi_system_reset(SBI_SRST_RESET_TYPE_WARM_REBOOT, SBI_SRST_RESET_REASON_SYSFAIL);
   info("shutdown failed: (%ld, %ld)\n", ret.error, ret.value);
   while (1) {
   }
@@ -78,7 +78,11 @@ void fatalk(const char *restrict file, unsigned long lineno, const char *restric
 void haltk(const char *restrict file, unsigned long lineno, const char *restrict func,
            const char *restrict fmt, ...) {
   print_timestamp(ANSI_FG_YELLOW);
-  sbi_shutdown();
+  struct sbiret ret =
+      sbi_system_reset(SBI_SRST_RESET_TYPE_WARM_REBOOT, SBI_SRST_RESET_REASON_NONE);
+  info("shutdown failed: (%ld, %ld)\n", ret.error, ret.value);
+  while (1) {
+  }
 }
 
 #undef print_timestamp

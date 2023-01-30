@@ -33,7 +33,7 @@ EMU_TEST_CONF	:= .test.conf
 ifneq ($(wildcard $(EMU_TEST_CONF)),)
 EMU_ARGS	+= --test $(shell cat $(EMU_TEST_CONF))
 endif
-EMU_OPTS	:= -M $(EMU_MACH) -m $(EMU_RAM_SIZE) -nographic -smp $(EMU_CPUS)
+EMU_OPTS	:= -M $(EMU_MACH) -m $(EMU_RAM_SIZE) -nographic -smp $(EMU_CPUS) -no-reboot
 
 INCLUDES	:= -I./include
 MODULES		:= kern lib
