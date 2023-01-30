@@ -77,7 +77,7 @@ const char *strchr(const char *restrict s, int c) {
   return 0;
 }
 
-int strcmp(const char *restrict p, const char *restrict q) {
+int strcmp(const char *p, const char *q) {
   while (*p && *p == *q) {
     p++, q++;
   }
