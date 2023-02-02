@@ -27,6 +27,28 @@ static void print_boot_info(void) {
   }
 }
 
+static void __attribute__((noreturn)) kernel_gen_init(void) {
+  static volatile unsigned long gen_init_state = 0;
+  static with_spinlock(gen_init_state);
+  switch (hrt_get_id()) {
+  case SYSCORE:
+    panic_e(args_evaluate(chosen_get_bootargs()));
+  default:
+    panic_e(lk_acquire(&spinlock_of(gen_init_state)));
+    gen_init_state++;
+    panic_e(lk_release(&spinlock_of(gen_init_state)));
+    break;
+  }
+  while (gen_init_state != cpus_get_count()) {
+  }
+  if (hrt_get_id() == SYSCORE) {
+    halt("All cores are running, halt!\n");
+  } else {
+    while (1) {
+    }
+  }
+}
+
 void __attribute__((noreturn)) kernel_init(unsigned long hartid, void *dtb_addr) {
   static volatile unsigned long init_state = 0;
   static with_spinlock(init_state);
@@ -46,24 +68,16 @@ void __attribute__((noreturn)) kernel_init(unsigned long hartid, void *dtb_addr)
     vmm_summary();
 
     log_localize_output();
-
-    panic_e(args_evaluate(chosen_get_bootargs()));
-
-    panic_e(lk_acquire(&spinlock_of(init_state)));
-    init_state++;
-    panic_e(lk_release(&spinlock_of(init_state)));
-    while (init_state != cpus_get_count()) {
-    }
-    halt("All cores are running, halt!\n");
   } else {
     while (init_state == 0) {
     }
     vmm_start();
     info("Hello Jrinx, I am slave hart!\n");
-    panic_e(lk_acquire(&spinlock_of(init_state)));
-    init_state++;
-    panic_e(lk_release(&spinlock_of(init_state)));
-    while (1) {
-    }
   }
+  panic_e(lk_acquire(&spinlock_of(init_state)));
+  init_state++;
+  panic_e(lk_release(&spinlock_of(init_state)));
+  while (init_state != cpus_get_count()) {
+  }
+  kernel_gen_init();
 }

@@ -52,9 +52,6 @@ long intc_register_handler(void *_, unsigned long trap_num, trap_callback_t call
   exc->exc_trap_num = trap_num;
   exc->exc_callback = callback;
   hashmap_put(&exc_map, &exc->exc_link);
-  if (trap_num > CAUSE_INT_OFFSET) {
-    csrw_sie(csrr_sie() | (1 << (trap_num - CAUSE_INT_OFFSET)));
-  }
   return KER_SUCCESS;
 }
 

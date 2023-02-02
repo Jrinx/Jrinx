@@ -1,5 +1,6 @@
 #include <kern/drivers/serialport.h>
 #include <kern/lib/debug.h>
+#include <kern/lib/regs.h>
 #include <kern/tests.h>
 #include <lib/string.h>
 
@@ -10,6 +11,9 @@ static void serial_test(void) {
   char buffer[SERIAL_TEST_BUFFER];
   const char *std = "abcdefgh1234567890";
   info("test serial input/output, please input '%s' and press enter:\n", std);
+
+  for (rv64_sipe sip = {.val = csrr_sip()}; !sip.ip_bits.seip; sip.val = csrr_sip()) {
+  }
 
   while (len < SERIAL_TEST_BUFFER) {
     buffer[len] = serial_blocked_getc();

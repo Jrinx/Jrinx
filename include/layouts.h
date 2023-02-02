@@ -1,6 +1,8 @@
 #ifndef _LAYOUTS_H_
 #define _LAYOUTS_H_
 
+#define SYSCORE 1
+
 #define PGSHIFT 12
 #define PGSIZE (1 << PGSHIFT)
 

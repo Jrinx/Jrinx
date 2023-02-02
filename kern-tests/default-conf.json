@@ -9,6 +9,7 @@
           "Hello Jrinx, I am master hart!",
           "enable virtual memory \\(satp: [0-9a-zA-Z]{16}\\)",
           "switch to local serial output",
+          "Hello Jrinx, I am slave hart!",
           "<<< [a-zA-Z]+-test begin",
           ">>> [a-zA-Z]+-test end",
           "arg-driven test done, halt!"
