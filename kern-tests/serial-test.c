@@ -4,18 +4,16 @@
 #include <kern/tests.h>
 #include <lib/string.h>
 
-#define SERIAL_TEST_BUFFER 512
-
 static void serial_test(void) {
+  const char std[] = "abcdefgh1234567890";
   size_t len = 0;
-  char buffer[SERIAL_TEST_BUFFER];
-  const char *std = "abcdefgh1234567890";
-  info("test serial input/output, please input '%s' and press enter:\n", std);
+  char buffer[sizeof(std)];
+  info("test serial int & i/o, please input '%s' and press enter:\n", std);
 
   for (rv64_si sip = {.val = csrr_sip()}; !sip.bits.sei; sip.val = csrr_sip()) {
   }
 
-  while (len < SERIAL_TEST_BUFFER) {
+  while (len < sizeof(std)) {
     buffer[len] = serial_blocked_getc();
     serial_blocked_putc(buffer[len]);
     if (buffer[len] == '\r') {
