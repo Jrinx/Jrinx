@@ -12,7 +12,7 @@ static void serial_test(void) {
   const char *std = "abcdefgh1234567890";
   info("test serial input/output, please input '%s' and press enter:\n", std);
 
-  for (rv64_sipe sip = {.val = csrr_sip()}; !sip.ip_bits.seip; sip.val = csrr_sip()) {
+  for (rv64_si sip = {.val = csrr_sip()}; !sip.bits.sei; sip.val = csrr_sip()) {
   }
 
   while (len < SERIAL_TEST_BUFFER) {
