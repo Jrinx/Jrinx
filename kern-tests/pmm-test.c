@@ -40,7 +40,7 @@ static void pmm_test(void) {
 
   assert(phy_frame_alloc(&tmp_frame) == -KER_MEM_ER);
 
-  info("test frame reusing\n");
+  info("test frame recycling\n");
   assert(phy_frame_ref_dec(frame1) == KER_SUCCESS);
   assert(phy_frame_alloc(&tmp_frame) == KER_SUCCESS);
 }
