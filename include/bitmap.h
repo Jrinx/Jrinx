@@ -27,8 +27,8 @@ static inline unsigned bitmap_find_first_zero_bit(unsigned long *bitmap, size_t 
   for (i = 0; i < nr && !~bitmap[i]; i++) {
   }
 
-  unsigned j = ffs(bitmap[i]);
-  return j ? i * sizeof(unsigned long) + (j - 1) : -1UL;
+  unsigned j = ffs(~bitmap[i]);
+  return j ? i * (sizeof(unsigned long) * 8) + (j - 1) : -1UL;
 }
 
 #endif

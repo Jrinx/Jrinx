@@ -10,6 +10,7 @@ enum {
   KER_MEM_ER,
   KER_INT_ER,
   KER_SRL_ER,
+  KER_ASID_ER,
   KER_ERR_MAX,
 };
 

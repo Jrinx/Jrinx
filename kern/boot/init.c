@@ -11,6 +11,7 @@
 #include <kern/lib/sync.h>
 #include <kern/lock/lock.h>
 #include <kern/lock/spinlock.h>
+#include <kern/mm/asid.h>
 #include <kern/mm/vmm.h>
 #include <layouts.h>
 #include <lib/string.h>
@@ -57,6 +58,8 @@ void __attribute__((noreturn)) kernel_init(unsigned long hartid, void *dtb_addr)
     print_boot_info();
 
     info("Hello Jrinx, I am master hart!\n");
+
+    asid_init();
 
     panic_e(dt_load(dtb_addr, &boot_dt));
     panic_e(device_probe(&boot_dt));
