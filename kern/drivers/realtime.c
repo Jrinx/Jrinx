@@ -20,6 +20,7 @@ static const void *rtc_key_of(const struct linked_node *node) {
 static struct hlist_head rtc_map_array[32];
 static struct hashmap rtc_map = {
     .h_array = rtc_map_array,
+    .h_num = 0,
     .h_cap = 32,
     .h_code = hash_code_str,
     .h_equals = hash_eq_str,

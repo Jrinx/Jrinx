@@ -8,7 +8,7 @@ void hashmap_init(const struct hashmap *map) {
   }
 }
 
-void hashmap_put(const struct hashmap *map, struct linked_node *node) {
+void hashmap_put(struct hashmap *map, struct linked_node *node) {
   const void *node_key = map->h_key(node);
   unsigned long code = map->h_code(node_key);
   size_t index = code % map->h_cap;
@@ -19,9 +19,10 @@ void hashmap_put(const struct hashmap *map, struct linked_node *node) {
     }
   }
   hlist_insert_head(head, node);
+  map->h_num++;
 }
 
-void hashmap_remove(const struct hashmap *map, const void *key) {
+void hashmap_remove(struct hashmap *map, const void *key) {
   unsigned long code = map->h_code(key);
   size_t index = code % map->h_cap;
   struct hlist_head *head = &map->h_array[index];
@@ -30,6 +31,7 @@ void hashmap_remove(const struct hashmap *map, const void *key) {
       hlist_remove_node(ptr);
     }
   }
+  map->h_num--;
 }
 
 struct linked_node *hashmap_get(const struct hashmap *map, const void *key) {
@@ -73,5 +75,19 @@ unsigned long hash_code_uint32(const void *key) {
 int hash_eq_uint32(const void *key1, const void *key2) {
   const uint32_t *num1 = key1;
   const uint32_t *num2 = key2;
+  return *num1 == *num2;
+}
+
+unsigned long hash_code_uint64(const void *key) {
+  uint64_t num = *(const uint64_t *)key;
+  num = (num ^ (num >> 30)) * 0xbf58476d1ce4e5b9UL;
+  num = (num ^ (num >> 27)) * 0x94d049bb133111ebUL;
+  num = num ^ (num >> 31);
+  return num;
+}
+
+int hash_eq_uint64(const void *key1, const void *key2) {
+  const uint64_t *num1 = key1;
+  const uint64_t *num2 = key2;
   return *num1 == *num2;
 }

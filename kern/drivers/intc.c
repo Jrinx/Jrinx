@@ -21,6 +21,7 @@ static const void *exc_key_of(const struct linked_node *node) {
 static struct hlist_head exc_map_array[64];
 static struct hashmap exc_map = {
     .h_array = exc_map_array,
+    .h_num = 0,
     .h_cap = 64,
     .h_code = hash_code_uint32,
     .h_equals = hash_eq_uint32,
@@ -41,6 +42,7 @@ static const void *irq_reg_key_of(const struct linked_node *node) {
 static struct hlist_head irq_reg_map_array[16];
 static struct hashmap irq_reg_map = {
     .h_array = irq_reg_map_array,
+    .h_num = 0,
     .h_cap = 16,
     .h_code = hash_code_uint32,
     .h_equals = hash_eq_uint32,

@@ -51,13 +51,9 @@ static long dt_node_load(void *dtb_addr, size_t pos, size_t *nxt_pos,
   size_t node_name_len = strlen(node_name);
   node->nd_name = alloc(sizeof(char) * (node_name_len + 1), sizeof(char));
   strcpy(node->nd_name, node_name);
-  struct hlist_head *prop_map_array =
-      alloc(sizeof(struct hlist_head) * 32, sizeof(struct hlist_head));
-  node->nd_prop_map.h_array = prop_map_array;
-  node->nd_prop_map.h_cap = 32;
-  node->nd_prop_map.h_code = hash_code_str;
-  node->nd_prop_map.h_equals = hash_eq_str;
-  node->nd_prop_map.h_key = prop_key_of;
+  HASHMAP_ALLOC(&node->nd_prop_map,
+                alloc(sizeof(struct hlist_head) * 32, sizeof(struct hlist_head)), 32, str,
+                prop_key_of);
   hashmap_init(&node->nd_prop_map);
   list_init(&node->nd_children_list);
   list_insert_tail(child_list, &node->nd_link);

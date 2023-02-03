@@ -25,6 +25,7 @@ static const void *serial_key_of(const struct linked_node *node) {
 static struct hlist_head serial_map_array[16];
 static struct hashmap serial_map = {
     .h_array = serial_map_array,
+    .h_num = 0,
     .h_cap = 16,
     .h_code = hash_code_str,
     .h_equals = hash_eq_str,
