@@ -56,24 +56,24 @@ static void plic_complete(struct plic *plic, uint32_t context_id) {
 static long plic_handle_int(void *ctx, unsigned long trap_num) {
   struct plic *plic = ctx;
 
-  catch_e(lk_acquire(&plic->spinlock_of(pl)));
+  panic_e(lk_acquire(&plic->spinlock_of(pl)));
 
   uint32_t int_num = plic_claim(plic, PLIC_EXTERNAL_INT_CTX);
   if (int_num < PLIC_SOURCE_MIN || int_num > PLIC_SOURCE_MAX) {
-    catch_e(lk_release(&plic->spinlock_of(pl)));
+    panic_e(lk_release(&plic->spinlock_of(pl)));
     return -KER_INT_ER;
   }
 
   trap_callback_t callback = plic->pl_int_map[int_num];
 
   catch_e(cb_invoke(callback)(int_num), {
-    catch_e(lk_release(&plic->spinlock_of(pl)));
+    panic_e(lk_release(&plic->spinlock_of(pl)));
     return err;
   });
 
   plic_complete(plic, PLIC_EXTERNAL_INT_CTX);
 
-  catch_e(lk_release(&plic->spinlock_of(pl)));
+  panic_e(lk_release(&plic->spinlock_of(pl)));
   return KER_SUCCESS;
 }
 
@@ -82,11 +82,11 @@ static long plic_register_irq(void *ctx, unsigned long source_id, trap_callback_
     return -KER_INT_ER;
   }
   struct plic *plic = ctx;
-  catch_e(lk_acquire(&plic->spinlock_of(pl)));
+  panic_e(lk_acquire(&plic->spinlock_of(pl)));
   plic_source_enable(plic, PLIC_EXTERNAL_INT_CTX, source_id);
   plic_set_source_prio(plic, source_id, PLIC_PRIO_MAX);
   plic->pl_int_map[source_id] = callback;
-  catch_e(lk_release(&plic->spinlock_of(pl)));
+  panic_e(lk_release(&plic->spinlock_of(pl)));
   return KER_SUCCESS;
 }
 

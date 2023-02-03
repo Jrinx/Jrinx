@@ -157,7 +157,7 @@ long frame2pa(struct phy_frame *frame, unsigned long *addr) {
 
 long phy_frame_alloc(struct phy_frame **frame) {
   size_t mem_num = mem_get_num();
-  catch_e(lk_acquire(&spinlock_of(pf_free_list)));
+  panic_e(lk_acquire(&spinlock_of(pf_free_list)));
   for (size_t i = 0; i < mem_num; i++) {
     if (!list_empty(&pf_free_list[i])) {
       struct linked_node *first = pf_free_list[i].l_first;
@@ -166,45 +166,45 @@ long phy_frame_alloc(struct phy_frame **frame) {
       unsigned long pa;
       panic_e(frame2pa(*frame, &pa));
       memset((void *)pa, 0, PGSIZE);
-      catch_e(lk_release(&spinlock_of(pf_free_list)));
+      panic_e(lk_release(&spinlock_of(pf_free_list)));
       return KER_SUCCESS;
     }
   }
-  catch_e(lk_release(&spinlock_of(pf_free_list)));
+  panic_e(lk_release(&spinlock_of(pf_free_list)));
   return -KER_MEM_ER;
 }
 
 static long phy_frame_free(struct phy_frame *frame) {
   unsigned long sel;
   catch_e(frame2sel(frame, &sel));
-  catch_e(lk_acquire(&spinlock_of(pf_free_list)));
+  panic_e(lk_acquire(&spinlock_of(pf_free_list)));
   list_insert_tail(&pf_free_list[sel], &frame->pf_link);
-  catch_e(lk_release(&spinlock_of(pf_free_list)));
+  panic_e(lk_release(&spinlock_of(pf_free_list)));
   return KER_SUCCESS;
 }
 
 static with_spinlock(frame_ref_mod);
 
 long phy_frame_ref_dec(struct phy_frame *frame) {
-  catch_e(lk_acquire(&spinlock_of(frame_ref_mod)));
+  panic_e(lk_acquire(&spinlock_of(frame_ref_mod)));
   if (frame->pf_ref == 0) {
-    catch_e(lk_release(&spinlock_of(frame_ref_mod)));
+    panic_e(lk_release(&spinlock_of(frame_ref_mod)));
     return -KER_MEM_ER;
   }
   frame->pf_ref--;
   if (frame->pf_ref == 0) {
     catch_e(phy_frame_free(frame), {
-      catch_e(lk_release(&spinlock_of(frame_ref_mod)));
+      panic_e(lk_release(&spinlock_of(frame_ref_mod)));
       return err;
     });
   }
-  catch_e(lk_release(&spinlock_of(frame_ref_mod)));
+  panic_e(lk_release(&spinlock_of(frame_ref_mod)));
   return KER_SUCCESS;
 }
 
 long phy_frame_ref_inc(struct phy_frame *frame) {
-  catch_e(lk_acquire(&spinlock_of(frame_ref_mod)));
+  panic_e(lk_acquire(&spinlock_of(frame_ref_mod)));
   frame->pf_ref++;
-  catch_e(lk_release(&spinlock_of(frame_ref_mod)));
+  panic_e(lk_release(&spinlock_of(frame_ref_mod)));
   return KER_SUCCESS;
 }
