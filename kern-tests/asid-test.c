@@ -4,8 +4,8 @@
 #include <kern/tests.h>
 #include <lib/string.h>
 
-unsigned asid_allocated[0x10000U];
-unsigned asid_allocated_max = 0;
+static unsigned asid_allocated[0x10000U];
+static unsigned asid_allocated_max = 0;
 
 static void asid_test(void) {
   info("test allocation\n");
