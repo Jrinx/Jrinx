@@ -77,9 +77,6 @@ release-debug: release
 debug: CFLAGS		+= -O0 -g -ggdb
 debug: build
 
-ifneq ($(filter preprocess,$(MAKECMDGOALS)),)
-build: CHECK_PREPROC	:= y
-endif
 build: clean
 	@export MAKEFLAGS="-j$$(nproc) -s $$MAKEFLAGS"
 	@$(MAKE) $(JRINX)
@@ -119,6 +116,7 @@ clean-all: clean
 clean-opensbi:
 	@$(MAKE) -C $(OPENSBI_ROOT) distclean
 
+preprocess: CHECK_PREPROC := y
 preprocess: all
 
 objdump:
