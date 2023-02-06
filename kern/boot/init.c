@@ -28,7 +28,7 @@ static void print_boot_info(void) {
   }
 }
 
-static void __attribute__((noreturn)) kernel_gen_init(void) {
+static void kernel_gen_init(void) {
   static volatile unsigned long gen_init_state = 0;
   static with_spinlock(gen_init_state);
   switch (hrt_get_id()) {
@@ -41,12 +41,6 @@ static void __attribute__((noreturn)) kernel_gen_init(void) {
     break;
   }
   while (gen_init_state != cpus_get_count()) {
-  }
-  if (hrt_get_id() == SYSCORE) {
-    halt("All cores are running, halt!\n");
-  } else {
-    while (1) {
-    }
   }
 }
 
@@ -82,5 +76,13 @@ void __attribute__((noreturn)) kernel_init(unsigned long hartid, void *dtb_addr)
   panic_e(lk_release(&spinlock_of(init_state)));
   while (init_state != cpus_get_count()) {
   }
+
   kernel_gen_init();
+
+  if (hrt_get_id() == SYSCORE) {
+    halt("All cores are running, halt!\n");
+  } else {
+    while (1) {
+    }
+  }
 }
