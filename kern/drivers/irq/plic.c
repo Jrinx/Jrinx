@@ -22,22 +22,23 @@ static void plic_set_source_prio(struct plic *plic, uint32_t source_id, uint32_t
   *((volatile uint32_t *)(plic->pl_addr + 4 * source_id)) = priority;
 }
 
-static void plic_source_enable(struct plic *plic, uint32_t context_id, uint32_t source_id) {
+static void plic_source_set_en(struct plic *plic, uint32_t context_id, uint32_t source_id,
+                               int enable) {
   unsigned long ctx_base = plic->pl_addr + 0x2000 + context_id * 0x80;
   uint32_t quo = source_id / (sizeof(uint32_t) * 8);
   uint32_t rem = source_id % (sizeof(uint32_t) * 8);
   uint32_t bits = *((volatile uint32_t *)(ctx_base + quo * 4));
-  bits |= 1U << rem;
+  if (enable) {
+    bits |= 1U << rem;
+  } else {
+    bits &= ~(1U << rem);
+  }
   *((volatile uint32_t *)(ctx_base + quo * 4)) = bits;
 }
 
-static void plic_source_disable(struct plic *plic, uint32_t context_id, uint32_t source_id) {
+static void plic_source_disable_all(struct plic *plic, uint32_t context_id) {
   unsigned long ctx_base = plic->pl_addr + 0x2000 + context_id * 0x80;
-  uint32_t quo = source_id / (sizeof(uint32_t) * 8);
-  uint32_t rem = source_id % (sizeof(uint32_t) * 8);
-  uint32_t bits = *((volatile uint32_t *)(ctx_base + quo * 4));
-  bits &= ~(1U << rem);
-  *((volatile uint32_t *)(ctx_base + quo * 4)) = bits;
+  memset((void *)ctx_base, 0, 0x80);
 }
 
 static void plic_set_context_prio_threshold(struct plic *plic, uint32_t context_id,
@@ -83,7 +84,7 @@ static long plic_register_irq(void *ctx, unsigned long source_id, trap_callback_
   }
   struct plic *plic = ctx;
   panic_e(lk_acquire(&plic->spinlock_of(pl)));
-  plic_source_enable(plic, PLIC_EXTERNAL_INT_CTX, source_id);
+  plic_source_set_en(plic, PLIC_EXTERNAL_INT_CTX, source_id, 1);
   plic_set_source_prio(plic, source_id, PLIC_PRIO_MAX);
   plic->pl_int_map[source_id] = callback;
   panic_e(lk_release(&plic->spinlock_of(pl)));
@@ -101,9 +102,7 @@ static void plic_init(struct plic *plic) {
   info("disable all interrupt sources for all context (0 - %d)\n", context_max_id);
   info("set all context priority threshold to MAX\n");
   for (uint32_t i = 0; i <= context_max_id; i++) {
-    for (uint32_t j = PLIC_SOURCE_MIN; j <= PLIC_SOURCE_MAX; j++) {
-      plic_source_disable(plic, i, j);
-    }
+    plic_source_disable_all(plic, i);
     plic_set_context_prio_threshold(plic, i, PLIC_PRIO_MAX);
   }
 
