@@ -30,10 +30,6 @@ EMU_MACH 	:= $(BOARD)
 EMU_CPUS 	:= $(CPUS)
 EMU_RAM_SIZE	:= 1G
 EMU_ARGS	:= $(ARGS)
-EMU_TEST_CONF	:= .test.conf
-ifneq ($(wildcard $(EMU_TEST_CONF)),)
-EMU_ARGS	+= --test $(shell cat $(EMU_TEST_CONF))
-endif
 EMU_OPTS	:= -M $(EMU_MACH) -m $(EMU_RAM_SIZE) -nographic -smp $(EMU_CPUS) -no-reboot
 
 INCLUDES	:= -I./include
@@ -52,11 +48,6 @@ DTC		:= dtc
 
 export CROSS_COMPILE CFLAGS LDFLAGS
 export CHECK_PREPROC ?= n
-export TEST
-
-ifneq ($(TEST),)
-$(shell echo '$(TEST)' > $(EMU_TEST_CONF))
-endif
 
 .ONESHELL:
 .PHONY: all debug release release-debug build sbi-fw clean clean-all clean-opensbi \
@@ -127,6 +118,9 @@ objcopy:
 	@$(OBJCOPY) -O binary $(JRINX) $(JRINX).bin
 
 run: EMU_OPTS			+= -kernel $(JRINX) -bios $(BOOTLOADER) -append '$(EMU_ARGS)'
+ifneq ($(test),)
+run: EMU_OPTS			+= -append '--test $(test)'
+endif
 run: $(BOOTLOADER)
 	@$(EMU) $(EMU_OPTS)
 

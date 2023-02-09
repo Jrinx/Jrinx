@@ -36,7 +36,7 @@ prefix="[ $COMPILE_MODE mode ]"
 r=0
 
 # shellcheck disable=2086
-make $COMPILE_MODE > /dev/null || r=$?
+make $COMPILE_MODE COLOR=n > /dev/null || r=$?
 if [ "$r" -ne 0 ]; then
   bfatal "$prefix failed to build Jrinx"
   exit $r
@@ -62,19 +62,14 @@ fi
 
 for test_case in $test_list; do
   bgreen "$prefix run $test_case"
-  make TEST="$test_case" COLOR=n > /dev/null || r=$?
-  if [ "$r" -ne 0 ]; then
-    fatal "$prefix failed to build Jrinx with $test_case"
-    exit $r
-  fi
   conf_file='kern-tests/default-conf.json'
   if [ -f "kern-tests/$test_case-conf.json" ]; then
     conf_file="kern-tests/$test_case-conf.json"
   fi
   if [ "$verbose" = 'y' ]; then
-    scripts/judge "$conf_file" || r=$?
+    test="$test_case" scripts/judge "$conf_file" || r=$?
   else
-    scripts/judge "$conf_file" -n || r=$?
+    test="$test_case" scripts/judge "$conf_file" -n || r=$?
   fi
   if [ "$r" -ne 0 ]; then
     bfatal "$prefix judge failed on $test_case"
