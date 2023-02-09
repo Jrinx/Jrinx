@@ -19,6 +19,21 @@ static struct arg_opt args_collections[] = {
     arg_of_end,
 };
 
+static void do_test(const char *name) {
+  extern struct kern_test *kern_testset_begin[];
+  extern struct kern_test *kern_testset_end[];
+  for (struct kern_test **ptr = kern_testset_begin; ptr < kern_testset_end; ptr++) {
+    struct kern_test *test = *ptr;
+    if (strcmp(test->kt_name, name) == 0) {
+      info("<<< %s begin\n", name);
+      test->kt_test_func();
+      info(">>> %s end\n", name);
+      return;
+    }
+  }
+  fatal("test %s not found\n", name);
+}
+
 static long args_action(void) {
   if (args_test != NULL) {
     do_test(args_test);

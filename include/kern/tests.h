@@ -9,6 +9,4 @@ struct kern_test {
 #define kern_test_def(name)                                                                    \
   struct kern_test *kern_##name##_def __attribute__((section(".ksec.testcase." #name))) = &name
 
-void do_test(const char *name);
-
 #endif
