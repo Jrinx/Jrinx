@@ -1,7 +1,7 @@
+#include "uart16550a.h"
 #include <endian.h>
 #include <kern/drivers/device.h>
 #include <kern/drivers/intc.h>
-#include <kern/drivers/serial/uart16550a.h>
 #include <kern/drivers/serialport.h>
 #include <kern/lib/debug.h>
 #include <kern/lib/errors.h>

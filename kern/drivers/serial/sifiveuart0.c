@@ -1,7 +1,7 @@
 #include <endian.h>
 #include <kern/drivers/device.h>
 #include <kern/drivers/intc.h>
-#include <kern/drivers/serial/sifiveuart0.h>
+#include "sifiveuart0.h"
 #include <kern/drivers/serialport.h>
 #include <kern/lib/debug.h>
 #include <kern/lib/errors.h>

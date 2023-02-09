@@ -1,7 +1,7 @@
+#include "goldfish.h"
 #include <endian.h>
 #include <kern/drivers/device.h>
 #include <kern/drivers/realtime.h>
-#include <kern/drivers/rtc/goldfish.h>
 #include <kern/lib/debug.h>
 #include <kern/lib/errors.h>
 #include <kern/lock/lock.h>

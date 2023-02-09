@@ -1,5 +1,5 @@
-#ifndef _KERN_DRIVERS_IRQ_PLIC_H_
-#define _KERN_DRIVERS_IRQ_PLIC_H_
+#ifndef PLIC_H
+#define PLIC_H
 
 #include <kern/drivers/device.h>
 #include <layouts.h>

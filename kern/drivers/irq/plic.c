@@ -1,7 +1,7 @@
+#include "plic.h"
 #include <endian.h>
 #include <kern/drivers/device.h>
 #include <kern/drivers/intc.h>
-#include <kern/drivers/irq/plic.h>
 #include <kern/lib/debug.h>
 #include <kern/lib/errors.h>
 #include <kern/lock/lock.h>
