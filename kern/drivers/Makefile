@@ -8,4 +8,7 @@ DRIVERS := $(dir $(wildcard ./*/))
 tar:: $(DRIVERS)
 
 $(DRIVERS):
-	$(MAKE) -C $@
+	$(MAKE) -C $@ $(shell \
+	if [ ! -f $@/Makefile ]; then \
+		echo '-f $(BUILD_ROOT_DIR)/mk/auto-make.mk'; \
+	fi)

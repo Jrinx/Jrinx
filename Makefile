@@ -33,9 +33,8 @@ EMU_ARGS	:= $(ARGS)
 EMU_OPTS	:= -M $(EMU_MACH) -m $(EMU_RAM_SIZE) -nographic -smp $(EMU_CPUS) -no-reboot
 
 INCLUDES	:= -I./include
-MODULES		:= kern lib
-KERNTESTS_DIR	:= kern-tests
-OBJECTS		:= $(addsuffix /**/*.o, $(MODULES) $(KERNTESTS_DIR))
+MODULES		:= kern lib kern-tests
+OBJECTS		:= $(addsuffix /**/*.o, $(MODULES))
 LDSCRIPT	:= kern.ld
 TARGET_DIR	:= target
 JRINX		:= $(TARGET_DIR)/jrinx
@@ -48,12 +47,13 @@ DTC		:= dtc
 
 export CROSS_COMPILE CFLAGS LDFLAGS
 export CHECK_PREPROC ?= n
+export BUILD_ROOT_DIR ?= $(abspath ./)
 
 .ONESHELL:
 .PHONY: all debug release release-debug build sbi-fw clean clean-all clean-opensbi \
 	run dbg gdb gdb-sbi \
 	preprocess objdump objcopy dumpdts \
-	$(JRINX) $(MODULES) $(KERNTESTS_DIR) \
+	$(JRINX) $(MODULES) \
 	check-style fix-style register-git-hooks cloc
 
 all: debug
@@ -75,15 +75,15 @@ build: clean
 sbi-fw: $(BOOTLOADER)
 
 $(JRINX): SHELL := $(shell which bash)
-$(JRINX): $(MODULES) $(KERNTESTS_DIR) $(LDSCRIPT) $(TARGET_DIR)
+$(JRINX): $(MODULES) $(LDSCRIPT) $(TARGET_DIR)
 	shopt -s nullglob globstar
 	$(LD) $(LDFLAGS) -T $(LDSCRIPT) -o $(JRINX) $(OBJECTS)
 
 $(MODULES):
-	$(MAKE) -C $@
-
-$(KERNTESTS_DIR):
-	$(MAKE) -C $@
+	$(MAKE) -C $@ $(shell \
+	if [ ! -f $@/Makefile ]; then \
+		echo '-f $(BUILD_ROOT_DIR)/mk/auto-make.mk'; \
+	fi)
 
 $(BOOTLOADER):
 	@$(MAKE) -C $(OPENSBI_ROOT) all PLATFORM=generic PLATFORM_RISCV_XLEN=64
