@@ -1,5 +1,5 @@
 {
-  "extends": "default-conf.json",
+  "extends": "default.json",
   "interactive": [
     {
       "when": " and press enter:",

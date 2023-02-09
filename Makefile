@@ -33,7 +33,7 @@ EMU_ARGS	:= $(ARGS)
 EMU_OPTS	:= -M $(EMU_MACH) -m $(EMU_RAM_SIZE) -nographic -smp $(EMU_CPUS) -no-reboot
 
 INCLUDES	:= -I./include
-MODULES		:= kern lib kern-tests
+MODULES		:= kern lib
 OBJECTS		:= $(addsuffix /**/*.o, $(MODULES))
 LDSCRIPT	:= kern.ld
 TARGET_DIR	:= target

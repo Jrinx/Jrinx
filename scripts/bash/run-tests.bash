@@ -52,9 +52,9 @@ test_list="$test_name"
 
 if [ -z "$test_name" ]; then
   test_list=$(
-    find kern-tests -maxdepth 1 -name '*-test.c' | \
+    find kern/tests/* -maxdepth 1 -name '*-test.c' | \
     sort | \
-    sed -rne 's/kern-tests\/(.+?-test)\.c/\1/p'
+    sed -rne 's/[a-zA-Z_\/]+\/(\w+-test)\.c/\1/p'
   )
 else
   test_list="$test_name"
@@ -62,9 +62,9 @@ fi
 
 for test_case in $test_list; do
   bgreen "$prefix run $test_case"
-  conf_file='kern-tests/default-conf.json'
-  if [ -f "kern-tests/$test_case-conf.json" ]; then
-    conf_file="kern-tests/$test_case-conf.json"
+  conf_file='tests-conf/default.json'
+  if [ -f "tests-conf/$test_case.json" ]; then
+    conf_file="tests-conf/$test_case.json"
   fi
   if [ "$verbose" = 'y' ]; then
     test="$test_case" scripts/judge "$conf_file" || r=$?
