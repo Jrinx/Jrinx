@@ -1,5 +1,7 @@
 # Jrinx
 
+![github workflows status](https://github.com/Coekjan/Jrinx/actions/workflows/main.workflow.yml/badge.svg?branch=master)
+
 ## 什么是 Jrinx？
 
 Jrinx 是一个基于 RISC-V 的 [ARINC 653](https://wikipedia.org/wiki/ARINC_653) 多分区操作系统。其命名来自于 ARINC 653 与 [JOS](https://pdos.csail.mit.edu/6.828/2014/overview.html)。

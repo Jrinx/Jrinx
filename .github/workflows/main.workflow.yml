@@ -1,0 +1,38 @@
+name: Code Style Check & Regression Test
+
+on: [push]
+
+env:
+  CROSS_COMPILE: riscv64-linux-gnu-
+
+jobs:
+  check-style:
+    runs-on: ubuntu-latest
+    container:
+      image: coekjan/jrinx-devel:latest
+    steps:
+      - uses: actions/checkout@v3
+      - run: git config --system --add safe.directory "$GITHUB_WORKSPACE"
+      - name: Check Style
+        run: |
+          make check-style
+  regression-test:
+    needs: [check-style]
+    runs-on: ubuntu-latest
+    container:
+      image: coekjan/jrinx-devel:latest
+    strategy:
+      matrix:
+        mode: [debug, release]
+        board: [virt, sifive_u]
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: recursive
+      - run: git config --system --add safe.directory "$GITHUB_WORKSPACE"
+      - name: Run Test
+        env:
+          COMPILE_MODE: ${{ matrix.mode }}
+          BOARD: ${{ matrix.board }}
+        run: |
+          ./scripts/run-tests -p
