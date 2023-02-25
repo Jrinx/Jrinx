@@ -67,9 +67,9 @@ for test_case in $test_list; do
     conf_file="tests-conf/$test_case.json"
   fi
   if [ "$verbose" = 'y' ]; then
-    test="$test_case" scripts/judge "$conf_file" || r=$?
+    ARGS="--test $test_case" scripts/judge "$conf_file" || r=$?
   else
-    test="$test_case" scripts/judge "$conf_file" -n || r=$?
+    ARGS="--test $test_case" scripts/judge "$conf_file" -n || r=$?
   fi
   if [ "$r" -ne 0 ]; then
     bfatal "$prefix judge failed on $test_case"

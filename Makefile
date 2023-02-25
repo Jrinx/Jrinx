@@ -3,7 +3,6 @@ TARGET_ENDIAN	:= little
 
 CPUS		?= 5
 COLOR		?= y
-TEST		?=
 ARGS		?=
 BOARD		?= virt
 CROSS_COMPILE	?= riscv64-unknown-elf-
@@ -118,11 +117,8 @@ objcopy:
 	@$(OBJCOPY) -O binary $(JRINX) $(JRINX).bin
 
 run: EMU_OPTS			+= -kernel $(JRINX) -bios $(BOOTLOADER) -append '$(EMU_ARGS)'
-ifneq ($(test),)
-run: EMU_OPTS			+= -append '--test $(test)'
-endif
 run: $(BOOTLOADER)
-	@$(EMU) $(EMU_OPTS)
+	$(EMU) $(EMU_OPTS)
 
 dbg: EMU_OPTS			+= -s -S
 dbg: run
