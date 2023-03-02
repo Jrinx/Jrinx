@@ -10,6 +10,7 @@ struct phy_frame {
 };
 
 unsigned long mm_get_freemem_base(void);
+void mem_print_bytes(unsigned long size);
 void mem_print_range(unsigned long addr, unsigned long size, const char *suffix);
 
 extern void *(*alloc)(size_t size, size_t align);
