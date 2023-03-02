@@ -216,7 +216,7 @@ static void dt_print_node(struct dev_node *node, unsigned long layer) {
   })
 
   struct dev_node_prop *prop;
-  LINKED_NODE_ITER (node->nd_prop_map.h_array->h_first, prop, pr_link) {
+  HASHMAP_ITER (&node->nd_prop_map, prop, pr_link) {
     dt_printl("%s: ", prop->pr_name);
     for (size_t i = 0; i < prop->pr_len; i++) {
       printk("%02x", prop->pr_values[i]);

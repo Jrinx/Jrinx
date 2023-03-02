@@ -40,4 +40,8 @@ int hash_eq_uint64(const void *key1, const void *key2);
     m->h_key = (key_of);                                                                       \
   })
 
+#define HASHMAP_ITER(map, iter_var, member)                                                    \
+  for (size_t iter_var##_i = 0; iter_var##_i < (map)->h_cap; iter_var##_i++)                   \
+    LINKED_NODE_ITER ((map)->h_array[iter_var##_i].h_first, iter_var, member)
+
 #endif
