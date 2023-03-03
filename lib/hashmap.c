@@ -16,6 +16,7 @@ void hashmap_put(struct hashmap *map, struct linked_node *node) {
   for (struct linked_node *ptr = head->h_first; ptr != NULL; ptr = ptr->next) {
     if (map->h_equals(node_key, map->h_key(ptr))) {
       hlist_remove_node(ptr);
+      map->h_num--;
     }
   }
   hlist_insert_head(head, node);
@@ -29,9 +30,9 @@ void hashmap_remove(struct hashmap *map, const void *key) {
   for (struct linked_node *ptr = head->h_first; ptr != NULL; ptr = ptr->next) {
     if (map->h_equals(key, map->h_key(ptr))) {
       hlist_remove_node(ptr);
+      map->h_num--;
     }
   }
-  map->h_num--;
 }
 
 struct linked_node *hashmap_get(const struct hashmap *map, const void *key) {
