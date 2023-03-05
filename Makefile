@@ -85,7 +85,7 @@ $(MODULES):
 	fi)
 
 $(BOOTLOADER):
-	@$(MAKE) -C $(OPENSBI_ROOT) all PLATFORM=generic PLATFORM_RISCV_XLEN=64
+	@$(MAKE) -j$$(nproc) -C $(OPENSBI_ROOT) all PLATFORM=generic PLATFORM_RISCV_XLEN=64
 
 $(TARGET_DIR):
 	@mkdir -p $@
