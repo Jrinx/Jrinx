@@ -47,6 +47,7 @@ DTC		:= dtc
 export CROSS_COMPILE CFLAGS LDFLAGS
 export CHECK_PREPROC ?= n
 export BUILD_ROOT_DIR ?= $(abspath ./)
+export MAKEFLAGS := -j$(shell nproc) -s $(MAKEFLAGS)
 
 .ONESHELL:
 .PHONY: all debug release release-debug build sbi-fw clean clean-all clean-opensbi \
@@ -68,7 +69,6 @@ debug: CFLAGS		+= -O0 -g -ggdb
 debug: build
 
 build: clean
-	@export MAKEFLAGS="-j$$(nproc) -s $$MAKEFLAGS"
 	@$(MAKE) $(JRINX)
 
 sbi-fw: $(BOOTLOADER)
@@ -85,7 +85,7 @@ $(MODULES):
 	fi)
 
 $(BOOTLOADER):
-	@$(MAKE) -j$$(nproc) -C $(OPENSBI_ROOT) all PLATFORM=generic PLATFORM_RISCV_XLEN=64
+	@$(MAKE) -C $(OPENSBI_ROOT) all PLATFORM=generic PLATFORM_RISCV_XLEN=64
 
 $(TARGET_DIR):
 	@mkdir -p $@
