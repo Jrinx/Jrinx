@@ -59,13 +59,18 @@ static void _mem_print_bytes(unsigned long size, size_t shift) {
   }
 }
 
-void mem_print_bytes(unsigned long size) {
+void mem_print_bytes(unsigned long size, const char *suffix) {
   _mem_print_bytes(size, 0);
+  if (suffix) {
+    printk("%s", suffix);
+  } else {
+    printk("\n");
+  }
 }
 
 void mem_print_range(unsigned long addr, unsigned long size, const char *suffix) {
   printk("[%016lx, %016lx) <size: ", addr, addr + size);
-  mem_print_bytes(size);
+  _mem_print_bytes(size, 0);
   printk(">");
   if (suffix) {
     printk("%s", suffix);
