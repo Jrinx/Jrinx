@@ -138,8 +138,6 @@ long pt_map(pte_t *pgdir, vaddr_t va, paddr_t pa, perm_t perm) {
   }
   catch_e(pt_walk(pgdir, va, 1, &pte));
   pte->pp.ppn = pa.pp.ppn;
-  perm.bits.a = 1;
-  perm.bits.d = 1;
   perm.bits.v = 1;
   pte->pp.perm = perm.val;
   panic_e(pt_frame_ref_inc(pa));
@@ -170,7 +168,7 @@ void vmm_setup_mmio(void) {
     mem_print_range(*mmio->mm_addr + DEVOFFSET, mmio->mm_size, NULL);
     vaddr_t va = {.val = *mmio->mm_addr + DEVOFFSET};
     paddr_t pa = {.val = *mmio->mm_addr};
-    perm_t perm = {.bits = {.a = 1, .d = 1, .r = 1, .w = 1, .g = 1}};
+    perm_t perm = {.bits = {.r = 1, .w = 1, .g = 1}};
     for (; pa.val < *mmio->mm_addr + mmio->mm_size; pa.val += PGSIZE, va.val += PGSIZE) {
       panic_e(pt_map(kern_pgdir, va, pa, perm));
     }
@@ -185,7 +183,7 @@ void vmm_setup_kern(void) {
   size_t text_end = align_up((size_t)kern_text_end, PGSIZE);
 
   for (; va.val < text_end; va.val += PGSIZE, pa.val += PGSIZE) {
-    perm_t perm = {.bits = {.a = 1, .d = 1, .r = 1, .x = 1, .w = 1, .g = 1}};
+    perm_t perm = {.bits = {.r = 1, .x = 1, .w = 1, .g = 1}};
     panic_e(pt_map(kern_pgdir, va, pa, perm));
   }
 
@@ -196,7 +194,7 @@ void vmm_setup_kern(void) {
     panic_e(mem_get_addr(i, &mem_addr));
     panic_e(mem_get_size(i, &mem_size));
     vaddr_t va;
-    perm_t perm = {.bits = {.a = 1, .d = 1, .r = 1, .w = 1, .g = 1}};
+    perm_t perm = {.bits = {.r = 1, .w = 1, .g = 1}};
     if (text_end >= mem_addr && text_end < mem_addr + mem_size) {
       va.val = text_end;
     } else {
