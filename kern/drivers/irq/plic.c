@@ -140,8 +140,8 @@ static long plic_probe(const struct dev_node *node) {
 
   unsigned int phandle = from_be(*((uint32_t *)prop->pr_values));
   info("%s probed (phandle: %u) to handle user external int\n", node->nd_name, phandle);
-  info("\tlocates at ");
-  mem_print_range(addr, size, NULL);
+  struct fmt_mem_range mem_range = {.addr = addr, .size = size};
+  info("\tlocates at %pM (size: %pB)\n", &mem_range, &size);
 
   cb_decl(trap_callback_t, trap_callback, plic_handle_int, plic);
   catch_e(intc_register_handler(NULL, CAUSE_INT_OFFSET + CAUSE_INT_S_EXTERNAL, trap_callback));

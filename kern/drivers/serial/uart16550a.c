@@ -107,8 +107,8 @@ static long uart16550a_probe(const struct dev_node *node) {
 
   info("%s probed (shift: %u), interrupt %08x registered to intc %u\n", node->nd_name, shift,
        int_num, intc);
-  info("\tlocates at ");
-  mem_print_range(addr, size, NULL);
+  struct fmt_mem_range mem_range = {.addr = addr, .size = size};
+  info("\tlocates at %pM (size: %pB)\n", &mem_range, &size);
   cb_decl(trap_callback_t, trap_callback, uart16550a_handle_int, uart);
   catch_e(cb_invoke(irq_register_callback)(int_num, trap_callback));
 

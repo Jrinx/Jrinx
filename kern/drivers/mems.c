@@ -36,8 +36,8 @@ static long mem_probe(const struct dev_node *node) {
   info("%s probed (consists of %lu memory):\n", node->nd_name, mem_num);
 
   for (size_t i = 0; i < mem_num; i++) {
-    info("\tmemory[%lu] locates at ", i);
-    mem_print_range(mem_addr[i], mem_size[i], NULL);
+    struct fmt_mem_range mem_range = {.addr = mem_addr[i], .size = mem_size[i]};
+    info("\tmemory[%lu] locates at %pM (size: %pB)\n", i, &mem_range, &mem_size[i]);
   }
 
   return KER_SUCCESS;

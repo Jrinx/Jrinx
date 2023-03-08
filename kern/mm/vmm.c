@@ -164,8 +164,9 @@ void vmm_register_mmio(char *name, unsigned long *addr, unsigned long size) {
 void vmm_setup_mmio(void) {
   struct mmio_setup *mmio;
   LINKED_NODE_ITER (vmm_mmio_setup_list.l_first, mmio, mm_link) {
-    info("set up %s mmio at ", mmio->mm_name);
-    mem_print_range(*mmio->mm_addr + DEVOFFSET, mmio->mm_size, NULL);
+    struct fmt_mem_range mem_range = {.addr = *mmio->mm_addr + DEVOFFSET,
+                                      .size = mmio->mm_size};
+    info("set up %s mmio at %pM (size: %pB)\n", mmio->mm_name, &mem_range, &mmio->mm_size);
     vaddr_t va = {.val = *mmio->mm_addr + DEVOFFSET};
     paddr_t pa = {.val = *mmio->mm_addr};
     perm_t perm = {.bits = {.r = 1, .w = 1, .g = 1}};
@@ -226,6 +227,6 @@ void vmm_start(void) {
 void vmm_summary(void) {
   unsigned long freemem_base = mm_get_freemem_base();
   size_t free_end = align_up((size_t)freemem_base, PGSIZE);
-  info("os kernel reserves memory ");
-  mem_print_range(KERNBASE, free_end - KERNBASE, NULL);
+  struct fmt_mem_range mem_range = {.addr = KERNBASE, .size = free_end - KERNBASE};
+  info("os kernel reserves memory %pM (size: %pB)\n", &mem_range, &mem_range.size);
 }

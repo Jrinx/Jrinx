@@ -38,47 +38,6 @@ static void bare_free(const void *ptr) {
   UNIMPLEMENTED;
 }
 
-static void _mem_print_bytes(unsigned long size, size_t shift) {
-  static const char *unit[] = {"B", "KiB", "MiB", "GiB", "TiB"};
-
-  if (size == 0 && shift == 0) {
-    printk("0");
-    return;
-  }
-
-  unsigned long rem = size & ((1UL << 10) - 1);
-  unsigned long quo = size >> 10;
-  if (quo != 0) {
-    _mem_print_bytes(quo, shift + 1);
-  }
-  if (rem != 0) {
-    if (quo != 0) {
-      printk(" + ");
-    }
-    printk("%lu %s", rem, unit[shift]);
-  }
-}
-
-void mem_print_bytes(unsigned long size, const char *suffix) {
-  _mem_print_bytes(size, 0);
-  if (suffix) {
-    printk("%s", suffix);
-  } else {
-    printk("\n");
-  }
-}
-
-void mem_print_range(unsigned long addr, unsigned long size, const char *suffix) {
-  printk("[%016lx, %016lx) <size: ", addr, addr + size);
-  _mem_print_bytes(size, 0);
-  printk(">");
-  if (suffix) {
-    printk("%s", suffix);
-  } else {
-    printk("\n");
-  }
-}
-
 void *(*alloc)(size_t size, size_t align) = bare_alloc;
 void (*free)(const void *ptr) = bare_free;
 

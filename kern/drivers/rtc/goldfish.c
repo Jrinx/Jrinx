@@ -43,8 +43,8 @@ static long goldfish_probe(const struct dev_node *node) {
   goldfish->gf_size = size;
 
   info("%s probed\n", node->nd_name);
-  info("\tlocates at ");
-  mem_print_range(addr, size, NULL);
+  struct fmt_mem_range mem_range = {.addr = addr, .size = size};
+  info("\tlocates at %pM (size: %pB)\n", &mem_range, &size);
 
   cb_decl(read_time_callback_t, goldfish_read_time_callback, goldfish_read_time, goldfish);
   rt_register_dev(node->nd_name, goldfish_read_time_callback);

@@ -1,5 +1,7 @@
 #include <lib/printfmt.h>
 
+static void print_mem_range_style(fmt_callback_t, struct fmt_mem_range *, int, int, char);
+static void print_bytes_style(fmt_callback_t, size_t);
 static void print_char(fmt_callback_t, char, int, int);
 static void print_str(fmt_callback_t, const char *, int, int);
 static void print_num(fmt_callback_t, unsigned long, int, int, int, int, char, int);
@@ -131,6 +133,22 @@ void vprintfmt(fmt_callback_t out, const char *restrict fmt, va_list ap) {
       print_str(out, s, width, ladjust);
       break;
 
+    case 'p':
+      fmt++;
+      switch (*fmt) {
+      case 'M':
+        struct fmt_mem_range *mem_range = (struct fmt_mem_range *)va_arg(ap, void *);
+        print_mem_range_style(out, mem_range, width, ladjust, padc);
+        break;
+      case 'B':
+        size_t *bytes = (size_t *)va_arg(ap, void *);
+        print_bytes_style(out, *bytes);
+        break;
+      default:
+        fmt--;
+        break;
+      }
+      break;
     case '\0':
       fmt--;
       break;
@@ -142,7 +160,42 @@ void vprintfmt(fmt_callback_t out, const char *restrict fmt, va_list ap) {
   }
 }
 
-void print_char(fmt_callback_t out, char c, int length, int ladjust) {
+static void print_mem_range_style(fmt_callback_t out, struct fmt_mem_range *mem_range,
+                                  int length, int ladjust, char padc) {
+  cb_invoke(out)("[", sizeof(char));
+  print_num(out, mem_range->addr, 16, 0, length, ladjust, padc, 0);
+  cb_invoke(out)(", ", sizeof(char) * 2);
+  print_num(out, mem_range->addr + mem_range->size, 16, 0, length, ladjust, padc, 0);
+  cb_invoke(out)(")", sizeof(char));
+}
+
+static void _print_bytes_style(fmt_callback_t out, unsigned long size, size_t shift) {
+  static const char *unit[] = {" B", " KiB", " MiB", " GiB", " TiB"};
+
+  if (size == 0 && shift == 0) {
+    cb_invoke(out)("0", sizeof(char));
+    return;
+  }
+
+  unsigned long rem = size & ((1UL << 10) - 1);
+  unsigned long quo = size >> 10;
+  if (quo != 0) {
+    _print_bytes_style(out, quo, shift + 1);
+  }
+  if (rem != 0) {
+    if (quo != 0) {
+      cb_invoke(out)(" + ", sizeof(char) * 3);
+    }
+    print_num(out, rem, 10, 0, 0, 0, ' ', 0);
+    cb_invoke(out)(unit[shift], shift ? sizeof(char) * 4 : sizeof(char) * 2);
+  }
+}
+
+static void print_bytes_style(fmt_callback_t out, size_t size) {
+  _print_bytes_style(out, size, 0);
+}
+
+static void print_char(fmt_callback_t out, char c, int length, int ladjust) {
   int i;
 
   if (length < 1) {
@@ -162,7 +215,7 @@ void print_char(fmt_callback_t out, char c, int length, int ladjust) {
   }
 }
 
-void print_str(fmt_callback_t out, const char *s, int length, int ladjust) {
+static void print_str(fmt_callback_t out, const char *s, int length, int ladjust) {
   int i;
   int len = 0;
   const char *s1 = s;
@@ -186,8 +239,8 @@ void print_str(fmt_callback_t out, const char *s, int length, int ladjust) {
   }
 }
 
-void print_num(fmt_callback_t out, unsigned long u, int base, int neg_flag, int length,
-               int ladjust, char padc, int upcase) {
+static void print_num(fmt_callback_t out, unsigned long u, int base, int neg_flag, int length,
+                      int ladjust, char padc, int upcase) {
   int actualLength = 0;
   char buf[length + 70];
   char *p = buf;

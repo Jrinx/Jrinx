@@ -4,6 +4,7 @@
 #include <ansictl.h>
 #include <kern/drivers/realtime.h>
 #include <kern/lib/hart.h>
+#include <lib/printfmt.h>
 #include <stdarg.h>
 
 void log_localize_output(void);
