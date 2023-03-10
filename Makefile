@@ -4,6 +4,7 @@ TARGET_ENDIAN	:= little
 CPUS		?= 5
 COLOR		?= y
 ARGS		?=
+SYSCONF		?=
 BOARD		?= virt
 CROSS_COMPILE	?= riscv64-unknown-elf-
 
@@ -28,12 +29,13 @@ EMU 		:= qemu-system-riscv64
 EMU_MACH 	:= $(BOARD)
 EMU_CPUS 	:= $(CPUS)
 EMU_RAM_SIZE	:= 1G
-EMU_ARGS	:= $(ARGS)
+EMU_ARGS	:= $(ARGS) $(shell if [ -n "$(SYSCONF)" ]; then ./scripts/sysconf $(SYSCONF); fi)
 EMU_OPTS	:= -M $(EMU_MACH) -m $(EMU_RAM_SIZE) -nographic -smp $(EMU_CPUS) -no-reboot
 
 INCLUDES	:= -I./include
 MODULES		:= kern lib
-OBJECTS		:= $(addsuffix /**/*.o, $(MODULES))
+USER_MODULES	:= user
+OBJECTS		:= $(addsuffix /**/*.o, $(MODULES)) $(addsuffix /**/*.x, $(USER_MODULES))
 LDSCRIPT	:= kern.ld
 TARGET_DIR	:= target
 JRINX		:= $(TARGET_DIR)/jrinx
@@ -53,7 +55,7 @@ export MAKEFLAGS := -j$(shell nproc) -s $(MAKEFLAGS)
 .PHONY: all debug release release-debug build sbi-fw clean clean-all clean-opensbi \
 	run dbg gdb gdb-sbi \
 	preprocess objdump objcopy dumpdts \
-	$(JRINX) $(MODULES) \
+	$(JRINX) $(MODULES) $(USER_MODULES) \
 	check-style fix-style register-git-hooks cloc
 
 all: debug
@@ -74,11 +76,11 @@ build: clean
 sbi-fw: $(BOOTLOADER)
 
 $(JRINX): SHELL := $(shell which bash)
-$(JRINX): $(MODULES) $(LDSCRIPT) $(TARGET_DIR)
+$(JRINX): $(MODULES) $(USER_MODULES) $(LDSCRIPT) $(TARGET_DIR)
 	shopt -s nullglob globstar
 	$(LD) $(LDFLAGS) -T $(LDSCRIPT) -o $(JRINX) $(OBJECTS)
 
-$(MODULES):
+$(MODULES) $(USER_MODULES):
 	$(MAKE) -C $@ $(shell \
 	if [ ! -f $@/Makefile ]; then \
 		echo '-f $(BUILD_ROOT_DIR)/mk/auto-make.mk'; \
@@ -95,7 +97,8 @@ include mk/compile.mk
 clean:
 	@rm -rf $(TARGET_DIR)
 	@find -- . -not \( -path './$(OPENSBI_ROOT)/*' \) \( \
-		-name '*.o' -o -name '*.ld' -o -name '*.i' -o -name '$(EMU_TEST_CONF)' \
+		-name '*.o' -o -name '*.b' -o -name '*.b.c' -o -name '*.x' -o \
+		-name '*.ld' -o -name '*.i' -o -name '$(EMU_TEST_CONF)' \
 	\) -type f -delete
 
 clean-all: clean
@@ -110,7 +113,7 @@ preprocess: CHECK_PREPROC := y
 preprocess: all
 
 objdump:
-	@find -- * \( -path $(JRINX) \) -exec \
+	@find -- * \( -path $(JRINX) -o -name '*.b' \) -exec \
 		sh -c '$(OBJDUMP) {} -alDS > {}.objdump && echo {}.objdump' ';'
 
 objcopy:
@@ -118,7 +121,7 @@ objcopy:
 
 run: EMU_OPTS			+= -kernel $(JRINX) -bios $(BOOTLOADER) -append '$(EMU_ARGS)'
 run: $(BOOTLOADER)
-	$(EMU) $(EMU_OPTS)
+	@$(EMU) $(EMU_OPTS)
 
 dbg: EMU_OPTS			+= -s -S
 dbg: run

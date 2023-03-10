@@ -1,0 +1,4 @@
+{
+  "bootargs": "--test asid-test",
+  "extends": "default.json"
+}

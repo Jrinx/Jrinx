@@ -1,0 +1,19 @@
+{
+  "bootargs": "--debug-proc-run --debug-sched-max-cnt 100",
+  "sysconf": "loop.json",
+  "expected": {
+    "type": "unordered",
+    "vals": [
+      {
+        "type": "repeated",
+        "count": 50,
+        "pat": "switch to address space of 'loop1' \\(asid: \\d+\\)"
+      },
+      {
+        "type": "repeated",
+        "count": 50,
+        "pat": "switch to address space of 'loop2' \\(asid: \\d+\\)"
+      }
+    ]
+  }
+}

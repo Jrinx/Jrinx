@@ -15,6 +15,11 @@ static inline struct sbiret sbi_call(long arg0, long arg1, long arg2, long eid, 
   return ret;
 }
 
+inline long sbi_set_timer(uint64_t stime_value) {
+  struct sbiret ret = sbi_call(stime_value, 0, 0, SBI_EXT_TIME_SET_TIMER, 0);
+  return ret.error;
+}
+
 inline long sbi_console_putchar(int ch) {
   struct sbiret ret = sbi_call(ch, 0, 0, SBI_EXT_0_1_CONSOLE_PUTCHAR, 0);
   return ret.error;

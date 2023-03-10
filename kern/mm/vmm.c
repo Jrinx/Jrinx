@@ -4,6 +4,8 @@
 #include <kern/lib/errors.h>
 #include <kern/lib/regs.h>
 #include <kern/lib/sync.h>
+#include <kern/lock/lock.h>
+#include <kern/lock/spinlock.h>
 #include <kern/mm/pmm.h>
 #include <kern/mm/vmm.h>
 #include <layouts.h>
@@ -12,8 +14,28 @@
 
 pte_t kern_pgdir[PGSIZE / sizeof(pte_t)] __attribute__((aligned(PGSIZE)));
 
+static unsigned long kalloc_base = 0;
+static unsigned long next_base = 0;
+static with_spinlock(kalloc);
+
 static void *kalloc(size_t size, size_t align) {
-  UNIMPLEMENTED;
+  // TODO: buddy system
+  if (unlikely(kalloc_base == 0)) {
+    return NULL;
+  }
+  panic_e(lk_acquire(&spinlock_of(kalloc)));
+  if (unlikely(next_base == 0)) {
+    next_base = kalloc_base;
+  }
+  unsigned long tmp_next_base = align_up(next_base, align) + size;
+  if (unlikely(tmp_next_base > kalloc_base + KALLOCSIZE)) {
+    panic_e(lk_release(&spinlock_of(kalloc)));
+    return NULL;
+  }
+  void *res = (void *)next_base;
+  next_base = tmp_next_base;
+  panic_e(lk_release(&spinlock_of(kalloc)));
+  return res;
 }
 
 static void kfree(const void *ptr) {
@@ -164,16 +186,15 @@ void vmm_register_mmio(char *name, unsigned long *addr, unsigned long size) {
 void vmm_setup_mmio(void) {
   struct mmio_setup *mmio;
   LINKED_NODE_ITER (vmm_mmio_setup_list.l_first, mmio, mm_link) {
-    struct fmt_mem_range mem_range = {.addr = *mmio->mm_addr + DEVOFFSET,
-                                      .size = mmio->mm_size};
+    struct fmt_mem_range mem_range = {.addr = *mmio->mm_addr + MMIOBASE, .size = mmio->mm_size};
     info("set up %s mmio at %pM (size: %pB)\n", mmio->mm_name, &mem_range, &mmio->mm_size);
-    vaddr_t va = {.val = *mmio->mm_addr + DEVOFFSET};
+    vaddr_t va = {.val = *mmio->mm_addr + MMIOBASE};
     paddr_t pa = {.val = *mmio->mm_addr};
     perm_t perm = {.bits = {.r = 1, .w = 1, .g = 1}};
     for (; pa.val < *mmio->mm_addr + mmio->mm_size; pa.val += PGSIZE, va.val += PGSIZE) {
       panic_e(pt_map(kern_pgdir, va, pa, perm));
     }
-    *mmio->mm_addr += DEVOFFSET;
+    *mmio->mm_addr += MMIOBASE;
   }
 }
 
@@ -206,6 +227,8 @@ void vmm_setup_kern(void) {
       panic_e(pt_map(kern_pgdir, va, pa, perm));
     }
   }
+
+  kalloc_base = (unsigned long)alloc(KALLOCSIZE, PGSIZE);
 
   pmm_init();
 

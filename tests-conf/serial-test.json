@@ -1,4 +1,5 @@
 {
+  "bootargs": "--test serial-test",
   "extends": "default.json",
   "interactive": [
     {

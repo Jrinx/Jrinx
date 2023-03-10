@@ -5,12 +5,14 @@ from abc import abstractmethod
 import argparse
 import json
 import os
+import pathlib
 import psutil
 import re
 import signal
 import subprocess
 
 from utils import *
+from sysconf import encode_conf
 
 CHILD_TIMEOUT = 60
 CHILD_FINAL_STUCK_TIMEOUT = 5
@@ -122,21 +124,43 @@ class UnorderedPattern(Pattern):
         return len(self.__wait) == 0, tuple(all_pick)
 
 
+class RepeatedPattern(Pattern):
+    def __init__(self, pattern) -> None:
+        super().__init__(pattern)
+        self.__pat = Pattern.of(pattern['pat'])
+        self.__count = int(pattern['count'])
+        self.__rem = self.__count
+
+    def __str__(self) -> str:
+        return f'(repeated * {self.__count}: {self.__pat})'
+
+    def __call__(self, s: str) -> tuple[bool, tuple[str]]:
+        retire, pick = self.__pat(s)
+        if pick:
+            if retire:
+                self.__rem -= 1
+        return self.__rem == 0, pick
+
+
 class Rules:
     def __init__(self, verbose: bool, conf) -> None:
         self.__verbose = verbose
         self.__expected_patterns = Pattern.of(conf['expected'])
-        self.__unexpected_patterns = Pattern.of(conf['unexpected'])
+        if conf.get('unexpected'):
+            self.__unexpected_patterns = Pattern.of(conf['unexpected'])
+        else:
+            self.__unexpected_patterns = None
         self.__done = False
 
     def __call__(self, line: str) -> bool:
-        retire, pick = self.__unexpected_patterns(line)
-        if pick:
-            if retire:
-                if self.__verbose:
-                    fatal(f'detecting unexpected pattern \
+        if self.__unexpected_patterns:
+            retire, pick = self.__unexpected_patterns(line)
+            if pick:
+                if retire:
+                    if self.__verbose:
+                        fatal(f'detecting unexpected pattern \
 "{self.__unexpected_patterns}"', file=sys.stdout)
-                raise RulesNotSatisified('unexpected pattern detected')
+                    raise RulesNotSatisified('unexpected pattern detected')
         retire, pick = self.__expected_patterns(line)
         if pick:
             if self.__verbose:
@@ -218,7 +242,8 @@ def main():
         conf = json.load(rf)
     extends_rules_file = conf.pop('extends', None)
     while extends_rules_file:
-        extends_rules_path = os.path.join(os.path.dirname(args.rules_file), extends_rules_file)
+        extends_rules_path = os.path.join(os.path.dirname(
+            os.path.abspath(args.rules_file)), extends_rules_file)
         if not os.path.isfile(extends_rules_path):
             raise FileNotFoundError(extends_rules_path)
         with open(extends_rules_path, 'r', encoding='utf-8') as erf:
@@ -227,6 +252,18 @@ def main():
             if key not in conf.keys():
                 conf[key] = extended_conf[key]
         extends_rules_file = conf.pop('extends', None)
+    sysconf_file = conf.get('sysconf')
+    if sysconf_file:
+        sysconf_path = pathlib.Path(os.path.dirname(os.path.abspath(
+            args.rules_file))).parent / 'sys-conf' / sysconf_file
+        if not os.path.isfile(sysconf_path):
+            raise FileNotFoundError(sysconf_path)
+        with open(sysconf_path, 'r', encoding='utf-8') as sf:
+            sysconf_conf = json.load(sf)
+        os.environ['ARGS'] = os.environ.get('ARGS', '') + ' ' + encode_conf(sysconf_conf)
+    bootargs = conf.get('bootargs')
+    if bootargs:
+        os.environ['ARGS'] = os.environ.get('ARGS', '') + ' ' + bootargs
 
     cmd = ['make', 'run']
     interactive = conf.get('interactive')

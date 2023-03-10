@@ -14,7 +14,7 @@ static void vmm_test(void) {
   unsigned long ref = frame->pf_ref;
   paddr_t pa;
   assert(frame2pa(frame, &pa.val) == KER_SUCCESS);
-  vaddr_t va = {.val = pa.val + DEVOFFSET};
+  vaddr_t va = {.val = pa.val + MMIOBASE};
   perm_t perm = {.bits = {.r = 1, .w = 1}};
   assert(pt_map(kern_pgdir, va, pa, perm) == KER_SUCCESS);
   assert(frame->pf_ref == ref + 1);

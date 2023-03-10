@@ -31,6 +31,9 @@ SECTIONS {
     PROVIDE(kern_testset_begin = .);
     *(.ksec.testcase.*)
     PROVIDE(kern_testset_end = .);
+    PROVIDE(kern_prog_def_begin = .);
+    *(.ksec.prog_def.*)
+    PROVIDE(kern_prog_def_end = .);
   }
 
   . = ALIGN(PGSIZE);

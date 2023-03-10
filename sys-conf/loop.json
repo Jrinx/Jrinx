@@ -1,0 +1,14 @@
+{
+  "partitions": [
+    {
+      "name": "loop1",
+      "prog": "bare_loop",
+      "memory": "4*1024*1024"
+    },
+    {
+      "name": "loop2",
+      "prog": "bare_loop",
+      "memory": "8*1024*1024"
+    }
+  ]
+}

@@ -9,3 +9,4 @@ IndentCaseLabels: false
 ForEachMacros:
   - 'LINKED_NODE_ITER'
   - 'HASHMAP_ITER'
+  - 'ELF_PHDR_ITER'

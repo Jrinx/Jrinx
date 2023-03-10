@@ -52,9 +52,9 @@ test_list="$test_name"
 
 if [ -z "$test_name" ]; then
   test_list=$(
-    find kern/tests/* -maxdepth 1 -name '*-test.c' | \
+    find tests-conf/* -maxdepth 1 -name '*-test.json' | \
     sort | \
-    sed -rne 's/[a-zA-Z_\/]+\/(\w+-test)\.c/\1/p'
+    sed -rne 's/[^\/]+\/(\w+-test)\.json/\1/p'
   )
 else
   test_list="$test_name"
@@ -67,9 +67,9 @@ for test_case in $test_list; do
     conf_file="tests-conf/$test_case.json"
   fi
   if [ "$verbose" = 'y' ]; then
-    ARGS="--test $test_case" scripts/judge "$conf_file" || r=$?
+    scripts/judge "$conf_file" || r=$?
   else
-    ARGS="--test $test_case" scripts/judge "$conf_file" -n || r=$?
+    scripts/judge "$conf_file" -n || r=$?
   fi
   if [ "$r" -ne 0 ]; then
     bfatal "$prefix judge failed on $test_case"

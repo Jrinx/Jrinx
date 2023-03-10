@@ -1,34 +1,90 @@
 #ifndef _KERN_LIB_REGS_H_
 #define _KERN_LIB_REGS_H_
 
+#ifdef __LP64__
+#define RV_XLEN 8
+#else
+#define PV_XLEN 4
+#endif
+
+#ifndef __ASSEMBLER__
+
 #include <stdint.h>
 
 #define R_REG_DEF(reg)                                                                         \
-  static inline unsigned long r_##reg(void) {                                                  \
+  __attribute__((always_inline)) static inline unsigned long r_##reg(void) {                   \
     unsigned long val;                                                                         \
     asm volatile("mv %0, " #reg : "=r"(val));                                                  \
     return val;                                                                                \
   }
 
 #define W_REG_DEF(reg)                                                                         \
-  static inline void w_##reg(unsigned long val) {                                              \
+  __attribute__((always_inline)) static inline void w_##reg(unsigned long val) {               \
     asm volatile("mv " #reg ", %0" : : "r"(val));                                              \
   }
 
 #define R_CSR_DEF(reg)                                                                         \
-  static inline unsigned long csrr_##reg(void) {                                               \
+  __attribute__((always_inline)) static inline unsigned long csrr_##reg(void) {                \
     unsigned long val;                                                                         \
     asm volatile("csrr %0, " #reg : "=r"(val));                                                \
     return val;                                                                                \
   }
 
 #define W_CSR_DEF(reg)                                                                         \
-  static inline void csrw_##reg(unsigned long val) {                                           \
+  __attribute__((always_inline)) static inline void csrw_##reg(unsigned long val) {            \
     asm volatile("csrw " #reg ", %0" : : "r"(val));                                            \
   }
 
 R_REG_DEF(tp)
 W_REG_DEF(tp)
+
+#define RISCV_U_MODE 0
+#define RISCV_S_MODE 1
+#define RISCV_H_MODE 2
+#define RISCV_M_MODE 3
+
+typedef union {
+  uint64_t val;
+  struct {
+    unsigned blank0 : 1;
+    unsigned sie : 1;
+    unsigned blank1 : 3;
+    unsigned spie : 1;
+    unsigned ube : 1;
+    unsigned blank2 : 1;
+    unsigned spp : 1;
+    unsigned vs : 2;
+    unsigned blank3 : 2;
+    unsigned fs : 2;
+    unsigned xs : 2;
+    unsigned blank4 : 1;
+    unsigned sum : 1;
+    unsigned mxr : 1;
+    unsigned blank5 : 12;
+    unsigned uxl : 2;
+    unsigned blank6 : 29;
+    unsigned sd : 1;
+  } __attribute__((packed)) bits;
+} rv64_sstatus;
+
+R_CSR_DEF(sstatus)
+W_CSR_DEF(sstatus)
+
+enum rv64_stvec_mode_t {
+  DIRECT = 0,
+  VECTORED = 1,
+};
+
+typedef union {
+  uint64_t val;
+  struct {
+    enum rv64_stvec_mode_t mode : 2;
+    unsigned long base : 62;
+  } bits;
+} rv64_stvec;
+
+R_CSR_DEF(stvec)
+W_CSR_DEF(stvec)
 
 typedef union {
   uint64_t val;
@@ -48,6 +104,9 @@ R_CSR_DEF(sip)
 W_CSR_DEF(sip)
 R_CSR_DEF(sie)
 W_CSR_DEF(sie)
+
+R_CSR_DEF(sscratch)
+W_CSR_DEF(sscratch)
 
 #define CAUSE_INT_S_SOFTWARE 1
 #define CAUSE_INT_M_SOFTWARE 3
@@ -96,5 +155,14 @@ W_CSR_DEF(satp)
 
 #undef R_REG_DEF
 #undef W_REG_DEF
+#undef R_CSR_DEF
+#undef W_CSR_DEF
 
+__attribute__((always_inline)) static inline unsigned long r_time(void) {
+  unsigned long val;
+  asm volatile("rdtime %0" : "=r"(val));
+  return val;
+}
+
+#endif
 #endif

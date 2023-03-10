@@ -246,6 +246,7 @@ struct sbiret {
 
 #include <stdint.h>
 
+long sbi_set_timer(uint64_t stime_value);
 long sbi_console_putchar(int ch) __attribute__((warn_unused_result));
 long sbi_send_ipi(const unsigned long *hart_mask) __attribute__((warn_unused_result));
 void sbi_shutdown(void) __attribute__((noreturn));

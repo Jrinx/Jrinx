@@ -13,6 +13,8 @@
 #include <kern/lock/spinlock.h>
 #include <kern/mm/asid.h>
 #include <kern/mm/vmm.h>
+#include <kern/multitask/sched.h>
+#include <kern/traps/traps.h>
 #include <layouts.h>
 #include <lib/string.h>
 #include <stddef.h>
@@ -33,14 +35,28 @@ static void kernel_gen_init(void) {
   static with_spinlock(gen_init_state);
   switch (hrt_get_id()) {
   case SYSCORE:
-    panic_e(args_evaluate(chosen_get_bootargs()));
+    panic_e(args_action());
   default:
     panic_e(lk_acquire(&spinlock_of(gen_init_state)));
     gen_init_state++;
     panic_e(lk_release(&spinlock_of(gen_init_state)));
     break;
   }
+  trap_init_vec();
   while (gen_init_state != cpus_get_count()) {
+  }
+}
+
+static void kernel_sched(void) {
+  static volatile unsigned long sched_state = 0;
+  static with_spinlock(sched_state);
+  if (sched_has_proc()) {
+    sched();
+  }
+  panic_e(lk_acquire(&spinlock_of(sched_state)));
+  sched_state++;
+  panic_e(lk_release(&spinlock_of(sched_state)));
+  while (sched_state != cpus_get_count()) {
   }
 }
 
@@ -58,6 +74,7 @@ void __attribute__((noreturn)) kernel_init(unsigned long hartid, void *dtb_addr)
     panic_e(dt_load(dtb_addr, &boot_dt));
     panic_e(device_probe(&boot_dt));
     panic_e(chosen_select_dev());
+    panic_e(args_evaluate(chosen_get_bootargs()));
 
     vmm_setup_mmio();
     vmm_setup_kern();
@@ -65,6 +82,8 @@ void __attribute__((noreturn)) kernel_init(unsigned long hartid, void *dtb_addr)
     vmm_summary();
 
     log_localize_output();
+    traps_init();
+    sched_init();
   } else {
     while (init_state == 0) {
     }
@@ -78,6 +97,7 @@ void __attribute__((noreturn)) kernel_init(unsigned long hartid, void *dtb_addr)
   }
 
   kernel_gen_init();
+  kernel_sched();
 
   if (hrt_get_id() == SYSCORE) {
     halt("All cores are running, halt!\n");
