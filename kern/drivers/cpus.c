@@ -15,7 +15,12 @@ const uint8_t *kern_master_stacktop = kern_master_stack + KSTKSIZE;
 
 unsigned long *cpus_stacktop = NULL;
 
+static uint32_t cpus_timebase_freq;
 static unsigned long cpus_count;
+
+uint32_t cpus_get_timebase_freq(void) {
+  return cpus_timebase_freq;
+}
 
 unsigned long cpus_get_count(void) {
   return cpus_count;
@@ -45,6 +50,15 @@ static int cpus_check(const struct dev_node *node) {
 static long cpus_probe(const struct dev_node *node) {
   cpus_count = 0;
   struct dev_node *child;
+
+  struct dev_node_prop *prop;
+  prop = dt_node_prop_extract(node, "timebase-frequency");
+  if (prop == NULL) {
+    cpus_timebase_freq = 10000000;
+  } else {
+    cpus_timebase_freq = from_be(*((uint32_t *)prop->pr_values));
+  }
+
   LINKED_NODE_ITER (node->nd_children_list.l_first, child, nd_link) {
     if (cpus_check(child)) {
       cpus_count++;
@@ -92,4 +106,4 @@ static struct device cpus_device = {
     .d_probe = cpus_probe,
 };
 
-device_init(cpus_device, high);
+device_init(cpus_device, highest);

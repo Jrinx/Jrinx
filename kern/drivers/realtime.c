@@ -1,5 +1,7 @@
+#include <kern/drivers/cpus.h>
 #include <kern/drivers/realtime.h>
 #include <kern/lib/debug.h>
+#include <kern/lib/regs.h>
 #include <kern/mm/pmm.h>
 #include <lib/hashmap.h>
 #include <lib/string.h>
@@ -53,19 +55,19 @@ int rt_read_time(uint64_t *re) {
   return 1;
 }
 
-int rt_read_boot_time_sec_msec(uint64_t *sec, uint64_t *millisec) {
+int sys_read_boot_time_sec_msec(uint64_t *sec, uint64_t *millisec) {
   static uint64_t boot_nanosec = 0;
-  uint64_t nanosec = 0;
-  if (!rt_read_time(&nanosec)) {
+  uint64_t time = r_time();
+  if (boot_nanosec == 0) {
+    boot_nanosec = time;
+  }
+  time -= boot_nanosec;
+  if (cpus_get_timebase_freq() == 0) {
     *sec = 0;
     *millisec = 0;
     return 0;
   }
-  if (boot_nanosec == 0) {
-    boot_nanosec = nanosec;
-  }
-  nanosec -= boot_nanosec;
-  *sec = nanosec / 1000000000UL;
-  *millisec = nanosec / 1000000UL - (*sec * 1000UL);
+  *sec = time / cpus_get_timebase_freq();
+  *millisec = time / (cpus_get_timebase_freq() / 1000);
   return 1;
 }

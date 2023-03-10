@@ -59,4 +59,4 @@ static struct device goldfish_device = {
     .d_probe = goldfish_probe,
 };
 
-device_init(goldfish_device, highest);
+device_init(goldfish_device, low);
