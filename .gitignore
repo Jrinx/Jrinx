@@ -3,6 +3,9 @@ __pycache__
 
 *.test-out
 *.o
+*.b
+*.b.c
+*.x
 *.i
 *.objdump
 *.bin
