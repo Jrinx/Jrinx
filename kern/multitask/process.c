@@ -115,7 +115,8 @@ void proc_run(struct proc *proc) {
   if (args_debug_proc_run) {
     info("switch to address space of '%s' (asid: %lu)\n", part->pa_name, part->pa_asid);
   }
-  panic_e(sbi_set_timer(r_time() + 100000));
+  // TODO: set timer through 'period' field?
+  panic_e(sbi_set_timer(r_time() + cpus_get_timebase_freq() / 100));
   extern void trap_ret(struct context * ctx) __attribute__((noreturn));
   trap_ret(proc_top_ctx);
 }
