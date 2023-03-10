@@ -1,8 +1,8 @@
+#include <kern/drivers/cpus.h>
 #include <kern/lib/debug.h>
 #include <kern/lib/logger.h>
 #include <kern/lock/lock.h>
 #include <kern/lock/spinlock.h>
-#include <kern/mm/asid.h>
 #include <kern/mm/pmm.h>
 #include <kern/multitask/partition.h>
 #include <kern/multitask/process.h>
@@ -60,7 +60,8 @@ long part_alloc(struct part **part, const char *name, unsigned long memory_req) 
   tmp->pa_mem_rem = memory_req;
   tmp->pa_ustasktop = USTKLIMIT;
   tmp->pa_id = part_id_alloc();
-  catch_e(asid_alloc(&tmp->pa_asid));
+  tmp->pa_cpus_asid = alloc(sizeof(unsigned long) * cpus_get_count(), sizeof(unsigned long));
+  memset(tmp->pa_cpus_asid, -1, sizeof(unsigned long) * cpus_get_count());
   tmp->pa_pgdir = (pte_t *)pa;
   *part = tmp;
   panic_e(lk_acquire(&spinlock_of(part_id_map)));

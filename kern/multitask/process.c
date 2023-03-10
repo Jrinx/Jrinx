@@ -6,6 +6,7 @@
 #include <kern/lib/sync.h>
 #include <kern/lock/lock.h>
 #include <kern/lock/spinlock.h>
+#include <kern/mm/asid.h>
 #include <kern/mm/pmm.h>
 #include <kern/multitask/partition.h>
 #include <kern/multitask/process.h>
@@ -106,14 +107,18 @@ void proc_run(struct proc *proc) {
   if (part == NULL) {
     fatal("unknown partition id: %lu\n", proc->pr_part_id);
   }
+  if (part->pa_cpus_asid[hrt_get_id()] > asid_get_max()) {
+    panic_e(asid_alloc(&part->pa_cpus_asid[hrt_get_id()])); // TODO: asid generation
+  }
   rv64_satp proc_satp = {.bits = {.mode = SV39,
-                                  .asid = part->pa_asid,
+                                  .asid = part->pa_cpus_asid[hrt_get_id()],
                                   .ppn = ((unsigned long)part->pa_pgdir) / PGSIZE}};
   csrw_satp(proc_satp.val);
-  sfence_vma_asid(part->pa_asid);
+  sfence_vma_asid(part->pa_cpus_asid[hrt_get_id()]);
   extern int args_debug_proc_run;
   if (args_debug_proc_run) {
-    info("switch to address space of '%s' (asid: %lu)\n", part->pa_name, part->pa_asid);
+    info("switch to address space of '%s' (asid: %lu)\n", part->pa_name,
+         part->pa_cpus_asid[hrt_get_id()]);
   }
   // TODO: set timer through 'period' field?
   panic_e(sbi_set_timer(r_time() + cpus_get_timebase_freq() / 100));

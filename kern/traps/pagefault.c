@@ -27,5 +27,5 @@ void do_pagefault(struct context *context) {
   if (pte->bits.d == 0 && context->ctx_scause == CAUSE_EXC_ST_PAGE_FAULT) {
     pte->bits.d = 1;
   }
-  sfence_vma_va_asid(va.val, part->pa_asid);
+  sfence_vma_va_asid(va.val, part->pa_cpus_asid[hrt_get_id()]);
 }

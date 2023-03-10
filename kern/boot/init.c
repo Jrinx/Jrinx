@@ -69,13 +69,12 @@ void __attribute__((noreturn)) kernel_init(unsigned long hartid, void *dtb_addr)
 
     info("Hello Jrinx, I am master hart!\n");
 
-    asid_init();
-
     panic_e(dt_load(dtb_addr, &boot_dt));
     panic_e(device_probe(&boot_dt));
     panic_e(chosen_select_dev());
     panic_e(args_evaluate(chosen_get_bootargs()));
 
+    asid_init();
     vmm_setup_mmio();
     vmm_setup_kern();
     vmm_start();

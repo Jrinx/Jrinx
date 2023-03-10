@@ -10,7 +10,7 @@ struct part {
   uint64_t pa_id;
   const char *pa_name;
   pte_t *pa_pgdir;
-  unsigned long pa_asid;
+  unsigned long *pa_cpus_asid;
   unsigned long pa_mem_req;
   unsigned long pa_mem_rem;
   unsigned long pa_ustasktop;
