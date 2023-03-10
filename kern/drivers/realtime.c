@@ -1,4 +1,3 @@
-#include <kern/drivers/cpus.h>
 #include <kern/drivers/realtime.h>
 #include <kern/lib/debug.h>
 #include <kern/lib/regs.h>
@@ -52,22 +51,5 @@ int rt_read_time(uint64_t *re) {
     return 0;
   }
   catch_e(cb_invoke(selected_rtc_dev->rt_read_time_callback)(re), { return 0; });
-  return 1;
-}
-
-int sys_read_boot_time_sec_msec(uint64_t *sec, uint64_t *millisec) {
-  static uint64_t boot_nanosec = 0;
-  uint64_t time = r_time();
-  if (boot_nanosec == 0) {
-    boot_nanosec = time;
-  }
-  time -= boot_nanosec;
-  if (cpus_get_timebase_freq() == 0) {
-    *sec = 0;
-    *millisec = 0;
-    return 0;
-  }
-  *sec = time / cpus_get_timebase_freq();
-  *millisec = time / (cpus_get_timebase_freq() / 1000);
   return 1;
 }

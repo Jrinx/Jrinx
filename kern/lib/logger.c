@@ -1,3 +1,4 @@
+#include <kern/drivers/cpus.h>
 #include <kern/drivers/serialport.h>
 #include <kern/lib/debug.h>
 #include <kern/lib/sbi.h>
@@ -39,6 +40,23 @@ void printk(const char *restrict fmt, ...) {
   va_start(ap, fmt);
   vprintfmt(output_cb, fmt, ap);
   va_end(ap);
+}
+
+static int sys_read_boot_time_sec_msec(uint64_t *sec, uint64_t *millisec) {
+  static uint64_t boot_nanosec = 0;
+  uint64_t time = r_time();
+  if (boot_nanosec == 0) {
+    boot_nanosec = time;
+  }
+  time -= boot_nanosec;
+  if (cpus_get_timebase_freq() == 0) {
+    *sec = 0;
+    *millisec = 0;
+    return 0;
+  }
+  *sec = time / cpus_get_timebase_freq();
+  *millisec = time / (cpus_get_timebase_freq() / 1000) - (*sec * 1000);
+  return 1;
 }
 
 #define print_timestamp(color)                                                                 \

@@ -11,6 +11,4 @@ void rt_register_dev(char *name, read_time_callback_t read_time_callback);
 int rt_select_dev(const char *name);
 int rt_read_time(uint64_t *re);
 
-int sys_read_boot_time_sec_msec(uint64_t *sec, uint64_t *millisec);
-
 #endif
