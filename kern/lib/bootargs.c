@@ -17,7 +17,7 @@ static struct arg_opt args_collections[] = {
     arg_of_str('t', "test", &args_test),
     arg_of_str('p', "pa-conf", &args_partitions_conf),
     arg_of_bool('d', "dt-print", &args_dt_print),
-    arg_of_bool('p', "debug-proc-run", &args_debug_proc_run),
+    arg_of_bool('r', "debug-proc-run", &args_debug_proc_run),
     arg_of_int('s', "debug-sched-max-cnt", &args_debug_sched_max_cnt),
     arg_of_end,
 };
