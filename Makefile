@@ -51,7 +51,7 @@ export BUILD_ROOT_DIR ?= $(abspath ./)
 export MAKEFLAGS := -j$(shell nproc) -s $(MAKEFLAGS)
 
 .ONESHELL:
-.PHONY: all debug release release-debug build sbi-fw clean clean-all clean-opensbi \
+.PHONY: all debug release release-debug build sbi-fw clean clean-dt clean-opensbi clean-all \
 	run dbg gdb gdb-sbi \
 	preprocess objdump objcopy dumpdts \
 	$(JRINX) $(MODULES) $(USER_MODULES) \
@@ -97,16 +97,18 @@ clean:
 	@rm -rf $(TARGET_DIR)
 	@find -- . -not \( -path './$(OPENSBI_ROOT)/*' \) \( \
 		-name '*.o' -o -name '*.b' -o -name '*.b.c' -o -name '*.x' -o \
-		-name '*.ld' -o -name '*.i' -o -name '$(EMU_TEST_CONF)' \
+		-name '*.ld' -o -name '*.i' -o -name '$(EMU_TEST_CONF)' -o -name '*.objdump' \
 	\) -type f -delete
 
-clean-all: clean
+clean-dt:
 	@find -- . -not \( -path './$(OPENSBI_ROOT)/*' \) \( \
 		-name '*.dtb' -o -name '*.dts' \
 	\) -type f -delete
 
 clean-opensbi:
 	@$(MAKE) -C $(OPENSBI_ROOT) distclean
+
+clean-all: clean clean-dt clean-opensbi
 
 preprocess: CHECK_PREPROC := y
 preprocess: all
