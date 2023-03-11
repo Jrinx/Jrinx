@@ -21,6 +21,7 @@
 #include <stdint.h>
 
 struct dev_tree boot_dt;
+const char *boot_dt_model;
 
 static void print_boot_info(void) {
   printk("\nJrinx OS (revision: %s)\n", CONFIG_REVISON);
@@ -70,6 +71,7 @@ void __attribute__((noreturn)) kernel_init(unsigned long hartid, void *dtb_addr)
     info("Hello Jrinx, I am master hart!\n");
 
     panic_e(dt_load(dtb_addr, &boot_dt));
+    boot_dt_model = dt_get_model(&boot_dt);
     panic_e(device_probe(&boot_dt));
     panic_e(chosen_select_dev());
     panic_e(args_evaluate(chosen_get_bootargs()));

@@ -253,3 +253,15 @@ void dt_print_tree(struct dev_tree *dt) {
     printk("}\n");
   }
 }
+
+const char *dt_get_model(const struct dev_tree *dt) {
+  struct dev_node *node;
+  LINKED_NODE_ITER (dt->dt_node_list.l_first, node, nd_link) {
+    struct dev_node_prop *prop;
+    prop = dt_node_prop_extract(node, "model");
+    if (prop != NULL) {
+      return (char *)prop->pr_values;
+    }
+  }
+  return NULL;
+}

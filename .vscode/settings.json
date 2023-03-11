@@ -6,7 +6,6 @@
     "CONFIG_REVISON=0000000",
     "CONFIG_JRINX_LOGO={0x00}",
     "CONFIG_COLOR=1",
-    "CONFIG_BOARD_VIRT=1",
   ],
   "C_Cpp.default.includePath": [
     "${workspaceFolder}/include",

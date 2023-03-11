@@ -39,5 +39,6 @@ long dt_load(void *dtb_addr, struct dev_tree *dt) __attribute__((warn_unused_res
 long dt_iter(struct dev_tree *dt, dt_node_pred_t pred, dt_iter_callback_t callback)
     __attribute__((warn_unused_result));
 void dt_print_tree(struct dev_tree *dt);
+const char *dt_get_model(const struct dev_tree *dt);
 
 #endif

@@ -20,8 +20,7 @@ CFLAGS		+= --std=gnu99 -nostdlib \
 		-DCONFIG_ENDIAN=$(shell echo $(TARGET_ENDIAN) | tr '[:lower:]' '[:upper:]')_ENDIAN \
 		-DCONFIG_COLOR=$(shell [ "$(COLOR)" = "y" ] && echo 1 || echo 0) \
 		-DCONFIG_JRINX_LOGO='$(shell scripts/logo-gen $(JRINX_LOGO))' \
-		-DCONFIG_REVISON='"$(shell git rev-parse --short HEAD)"' \
-		-DCONFIG_BOARD_$(shell echo $(BOARD) | tr '[:lower:]' '[:upper:]')=1
+		-DCONFIG_REVISON='"$(shell git rev-parse --short HEAD)"'
 
 LDFLAGS		+= --fatal-warnings --warn-unresolved-symbols
 

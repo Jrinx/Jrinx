@@ -8,6 +8,7 @@
 #include <kern/lock/spinlock.h>
 #include <kern/mm/pmm.h>
 #include <kern/mm/vmm.h>
+#include <layouts.h>
 #include <lib/string.h>
 
 struct plic {
@@ -17,6 +18,8 @@ struct plic {
   trap_callback_t pl_int_map[PLIC_SOURCE_MAX + 1];
   struct lock spinlock_of(pl);
 };
+
+static unsigned int external_int_ctx;
 
 static void plic_set_source_prio(struct plic *plic, uint32_t source_id, uint32_t priority) {
   *((volatile uint32_t *)(plic->pl_addr + 4 * source_id)) = priority;
@@ -59,7 +62,7 @@ static long plic_handle_int(void *ctx, unsigned long trap_num) {
 
   panic_e(lk_acquire(&plic->spinlock_of(pl)));
 
-  uint32_t int_num = plic_claim(plic, PLIC_EXTERNAL_INT_CTX);
+  uint32_t int_num = plic_claim(plic, external_int_ctx);
   if (int_num < PLIC_SOURCE_MIN || int_num > PLIC_SOURCE_MAX) {
     panic_e(lk_release(&plic->spinlock_of(pl)));
     return -KER_INT_ER;
@@ -72,7 +75,7 @@ static long plic_handle_int(void *ctx, unsigned long trap_num) {
     return err;
   });
 
-  plic_complete(plic, PLIC_EXTERNAL_INT_CTX);
+  plic_complete(plic, external_int_ctx);
 
   panic_e(lk_release(&plic->spinlock_of(pl)));
   return KER_SUCCESS;
@@ -84,7 +87,7 @@ static long plic_register_irq(void *ctx, unsigned long source_id, trap_callback_
   }
   struct plic *plic = ctx;
   panic_e(lk_acquire(&plic->spinlock_of(pl)));
-  plic_source_set_en(plic, PLIC_EXTERNAL_INT_CTX, source_id, 1);
+  plic_source_set_en(plic, external_int_ctx, source_id, 1);
   plic_set_source_prio(plic, source_id, PLIC_PRIO_MAX);
   plic->pl_int_map[source_id] = callback;
   panic_e(lk_release(&plic->spinlock_of(pl)));
@@ -98,7 +101,7 @@ static void plic_init(struct plic *plic) {
   }
 
   uint32_t context_max_id = (plic->pl_size - 0x200000UL) / 0x1000UL - 1UL;
-  assert(context_max_id >= PLIC_EXTERNAL_INT_CTX);
+  assert(context_max_id >= external_int_ctx);
   info("disable all interrupt sources for all context (0 - %d)\n", context_max_id);
   info("set all context priority threshold to MAX\n");
   for (uint32_t i = 0; i <= context_max_id; i++) {
@@ -106,8 +109,8 @@ static void plic_init(struct plic *plic) {
     plic_set_context_prio_threshold(plic, i, PLIC_PRIO_MAX);
   }
 
-  info("all interrupt sources shall be handled by context %u\n", PLIC_EXTERNAL_INT_CTX);
-  plic_set_context_prio_threshold(plic, PLIC_EXTERNAL_INT_CTX, PLIC_PRIO_MIN);
+  info("all interrupt sources shall be handled by context %u\n", external_int_ctx);
+  plic_set_context_prio_threshold(plic, external_int_ctx, PLIC_PRIO_MIN);
 }
 
 static int plic_pred(const struct dev_node *node) {
@@ -129,6 +132,16 @@ static long plic_probe(const struct dev_node *node) {
   prop = dt_node_prop_extract(node, "phandle");
   if (prop == NULL) {
     return -KER_DEV_ER;
+  }
+
+  extern const char *boot_dt_model;
+  if (boot_dt_model == NULL) {
+    return -KER_DEV_ER;
+  }
+  if (strcmp(boot_dt_model, "riscv-virtio,qemu") == 0) {
+    external_int_ctx = SYSCORE * 2 + 1;
+  } else if (strcmp(boot_dt_model, "SiFive HiFive Unleashed A00") == 0) {
+    external_int_ctx = SYSCORE * 2;
   }
 
   struct plic *plic = alloc(sizeof(struct plic), sizeof(struct plic));
