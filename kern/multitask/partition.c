@@ -89,7 +89,7 @@ static struct prog_def_t *prog_find_by_name(const char *prog_name) {
 
 struct part_load_prog_mapper_ctx {
   struct part *part;
-  struct elf_phdr *phdr;
+  Elf64_Phdr *phdr;
 };
 
 static long part_load_prog_mapper(void *data, unsigned long va, size_t offset, const void *src,
@@ -126,7 +126,7 @@ static long part_load_prog_mapper(void *data, unsigned long va, size_t offset, c
 }
 
 static long part_load_prog(struct part *part, struct prog_def_t *prog) {
-  const struct elf_ehdr *ehdr = elf_from(prog->pg_elf_bin, prog->pg_elf_size);
+  const Elf64_Ehdr *ehdr = elf_from(prog->pg_elf_bin, prog->pg_elf_size);
   if (ehdr == NULL) {
     return -KER_ELF_ER;
   }

@@ -3,23 +3,22 @@
 #include <layouts.h>
 #include <lib/elfloader.h>
 
-const struct elf_ehdr *elf_from(const void *addr, size_t size) {
-  if (unlikely((unsigned long)addr % sizeof(struct elf_ehdr) != 0)) {
+const Elf64_Ehdr *elf_from(const void *addr, size_t size) {
+  if (unlikely((unsigned long)addr % sizeof(Elf64_Ehdr) != 0)) {
     return NULL;
   }
-  const struct elf_ehdr *ehdr = addr;
-  if (unlikely(
-          ehdr->e_ident.fields.e_magic[0] != 0x7f || ehdr->e_ident.fields.e_magic[1] != 'E' ||
-          ehdr->e_ident.fields.e_magic[2] != 'L' || ehdr->e_ident.fields.e_magic[3] != 'F')) {
+  const Elf64_Ehdr *ehdr = addr;
+  if (unlikely(ehdr->e_ident[EI_MAG0] != ELFMAG0 || ehdr->e_ident[EI_MAG1] != ELFMAG1 ||
+               ehdr->e_ident[EI_MAG2] != ELFMAG2 || ehdr->e_ident[EI_MAG3] != ELFMAG3)) {
     return NULL;
   }
-  if (unlikely(ehdr->e_ident.fields.e_class != ELF_CLASS_64)) {
+  if (unlikely(ehdr->e_ident[EI_CLASS] != ELFCLASS64)) {
     return NULL;
   }
-  if (unlikely(ehdr->e_ident.fields.e_data != ELF_DATA_EL)) {
+  if (unlikely(ehdr->e_ident[EI_DATA] != ELFDATA2LSB)) {
     return NULL;
   }
-  if (unlikely(ehdr->e_ident.fields.e_version != ELF_CUR_VER)) {
+  if (unlikely(ehdr->e_ident[EI_VERSION] != EV_CURRENT)) {
     return NULL;
   }
   if (unlikely(ehdr->e_machine != EM_RISCV)) {
@@ -28,8 +27,7 @@ const struct elf_ehdr *elf_from(const void *addr, size_t size) {
   return ehdr;
 }
 
-long elf_load_prog(struct elf_phdr *phdr, const void *elf_addr,
-                   elf_mapper_callback_t map_callback) {
+long elf_load_prog(Elf64_Phdr *phdr, const void *elf_addr, elf_mapper_callback_t map_callback) {
   unsigned long prog_addr = phdr->p_vaddr;
   size_t prog_size = phdr->p_filesz;
   size_t mem_size = phdr->p_memsz;

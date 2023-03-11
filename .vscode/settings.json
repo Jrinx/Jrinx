@@ -9,6 +9,7 @@
   ],
   "C_Cpp.default.includePath": [
     "${workspaceFolder}/include",
+    "/usr/riscv64-unknown-elf/include"
   ],
   "editor.tabSize": 2,
 }
