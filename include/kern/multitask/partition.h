@@ -15,6 +15,7 @@ struct part {
   unsigned long pa_mem_rem;
   unsigned long pa_ustasktop;
   unsigned long pa_entrypoint;
+  unsigned long pa_main_proc_stacksize;
   struct linked_node pa_id_link;
 };
 

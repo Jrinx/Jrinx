@@ -11,6 +11,12 @@
        (ehdr)->e_phnum;                                                                        \
        var = (Elf64_Phdr *)((uint8_t *)(var) + (ehdr)->e_phentsize))
 
+#define ELF_SHDR_ITER(ehdr, var)                                                               \
+  for (Elf64_Shdr *var = (Elf64_Shdr *)((uint8_t *)(ehdr) + (ehdr)->e_shoff);                  \
+       ((uint8_t *)(var) - ((uint8_t *)(ehdr) + (ehdr)->e_shoff)) / (ehdr)->e_shentsize <      \
+       (ehdr)->e_shnum;                                                                        \
+       var = (Elf64_Shdr *)((uint8_t *)(var) + (ehdr)->e_shentsize))
+
 typedef long (*elf_mapper_t)(void *data, unsigned long va, size_t offset, const void *src,
                              size_t src_len);
 typedef cb_typedef(elf_mapper_t) elf_mapper_callback_t;

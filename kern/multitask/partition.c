@@ -137,6 +137,32 @@ static long part_load_prog(struct part *part, struct prog_def_t *prog) {
       catch_e(elf_load_prog(phdr, prog->pg_elf_bin + phdr->p_offset, part_load_prog_callback));
     }
   }
+  const char *strtab = NULL;
+  ELF_SHDR_ITER (ehdr, shdr) {
+    if (shdr->sh_type == SHT_STRTAB) {
+      strtab = (char *)(prog->pg_elf_bin + shdr->sh_offset);
+      break;
+    }
+  }
+  if (strtab == NULL) {
+    return -KER_ELF_ER;
+  }
+  unsigned long main_proc_stacktop = 0;
+  ELF_SHDR_ITER (ehdr, shdr) {
+    if (shdr->sh_type == SHT_SYMTAB) {
+      Elf64_Sym *symtab = (Elf64_Sym *)(prog->pg_elf_bin + shdr->sh_offset);
+      for (size_t i = 0; i < shdr->sh_size / shdr->sh_entsize; i++) {
+        if (strcmp(strtab + symtab[i].st_name, STR(UMAINSTKTOP_SYM)) == 0) {
+          main_proc_stacktop = symtab[i].st_value;
+          break;
+        }
+      }
+    }
+  }
+  if (main_proc_stacktop > USTKLIMIT) {
+    return -KER_ELF_ER;
+  }
+  part->pa_main_proc_stacksize = USTKLIMIT - main_proc_stacktop;
   part->pa_entrypoint = ehdr->e_entry;
   return KER_SUCCESS;
 }
@@ -155,11 +181,11 @@ long part_create(struct part_conf *conf) {
   struct part *part;
   catch_e(part_alloc(&part, conf->pa_name, conf->pa_mem_req));
   panic_e(part_load_prog(part, prog_def));
-  size_t stacksize_default = USTKSIZE_DEFAULT;
   info("create main process for partition '%s': name='main',entrypoint=%016lx,stacksize=%pB\n",
-       part->pa_name, part->pa_entrypoint, &stacksize_default);
+       part->pa_name, part->pa_entrypoint, &part->pa_main_proc_stacksize);
   struct proc *main_proc;
-  catch_e(proc_alloc(part, &main_proc, "main", part->pa_entrypoint, USTKSIZE_DEFAULT));
+  catch_e(
+      proc_alloc(part, &main_proc, "main", part->pa_entrypoint, part->pa_main_proc_stacksize));
   info("remaining memory of partition '%s': %pB\n", part->pa_name, &part->pa_mem_rem);
 
   // TODO assign to different processors

@@ -20,4 +20,11 @@ SECTIONS {
   .bss : {
     *(.bss .bss.* .sbss .sbss.*)
   }
+
+#ifdef USTKSIZE
+  . = (USTKLIMIT - USTKSIZE);
+#else
+  . = (USTKLIMIT - PGSIZE);
+#endif
+  UMAINSTKTOP_SYM = .;
 }

@@ -1,6 +1,9 @@
 #ifndef _MAGICROS_H_
 #define _MAGICROS_H_
 
+#define _STR(x) #x
+#define STR(x) _STR(x)
+
 #define _MACRO_CONCAT(x, y) x##y
 #define MACRO_CONCAT(x, y) _MACRO_CONCAT(x, y)
 

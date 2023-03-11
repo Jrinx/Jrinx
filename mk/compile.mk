@@ -12,9 +12,11 @@ include $(BUILD_ROOT_DIR)/mk/silent.mk
 %.o: %.S
 	$(CC) $(CFLAGS) $(INCLUDES) -c -o $@ $<
 
-%.b: $(USER_OBJS)
+USER_LD_FILE = user.ld
+
+%.b: $(USER_OBJS) $(USER_LD_FILE)
 	[ -z "$^" ] && exit 59 || true
-	$(LD) $(LDFLAGS) -T $(USER_LDS_FILE) -o $@ $^
+	$(LD) $(LDFLAGS) -T $(USER_LD_FILE) -o $@ $(USER_OBJS)
 
 %.b.c: %.b
 ifneq ($(BINTOC_PREFIX),)
@@ -28,5 +30,7 @@ endif
 
 %.ld: %.ld.S
 	$(CPP) $(CFLAGS) $(INCLUDES) -E -P -x c $< > $@
+
+vpath %.ld.S ./ $(BUILD_ROOT_DIR)/user/
 
 .PRECIOUS: %.b %.b.c %.o
