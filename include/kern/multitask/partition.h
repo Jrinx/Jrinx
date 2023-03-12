@@ -38,6 +38,7 @@ struct part *part_from_id(uint64_t id);
 long part_alloc(struct part **part, const char *name, unsigned long memory_req)
     __attribute__((warn_unused_result));
 long part_free(struct part *part) __attribute__((warn_unused_result));
+long part_pt_alloc(struct part *part, vaddr_t vaddr, perm_t perm, void **pa);
 long part_create(struct part_conf *conf) __attribute__((warn_unused_result));
 
 #endif

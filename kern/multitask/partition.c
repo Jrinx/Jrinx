@@ -1,6 +1,7 @@
 #include <kern/drivers/cpus.h>
 #include <kern/lib/debug.h>
 #include <kern/lib/logger.h>
+#include <kern/lib/sync.h>
 #include <kern/lock/lock.h>
 #include <kern/lock/spinlock.h>
 #include <kern/mm/pmm.h>
@@ -75,6 +76,23 @@ long part_free(struct part *part) {
   return KER_SUCCESS;
 }
 
+long part_pt_alloc(struct part *part, vaddr_t vaddr, perm_t perm, void **pa) {
+  if (part->pa_mem_rem < PGSIZE) {
+    return -KER_PART_ER;
+  }
+  struct phy_frame *frame;
+  catch_e(phy_frame_alloc(&frame));
+  paddr_t paddr;
+  catch_e(frame2pa(frame, &paddr.val));
+  *pa = (void *)paddr.val;
+  catch_e(pt_map(part->pa_pgdir, vaddr, paddr, perm), {
+    panic_e(phy_frame_ref_dec(frame));
+    return err;
+  });
+  part->pa_mem_rem -= PGSIZE;
+  return KER_SUCCESS;
+}
+
 static struct prog_def_t *prog_find_by_name(const char *prog_name) {
   extern struct prog_def_t *kern_prog_def_begin[];
   extern struct prog_def_t *kern_prog_def_end[];
@@ -95,18 +113,8 @@ struct part_load_prog_mapper_ctx {
 static long part_load_prog_mapper(void *data, unsigned long va, size_t offset, const void *src,
                                   size_t src_len) {
   struct part_load_prog_mapper_ctx *ctx = data;
-  if (ctx->part->pa_mem_rem < PGSIZE) {
-    return -KER_PART_ER;
-  }
-  struct phy_frame *frame;
-  catch_e(phy_frame_alloc(&frame));
-  unsigned long pa;
-  catch_e(frame2pa(frame, &pa));
-  if (src != NULL) {
-    memcpy((void *)pa + offset, src, src_len);
-  }
+  void *pa;
   vaddr_t vaddr = {.val = va};
-  paddr_t paddr = {.val = pa};
   perm_t perm = {.bits = {.v = 1, .u = 1}};
   if (ctx->phdr->p_flags & PF_X) {
     perm.bits.x = 1;
@@ -117,11 +125,10 @@ static long part_load_prog_mapper(void *data, unsigned long va, size_t offset, c
   if (ctx->phdr->p_flags & PF_R) {
     perm.bits.r = 1;
   }
-  catch_e(pt_map(ctx->part->pa_pgdir, vaddr, paddr, perm), {
-    panic_e(phy_frame_ref_dec(frame));
-    return err;
-  });
-  ctx->part->pa_mem_rem -= PGSIZE;
+  catch_e(part_pt_alloc(ctx->part, vaddr, perm, &pa));
+  if (src != NULL) {
+    memcpy(pa + offset, src, src_len);
+  }
   return KER_SUCCESS;
 }
 
@@ -137,6 +144,7 @@ static long part_load_prog(struct part *part, struct prog_def_t *prog) {
       catch_e(elf_load_prog(phdr, prog->pg_elf_bin + phdr->p_offset, part_load_prog_callback));
     }
   }
+  fence_i;
   const char *strtab = NULL;
   ELF_SHDR_ITER (ehdr, shdr) {
     if (shdr->sh_type == SHT_STRTAB) {

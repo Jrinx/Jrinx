@@ -5,15 +5,16 @@
 #define fence_i asm volatile("fence.i" : : : "memory")
 #define sfence_vma asm volatile("sfence.vma" : : : "memory")
 
-static inline void sfence_vma_va_asid(unsigned long va, unsigned long asid) {
+__attribute__((always_inline)) static inline void sfence_vma_va_asid(unsigned long va,
+                                                                     unsigned long asid) {
   asm volatile("sfence.vma %0, %1" : : "r"(va), "r"(asid) : "memory");
 }
 
-static inline void sfence_vma_asid(unsigned long asid) {
+__attribute__((always_inline)) static inline void sfence_vma_asid(unsigned long asid) {
   asm volatile("sfence.vma x0, %0" : : "r"(asid) : "memory");
 }
 
-static inline void sfence_vma_va(unsigned long va) {
+__attribute__((always_inline)) static inline void sfence_vma_va(unsigned long va) {
   asm volatile("sfence.vma %0, x0" : : "r"(va) : "memory");
 }
 
