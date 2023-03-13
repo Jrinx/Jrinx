@@ -68,8 +68,8 @@ static int sys_read_boot_time_sec_msec(uint64_t *sec, uint64_t *millisec) {
       printk(ANSI_COLOR_WRAP(color, "[ %lu.%03lu hart#%lu ] %s:%lu <%s> "), sec, millisec,     \
              hrt_get_id(), file, lineno, func);                                                \
     } else {                                                                                   \
-      printk(ANSI_COLOR_WRAP(color, "[ hart#%lu ] %s:%lu <%s> "), hrt_get_id(), file, lineno,  \
-             func);                                                                            \
+      printk(ANSI_COLOR_WRAP(color, "[ ?.??? hart#%lu ] %s:%lu <%s> "), hrt_get_id(), file,    \
+             lineno, func);                                                                    \
     }                                                                                          \
     va_list ap;                                                                                \
     va_start(ap, fmt);                                                                         \
