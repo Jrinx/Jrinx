@@ -8,17 +8,17 @@
 #include <lib/string.h>
 
 static const char *args_test;
-static int args_dt_print = 0;
-int args_debug_proc_run = 0;
+static int args_debug_dt = 0;
+int args_debug_as_switch = 0;
 int args_debug_sched_max_cnt = 0;
 static const char *args_partitions_conf;
 
 static struct arg_opt args_collections[] = {
     arg_of_str('t', "test", &args_test),
     arg_of_str('p', "pa-conf", &args_partitions_conf),
-    arg_of_bool('d', "dt-print", &args_dt_print),
-    arg_of_bool('r', "debug-proc-run", &args_debug_proc_run),
-    arg_of_int('s', "debug-sched-max-cnt", &args_debug_sched_max_cnt),
+    arg_of_bool(0, "debug-dt", &args_debug_dt),
+    arg_of_bool(0, "debug-as-switch", &args_debug_as_switch),
+    arg_of_int(0, "debug-sched-max-cnt", &args_debug_sched_max_cnt),
     arg_of_end,
 };
 
@@ -94,7 +94,7 @@ long args_action(void) {
     do_test(args_test);
     halt("arg-driven test done, halt!\n");
   }
-  if (args_dt_print) {
+  if (args_debug_dt) {
     extern struct dev_tree boot_dt;
     dt_print_tree(&boot_dt);
     halt("arg-dirven print boot device tree done, halt!\n");

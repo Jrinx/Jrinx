@@ -1,5 +1,5 @@
 {
-  "bootargs": "--debug-proc-run --debug-sched-max-cnt 100",
+  "bootargs": "--debug-as-switch --debug-sched-max-cnt 100",
   "sysconf": "loop.json",
   "expected": {
     "type": "unordered",

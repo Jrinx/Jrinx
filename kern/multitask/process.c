@@ -115,8 +115,8 @@ void proc_run(struct proc *proc) {
                                   .ppn = ((unsigned long)part->pa_pgdir) / PGSIZE}};
   csrw_satp(proc_satp.val);
   sfence_vma_asid(part->pa_cpus_asid[hrt_get_id()]);
-  extern int args_debug_proc_run;
-  if (args_debug_proc_run) {
+  extern int args_debug_as_switch;
+  if (args_debug_as_switch) {
     info("switch to address space of '%s' (asid: %lu)\n", part->pa_name,
          part->pa_cpus_asid[hrt_get_id()]);
   }
