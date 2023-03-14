@@ -1,6 +1,3 @@
-USER_OBJS		:= $(patsubst %.c,%.o,$(wildcard *.c)) \
-			$(patsubst %.S,%.o,$(wildcard *.S))
-
 COMPILE_TARGETS		:= $(patsubst %.c,%.x,$(wildcard *.c)) \
 			$(patsubst %.S,%.x,$(wildcard *.S))
 

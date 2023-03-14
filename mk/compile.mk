@@ -14,9 +14,9 @@ include $(BUILD_ROOT_DIR)/mk/silent.mk
 
 USER_LD_FILE = user.ld
 
-%.b: $(USER_OBJS) $(USER_LD_FILE)
+%.b: %.o $(USER_LD_FILE)
 	[ -z "$^" ] && exit 59 || true
-	$(LD) $(LDFLAGS) -T $(USER_LD_FILE) -o $@ $(USER_OBJS)
+	$(LD) $(LDFLAGS) -T $(USER_LD_FILE) -o $@ $< $(USER_LINK_LIBS)
 
 %.b.c: %.b
 ifneq ($(BINTOC_PREFIX),)

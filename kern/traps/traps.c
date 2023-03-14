@@ -32,6 +32,7 @@ static void prepare_nested_trap(void) {
 
 extern void do_pagefault(struct context *context);
 extern void do_timer_int(struct context *context);
+extern void do_syscall(struct context *context);
 
 void handle_trap(void) {
   struct context *context = cpus_context[hrt_get_id()];
@@ -42,6 +43,9 @@ void handle_trap(void) {
   case CAUSE_EXC_LD_PAGE_FAULT:
   case CAUSE_EXC_ST_PAGE_FAULT:
     do_pagefault(context);
+    break;
+  case CAUSE_EXC_U_ECALL:
+    do_syscall(context);
     break;
   case CAUSE_INT_OFFSET | CAUSE_INT_S_TIMER:
     do_timer_int(context);

@@ -46,6 +46,7 @@
 #ifndef __ASSEMBLER__
 
 #include <kern/lib/hart.h>
+#include <list.h>
 #include <stddef.h>
 
 struct context {
