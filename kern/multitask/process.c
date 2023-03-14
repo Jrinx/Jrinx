@@ -84,6 +84,7 @@ long proc_alloc(struct part *part, struct proc **proc, const char *name,
   tmp->pr_id = proc_id_alloc();
   tmp->pr_part_id = part->pa_id;
   proc_stack_setup(part, tmp, part->pa_ustasktop, aligned_stacksize);
+  proc_ctx->ctx_regs.names.sp = tmp->pr_ustacktop;
   part->pa_ustasktop -= aligned_stacksize + PGSIZE;
   part->pa_mem_rem -= aligned_stacksize;
   *proc = tmp;
