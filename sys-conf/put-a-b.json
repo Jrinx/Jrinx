@@ -1,0 +1,14 @@
+{
+  "partitions": [
+    {
+      "name": "put-a",
+      "prog": "general_put_a",
+      "memory": "4*1024*1024"
+    },
+    {
+      "name": "put-b",
+      "prog": "general_put_b",
+      "memory": "4*1024*1024"
+    }
+  ]
+}

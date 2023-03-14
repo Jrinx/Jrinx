@@ -54,7 +54,7 @@ if [ -z "$test_name" ]; then
   test_list=$(
     find tests-conf/* -maxdepth 1 -name '*-test.json' | \
     sort | \
-    sed -rne 's/[^\/]+\/(\w+-test)\.json/\1/p'
+    sed -rne 's/[^\/]+\/([a-zA-Z\-]+-test)\.json/\1/p'
   )
 else
   test_list="$test_name"
@@ -62,10 +62,7 @@ fi
 
 for test_case in $test_list; do
   bgreen "$prefix run $test_case"
-  conf_file='tests-conf/default.json'
-  if [ -f "tests-conf/$test_case.json" ]; then
-    conf_file="tests-conf/$test_case.json"
-  fi
+  conf_file="tests-conf/$test_case.json"
   if [ "$verbose" = 'y' ]; then
     scripts/judge "$conf_file" || r=$?
   else

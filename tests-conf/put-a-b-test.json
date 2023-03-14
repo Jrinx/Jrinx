@@ -1,0 +1,5 @@
+{
+  "bootargs": "--debug-sched-max-cnt 20",
+  "sysconf": "put-a-b.json",
+  "expected": "(AB){10}"
+}
