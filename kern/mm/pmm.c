@@ -73,7 +73,7 @@ void pmm_init(void) {
     uint64_t mem_size;
     panic_e(mem_get_size(i, &mem_size));
     pf_array_len[i] = mem_size / PGSIZE;
-    pf_array[i] = kalloc(sizeof(struct phy_frame) * pf_array_len[i]);
+    pf_array[i] = palloc(sizeof(struct phy_frame) * pf_array_len[i], PGSIZE);
     for (size_t j = 0; j < pf_array_len[i]; j++) {
       pf_array[i][j].pf_ref = 0;
       list_insert_tail(&pf_free_list[i], &pf_array[i][j].pf_link);
