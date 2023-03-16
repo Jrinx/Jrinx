@@ -6,7 +6,7 @@
 #include <kern/lib/errors.h>
 #include <kern/lock/lock.h>
 #include <kern/lock/spinlock.h>
-#include <kern/mm/pmm.h>
+#include <kern/mm/kalloc.h>
 #include <kern/mm/vmm.h>
 
 struct goldfish {
@@ -37,7 +37,7 @@ static long goldfish_probe(const struct dev_node *node) {
 
   uint64_t addr = from_be(*((uint64_t *)prop->pr_values));
   uint64_t size = from_be(*((uint64_t *)prop->pr_values + 1));
-  struct goldfish *goldfish = alloc(sizeof(struct goldfish), sizeof(struct goldfish));
+  struct goldfish *goldfish = kalloc(sizeof(struct goldfish));
   goldfish->gf_name = node->nd_name;
   goldfish->gf_addr = addr;
   goldfish->gf_size = size;

@@ -6,7 +6,7 @@
 #include <kern/lib/debug.h>
 #include <kern/lib/errors.h>
 #include <kern/lib/sync.h>
-#include <kern/mm/pmm.h>
+#include <kern/mm/kalloc.h>
 #include <kern/mm/vmm.h>
 #include <lib/string.h>
 
@@ -99,7 +99,7 @@ static long uart16550a_probe(const struct dev_node *node) {
   }
   uint32_t int_num = from_be(*((uint32_t *)prop->pr_values));
 
-  struct uart16550a *uart = alloc(sizeof(struct uart16550a), sizeof(struct uart16550a));
+  struct uart16550a *uart = kalloc(sizeof(struct uart16550a));
   uart->ur_name = node->nd_name;
   uart->ur_addr = addr;
   uart->ur_size = size;

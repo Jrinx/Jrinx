@@ -2,7 +2,7 @@
 #include <kern/drivers/device.h>
 #include <kern/lib/debug.h>
 #include <kern/lib/errors.h>
-#include <kern/mm/pmm.h>
+#include <kern/mm/kalloc.h>
 #include <lib/string.h>
 
 static size_t mem_num;
@@ -25,8 +25,8 @@ static long mem_probe(const struct dev_node *node) {
     return -KER_DTB_ER;
   }
   mem_num = prop->pr_len / (sizeof(uint64_t) * 2);
-  mem_addr = alloc(sizeof(uint64_t) * mem_num, sizeof(uint64_t));
-  mem_size = alloc(sizeof(uint64_t) * mem_num, sizeof(uint64_t));
+  mem_addr = kalloc(sizeof(uint64_t) * mem_num);
+  mem_size = kalloc(sizeof(uint64_t) * mem_num);
   uint64_t *reg_table = (uint64_t *)prop->pr_values;
   for (size_t i = 0; i < mem_num; i++) {
     mem_addr[i] = from_be(reg_table[i * 2]);

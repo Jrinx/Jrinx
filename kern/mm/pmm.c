@@ -7,6 +7,7 @@
 #include <kern/lib/errors.h>
 #include <kern/lock/lock.h>
 #include <kern/lock/spinlock.h>
+#include <kern/mm/kalloc.h>
 #include <kern/mm/pmm.h>
 #include <layouts.h>
 #include <lib/string.h>
@@ -19,27 +20,16 @@ unsigned long mm_get_freemem_base(void) {
   return freemem_base;
 }
 
-static void *bare_alloc(size_t size, size_t align) {
+void *palloc(size_t size, size_t align) {
   if (unlikely(freemem_base == 0)) {
     extern uint8_t kern_end[];
     freemem_base = (unsigned long)kern_end;
   }
-
   freemem_base = align_up(freemem_base, align);
-
   void *res = (void *)freemem_base;
-
   freemem_base += size;
-
   return res;
 }
-
-static void bare_free(const void *ptr) {
-  UNIMPLEMENTED;
-}
-
-void *(*alloc)(size_t size, size_t align) = bare_alloc;
-void (*free)(const void *ptr) = bare_free;
 
 static struct list_head *pf_free_list;
 static with_spinlock(pf_free_list);
@@ -75,16 +65,15 @@ frame2sel(struct phy_frame *frame, unsigned long *sel) {
 
 void pmm_init(void) {
   size_t mem_num = mem_get_num();
-  pf_free_list = alloc(sizeof(struct list_head) * mem_num, sizeof(struct list_head));
-  pf_array = alloc(sizeof(struct phy_frame *) * mem_num, sizeof(struct phy_frame *));
-  pf_array_len = alloc(sizeof(size_t) * mem_num, sizeof(size_t));
+  pf_free_list = kalloc(sizeof(struct list_head) * mem_num);
+  pf_array = kalloc(sizeof(struct phy_frame *) * mem_num);
+  pf_array_len = kalloc(sizeof(size_t) * mem_num);
   for (size_t i = 0; i < mem_num; i++) {
     list_init(&pf_free_list[i]);
     uint64_t mem_size;
     panic_e(mem_get_size(i, &mem_size));
     pf_array_len[i] = mem_size / PGSIZE;
-    pf_array[i] = alloc(sizeof(struct phy_frame) * pf_array_len[i],
-                        PGSIZE >= sizeof(struct phy_frame) ? PGSIZE : sizeof(struct phy_frame));
+    pf_array[i] = kalloc(sizeof(struct phy_frame) * pf_array_len[i]);
     for (size_t j = 0; j < pf_array_len[i]; j++) {
       pf_array[i][j].pf_ref = 0;
       list_insert_tail(&pf_free_list[i], &pf_array[i][j].pf_link);

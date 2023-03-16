@@ -3,7 +3,7 @@
 #include <kern/lib/errors.h>
 #include <kern/lock/lock.h>
 #include <kern/lock/spinlock.h>
-#include <kern/mm/pmm.h>
+#include <kern/mm/kalloc.h>
 #include <kern/multitask/process.h>
 #include <lib/string.h>
 
@@ -12,9 +12,8 @@ static struct list_head *cpus_sched_list;
 static with_spinlock(cpus_sched_list);
 
 void sched_init(void) {
-  cpus_cur_proc = alloc(sizeof(struct proc *) * cpus_get_count(), sizeof(struct proc *));
-  cpus_sched_list =
-      alloc(sizeof(struct list_head) * cpus_get_count(), sizeof(struct list_head));
+  cpus_cur_proc = kalloc(sizeof(struct proc *) * cpus_get_count());
+  cpus_sched_list = kalloc(sizeof(struct list_head) * cpus_get_count());
   memset(cpus_cur_proc, 0, sizeof(struct proc *) * cpus_get_count());
   memset(cpus_sched_list, 0, sizeof(struct list_head) * cpus_get_count());
   for (size_t i = 0; i < cpus_get_count(); i++) {

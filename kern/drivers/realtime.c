@@ -1,7 +1,7 @@
 #include <kern/drivers/realtime.h>
 #include <kern/lib/debug.h>
 #include <kern/lib/regs.h>
-#include <kern/mm/pmm.h>
+#include <kern/mm/kalloc.h>
 #include <lib/hashmap.h>
 #include <lib/string.h>
 
@@ -29,7 +29,7 @@ static struct hashmap rtc_map = {
 };
 
 void rt_register_dev(char *name, read_time_callback_t read_time_callback) {
-  struct rtc_dev *rtc = alloc(sizeof(struct rtc_dev), sizeof(struct rtc_dev));
+  struct rtc_dev *rtc = kalloc(sizeof(struct rtc_dev));
   rtc->rt_name = name;
   rtc->rt_read_time_callback = read_time_callback;
   hashmap_put(&rtc_map, &rtc->rt_link);

@@ -1,6 +1,6 @@
 #include <kern/drivers/cpus.h>
 #include <kern/lib/debug.h>
-#include <kern/mm/pmm.h>
+#include <kern/mm/kalloc.h>
 #include <kern/multitask/sched.h>
 #include <kern/traps/traps.h>
 #include <lib/string.h>
@@ -8,9 +8,9 @@
 struct context **cpus_context;
 
 void traps_init(void) {
-  cpus_context = alloc(sizeof(struct context *) * cpus_get_count(), sizeof(struct context *));
+  cpus_context = kalloc(sizeof(struct context *) * cpus_get_count());
   for (size_t i = 0; i < cpus_get_count(); i++) {
-    cpus_context[i] = alloc(sizeof(struct context), sizeof(struct context));
+    cpus_context[i] = kalloc(sizeof(struct context));
     memset(cpus_context[i], 0, sizeof(struct context));
   }
 }
@@ -25,7 +25,8 @@ static void prepare_nested_trap(void) {
   struct context *context = cpus_context[hrt_get_id()];
   struct proc *proc = cpus_cur_proc[hrt_get_id()];
   hlist_insert_head(&proc->pr_trapframe.tf_ctx_list, &context->ctx_link);
-  cpus_context[hrt_get_id()] = alloc(sizeof(struct context), sizeof(struct context));
+  cpus_context[hrt_get_id()] = kalloc(sizeof(struct context));
+  memset(cpus_context[hrt_get_id()], 0, sizeof(struct context));
   cpus_context[hrt_get_id()]->ctx_hartid = hrt_get_id();
   csrw_sscratch((unsigned long)cpus_context[hrt_get_id()]);
 }
@@ -37,6 +38,11 @@ extern void do_syscall(struct context *context);
 void handle_trap(void) {
   struct context *context = cpus_context[hrt_get_id()];
   prepare_nested_trap();
+  size_t kalloc_used = kalloc_get_used();
+  extern int args_debug_kalloc_used;
+  if (args_debug_kalloc_used) {
+    info("kalloc used: %pB\n", &kalloc_used);
+  }
   // Future: enable interrupt here
   switch (context->ctx_scause) {
   case CAUSE_EXC_IF_PAGE_FAULT:
@@ -55,7 +61,7 @@ void handle_trap(void) {
     break;
   }
   // Future: disable interrupt here
-  // TODO: free cpus_context[hrt_get_id()]
+  kfree(cpus_context[hrt_get_id()]);
   hlist_remove_node(&context->ctx_link);
   cpus_context[hrt_get_id()] = context;
 

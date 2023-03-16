@@ -1,6 +1,6 @@
 #include <kern/drivers/serialport.h>
 #include <kern/lib/debug.h>
-#include <kern/mm/pmm.h>
+#include <kern/mm/kalloc.h>
 #include <kern/mm/vmm.h>
 #include <lib/hashmap.h>
 #include <lib/string.h>
@@ -34,7 +34,7 @@ static struct hashmap serial_map = {
 
 void serial_register_dev(char *name, putc_callback_t putc_callback,
                          getc_callback_t getc_callback) {
-  struct serial_dev *dev = alloc(sizeof(struct serial_dev), sizeof(struct serial_dev));
+  struct serial_dev *dev = kalloc(sizeof(struct serial_dev));
   dev->sr_name = name;
   dev->sr_putc_callback = putc_callback;
   dev->sr_getc_callback = getc_callback;

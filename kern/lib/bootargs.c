@@ -1,7 +1,7 @@
 #include <kern/drivers/devicetree.h>
 #include <kern/lib/debug.h>
 #include <kern/lib/errors.h>
-#include <kern/mm/pmm.h>
+#include <kern/mm/kalloc.h>
 #include <kern/multitask/partition.h>
 #include <kern/tests.h>
 #include <lib/argparser.h>
@@ -9,6 +9,7 @@
 
 static const char *args_test;
 static int args_debug_dt = 0;
+int args_debug_kalloc_used = 0;
 int args_debug_as_switch = 0;
 int args_debug_sched_max_cnt = 0;
 static const char *args_partitions_conf;
@@ -17,6 +18,7 @@ static struct arg_opt args_collections[] = {
     arg_of_str('t', "test", &args_test),
     arg_of_str('p', "pa-conf", &args_partitions_conf),
     arg_of_bool(0, "debug-dt", &args_debug_dt),
+    arg_of_bool(0, "debug-kalloc-used", &args_debug_kalloc_used),
     arg_of_bool(0, "debug-as-switch", &args_debug_as_switch),
     arg_of_int(0, "debug-sched-max-cnt", &args_debug_sched_max_cnt),
     arg_of_end,
@@ -39,7 +41,7 @@ static void do_test(const char *name) {
 
 static long do_partitions_create(const char *conf) {
   size_t conf_len = strlen(conf);
-  char *conf_raw = alloc((conf_len + 1) * sizeof(char), sizeof(char));
+  char *conf_raw = kalloc((conf_len + 1) * sizeof(char));
   strcpy(conf_raw, conf);
   size_t conf_items_cnt = 1;
   size_t conf_parts_cnt = 1;
@@ -52,8 +54,7 @@ static long do_partitions_create(const char *conf) {
       conf_raw[i] = '\0';
     }
   }
-  struct part_conf *part_confs =
-      alloc(conf_parts_cnt * sizeof(struct part_conf), sizeof(struct part_conf));
+  struct part_conf *part_confs = kalloc(conf_parts_cnt * sizeof(struct part_conf));
   size_t p = 0, q = 0;
   do {
     struct part_conf *pc = &part_confs[p++];
@@ -62,7 +63,7 @@ static long do_partitions_create(const char *conf) {
     pc->pa_mem_req = 0;
     while (pc->pa_name == NULL || pc->pa_prog == NULL || pc->pa_mem_req == 0) {
       if (q > conf_len) {
-        return -KER_ARG_ER;
+        goto error;
       }
       if (strcmp(&conf_raw[q], "name") == 0) {
         pc->pa_name = &conf_raw[q + sizeof("name")];
@@ -71,10 +72,10 @@ static long do_partitions_create(const char *conf) {
       } else if (strcmp(&conf_raw[q], "memory") == 0) {
         pc->pa_mem_req = atoi(&conf_raw[q + sizeof("memory")]);
         if (pc->pa_mem_req == 0) {
-          return -KER_ARG_ER;
+          goto error;
         }
       } else {
-        return -KER_ARG_ER;
+        goto error;
       }
       for (size_t j = 0; j < 2; j++) {
         while (conf_raw[q++] != '\0') {
@@ -84,9 +85,15 @@ static long do_partitions_create(const char *conf) {
   } while (p < conf_parts_cnt);
 
   for (size_t i = 0; i < conf_parts_cnt; i++) {
-    catch_e(part_create(&part_confs[i]));
+    catch_e(part_create(&part_confs[i]), { goto error; });
   }
+  kfree(conf_raw);
+  kfree(part_confs);
   return KER_SUCCESS;
+error:
+  kfree(conf_raw);
+  kfree(part_confs);
+  return -KER_ARG_ER;
 }
 
 long args_action(void) {
@@ -120,7 +127,7 @@ long args_evaluate(const char *bootargs) {
   if (bootargs_len == 0) {
     return KER_SUCCESS;
   }
-  char *args_raw = alloc(sizeof(char) * (bootargs_len + 1), sizeof(char));
+  char *args_raw = kalloc(sizeof(char) * (bootargs_len + 1));
   size_t args_cnt = 0;
 
   memcpy(args_raw, bootargs, bootargs_len);
@@ -138,7 +145,7 @@ long args_evaluate(const char *bootargs) {
       k = 1;
     }
   }
-  const char **args_list = alloc(sizeof(char *) * args_cnt, sizeof(char *));
+  const char **args_list = kalloc(sizeof(char *) * args_cnt);
   size_t p = 0, q = 0;
   do {
     args_list[p++] = &args_raw[q];

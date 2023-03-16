@@ -1,12 +1,12 @@
+#include "sifiveuart0.h"
 #include <endian.h>
 #include <kern/drivers/device.h>
 #include <kern/drivers/intc.h>
-#include "sifiveuart0.h"
 #include <kern/drivers/serialport.h>
 #include <kern/lib/debug.h>
 #include <kern/lib/errors.h>
 #include <kern/lib/sync.h>
-#include <kern/mm/pmm.h>
+#include <kern/mm/kalloc.h>
 #include <kern/mm/vmm.h>
 
 struct sifiveuart0 {
@@ -92,7 +92,7 @@ static long sifiveuart0_probe(const struct dev_node *node) {
   }
   uint32_t int_num = from_be(*((uint32_t *)prop->pr_values));
 
-  struct sifiveuart0 *uart = alloc(sizeof(struct sifiveuart0), sizeof(struct sifiveuart0));
+  struct sifiveuart0 *uart = kalloc(sizeof(struct sifiveuart0));
   uart->su_name = node->nd_name;
   uart->su_addr = addr;
   uart->su_size = size;

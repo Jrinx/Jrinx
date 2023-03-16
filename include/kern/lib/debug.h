@@ -5,6 +5,8 @@
 #include <kern/lib/logger.h>
 #include <magicros.h>
 
+#define UNIMPLEMENTED fatal("unimplemented: %s", __func__)
+
 #define assert(expr)                                                                           \
   ({                                                                                           \
     if (unlikely(!(expr))) {                                                                   \

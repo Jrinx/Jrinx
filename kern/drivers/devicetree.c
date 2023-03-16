@@ -3,7 +3,7 @@
 #include <kern/drivers/dtb.h>
 #include <kern/lib/debug.h>
 #include <kern/lib/errors.h>
-#include <kern/mm/pmm.h>
+#include <kern/mm/kalloc.h>
 #include <lib/printfmt.h>
 #include <lib/string.h>
 #include <stddef.h>
@@ -46,13 +46,12 @@ static long dt_node_load(void *dtb_addr, size_t pos, size_t *nxt_pos,
 
   pos++;
 
-  struct dev_node *node = alloc(sizeof(struct dev_node), sizeof(struct dev_node));
+  struct dev_node *node = kalloc(sizeof(struct dev_node));
   const char *node_name = (char *)(dtb_addr + dtb_struct_off + pos * sizeof(uint32_t));
   size_t node_name_len = strlen(node_name);
-  node->nd_name = alloc(sizeof(char) * (node_name_len + 1), sizeof(char));
+  node->nd_name = kalloc(sizeof(char) * (node_name_len + 1));
   strcpy(node->nd_name, node_name);
-  HASHMAP_ALLOC(&node->nd_prop_map,
-                alloc(sizeof(struct hlist_head) * 32, sizeof(struct hlist_head)), 32, str,
+  HASHMAP_ALLOC(&node->nd_prop_map, kalloc(sizeof(struct hlist_head) * 32), 32, str,
                 prop_key_of);
   hashmap_init(&node->nd_prop_map);
   list_init(&node->nd_children_list);
@@ -70,15 +69,14 @@ static long dt_node_load(void *dtb_addr, size_t pos, size_t *nxt_pos,
 
     pos += 3;
 
-    struct dev_node_prop *prop =
-        alloc(sizeof(struct dev_node_prop), sizeof(struct dev_node_prop));
+    struct dev_node_prop *prop = kalloc(sizeof(struct dev_node_prop));
     const char *prop_name = (char *)(dtb_addr + dtb_strings_off + prop_nameoff);
     size_t prop_name_len = strlen(prop_name);
-    prop->pr_name = alloc(sizeof(char) * (prop_name_len + 1), sizeof(char));
+    prop->pr_name = kalloc(sizeof(char) * (prop_name_len + 1));
     strcpy(prop->pr_name, prop_name);
     prop->pr_len = prop_len;
     if (prop_len != 0) {
-      prop->pr_values = alloc(sizeof(uint8_t) * prop_len, sizeof(uint8_t));
+      prop->pr_values = kalloc(sizeof(uint8_t) * prop_len);
       memcpy(prop->pr_values, dtb_addr + dtb_struct_off + pos * sizeof(uint32_t), prop_len);
     } else {
       prop->pr_values = NULL;
@@ -126,8 +124,7 @@ long dt_load(void *dtb_addr, struct dev_tree *dt) {
     if (rsvent->e_addr == 0 && rsvent->e_size == 0) {
       break;
     }
-    struct dev_rsvmem *dev_rsvmem_ent =
-        alloc(sizeof(struct dev_rsvmem), sizeof(struct dev_rsvmem));
+    struct dev_rsvmem *dev_rsvmem_ent = kalloc(sizeof(struct dev_rsvmem));
     dev_rsvmem_ent->r_addr = rsvent->e_addr;
     dev_rsvmem_ent->r_size = rsvent->e_size;
     list_insert_tail(&dt->dt_rsvmem_list, &dev_rsvmem_ent->r_link);

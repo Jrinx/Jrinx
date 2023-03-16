@@ -7,6 +7,7 @@
 #include <kern/lock/lock.h>
 #include <kern/lock/spinlock.h>
 #include <kern/mm/asid.h>
+#include <kern/mm/kalloc.h>
 #include <kern/mm/pmm.h>
 #include <kern/multitask/partition.h>
 #include <kern/multitask/process.h>
@@ -64,9 +65,9 @@ long proc_alloc(struct part *part, struct proc **proc, const char *name,
   if (part->pa_mem_rem < aligned_stacksize) {
     return -KER_PROC_ER;
   }
-  struct proc *tmp = alloc(sizeof(struct proc), sizeof(struct proc));
+  struct proc *tmp = kalloc(sizeof(struct proc));
   memset(tmp, 0, sizeof(struct proc));
-  struct context *proc_ctx = alloc(sizeof(struct context), sizeof(struct context));
+  struct context *proc_ctx = kalloc(sizeof(struct context));
   memset(proc_ctx, 0, sizeof(struct context));
   proc_ctx->ctx_sepc = entrypoint;
   proc_ctx->ctx_hartid = HARTID_MAX;
@@ -101,7 +102,8 @@ long proc_free(struct proc *proc) {
 void proc_run(struct proc *proc) {
   struct context *proc_top_ctx =
       CONTAINER_OF(proc->pr_trapframe.tf_ctx_list.h_first, struct context, ctx_link);
-  cpus_context[hrt_get_id()] = proc_top_ctx; // TODO: free previous context
+  kfree(cpus_context[hrt_get_id()]);
+  cpus_context[hrt_get_id()] = proc_top_ctx;
   hlist_remove_node(&proc_top_ctx->ctx_link);
   proc_top_ctx->ctx_hartid = hrt_get_id();
   struct part *part = part_from_id(proc->pr_part_id);

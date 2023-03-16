@@ -6,6 +6,7 @@
 #include <kern/lib/sync.h>
 #include <kern/lock/lock.h>
 #include <kern/lock/spinlock.h>
+#include <kern/mm/kalloc.h>
 #include <kern/mm/pmm.h>
 #include <kern/mm/vmm.h>
 #include <layouts.h>
@@ -14,36 +15,8 @@
 
 pte_t kern_pgdir[PGSIZE / sizeof(pte_t)] __attribute__((aligned(PGSIZE)));
 
-static unsigned long kalloc_base = 0;
-static unsigned long next_base = 0;
-static with_spinlock(kalloc);
-
-static void *kalloc(size_t size, size_t align) {
-  // TODO: buddy system
-  if (unlikely(kalloc_base == 0)) {
-    return NULL;
-  }
-  panic_e(lk_acquire(&spinlock_of(kalloc)));
-  if (unlikely(next_base == 0)) {
-    next_base = kalloc_base;
-  }
-  unsigned long tmp_next_base = align_up(next_base, align) + size;
-  if (unlikely(tmp_next_base > kalloc_base + KALLOCSIZE)) {
-    panic_e(lk_release(&spinlock_of(kalloc)));
-    return NULL;
-  }
-  void *res = (void *)next_base;
-  next_base = tmp_next_base;
-  panic_e(lk_release(&spinlock_of(kalloc)));
-  return res;
-}
-
-static void kfree(const void *ptr) {
-  UNIMPLEMENTED;
-}
-
 static long pt_boot_frame_alloc(paddr_t *pa) {
-  void *addr = alloc(PGSIZE, PGSIZE);
+  void *addr = palloc(PGSIZE, PGSIZE);
   memset(addr, 0, PGSIZE);
   pa->val = (unsigned long)addr;
   return KER_SUCCESS;
@@ -176,7 +149,7 @@ struct mmio_setup {
 static struct list_head vmm_mmio_setup_list;
 
 void vmm_register_mmio(char *name, unsigned long *addr, unsigned long size) {
-  struct mmio_setup *mmio = alloc(sizeof(struct mmio_setup), sizeof(struct mmio_setup));
+  struct mmio_setup *mmio = kalloc(sizeof(struct mmio_setup));
   mmio->mm_name = name;
   mmio->mm_addr = addr;
   mmio->mm_size = size;
@@ -228,12 +201,8 @@ void vmm_setup_kern(void) {
     }
   }
 
-  kalloc_base = (unsigned long)alloc(KALLOCSIZE, PGSIZE);
-
   pmm_init();
 
-  alloc = kalloc;
-  free = kfree;
   pt_frame_alloc = pt_phy_frame_alloc;
   pt_frame_ref_inc = pt_phy_frame_ref_inc;
   pt_frame_ref_dec = pt_phy_frame_ref_dec;

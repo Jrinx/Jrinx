@@ -6,7 +6,7 @@
 #include <kern/lib/errors.h>
 #include <kern/lock/lock.h>
 #include <kern/lock/spinlock.h>
-#include <kern/mm/pmm.h>
+#include <kern/mm/kalloc.h>
 #include <kern/mm/vmm.h>
 #include <layouts.h>
 #include <lib/string.h>
@@ -144,7 +144,7 @@ static long plic_probe(const struct dev_node *node) {
     external_int_ctx = SYSCORE * 2;
   }
 
-  struct plic *plic = alloc(sizeof(struct plic), sizeof(struct plic));
+  struct plic *plic = kalloc(sizeof(struct plic));
   plic->pl_name = node->nd_name;
   plic->pl_addr = addr;
   plic->pl_size = size;

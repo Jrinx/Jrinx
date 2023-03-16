@@ -10,9 +10,7 @@ struct phy_frame {
 };
 
 unsigned long mm_get_freemem_base(void);
-
-extern void *(*alloc)(size_t size, size_t align);
-extern void (*free)(const void *ptr);
+void *palloc(size_t size, size_t align);
 
 void pmm_init(void);
 long pa2frame(unsigned long addr, struct phy_frame **frame) __attribute__((warn_unused_result));

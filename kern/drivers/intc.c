@@ -2,7 +2,7 @@
 #include <kern/lib/debug.h>
 #include <kern/lib/errors.h>
 #include <kern/lib/regs.h>
-#include <kern/mm/pmm.h>
+#include <kern/mm/kalloc.h>
 #include <lib/hashmap.h>
 #include <lib/string.h>
 #include <stdint.h>
@@ -50,7 +50,7 @@ static struct hashmap irq_reg_map = {
 };
 
 long intc_register_handler(void *_, unsigned long trap_num, trap_callback_t callback) {
-  struct exc_st *exc = alloc(sizeof(struct exc_st), sizeof(struct exc_st));
+  struct exc_st *exc = kalloc(sizeof(struct exc_st));
   exc->exc_trap_num = trap_num;
   exc->exc_callback = callback;
   hashmap_put(&exc_map, &exc->exc_link);
@@ -68,7 +68,7 @@ void intc_get_irq_reg(uint32_t phandle_num, irq_register_callback_t *callback) {
 }
 
 void intc_register_irq_reg(uint32_t phandle_num, irq_register_callback_t callback) {
-  struct irq_reg_st *irq_reg = alloc(sizeof(struct irq_reg_st), sizeof(struct irq_reg_st));
+  struct irq_reg_st *irq_reg = kalloc(sizeof(struct irq_reg_st));
   irq_reg->irq_phandle_num = phandle_num;
   irq_reg->irq_reg_callback = callback;
   hashmap_put(&irq_reg_map, &irq_reg->irq_link);

@@ -5,7 +5,7 @@
 #include <kern/lib/regs.h>
 #include <kern/lock/lock.h>
 #include <kern/lock/spinlock.h>
-#include <kern/mm/pmm.h>
+#include <kern/mm/kalloc.h>
 
 static unsigned long *cpus_asid_max;
 static unsigned long **cpus_asid_bitmap;
@@ -13,10 +13,10 @@ static size_t *cpus_asid_bitmap_size;
 static struct lock *cpus_asid_bitmap_lock;
 
 void asid_init(void) {
-  cpus_asid_max = alloc(sizeof(unsigned long) * cpus_get_count(), sizeof(unsigned long));
-  cpus_asid_bitmap = alloc(sizeof(unsigned long *) * cpus_get_count(), sizeof(unsigned long *));
-  cpus_asid_bitmap_size = alloc(sizeof(size_t) * cpus_get_count(), sizeof(size_t));
-  cpus_asid_bitmap_lock = alloc(sizeof(struct lock) * cpus_get_count(), sizeof(struct lock));
+  cpus_asid_max = kalloc(sizeof(unsigned long) * cpus_get_count());
+  cpus_asid_bitmap = kalloc(sizeof(unsigned long *) * cpus_get_count());
+  cpus_asid_bitmap_size = kalloc(sizeof(size_t) * cpus_get_count());
+  cpus_asid_bitmap_lock = kalloc(sizeof(struct lock) * cpus_get_count());
   for (unsigned long i = 0; i < cpus_get_count(); i++) {
     rv64_satp bak_satp = {.val = csrr_satp()};
     rv64_satp asid_probe_satp = {.bits = {.mode = BARE, .asid = 0xffffU, .ppn = 0UL}};
@@ -25,8 +25,7 @@ void asid_init(void) {
     cpus_asid_max[i] = asid_probe_satp.bits.asid;
     info("asid in cpu@%lu impl probed [0, %lu]\n", i, cpus_asid_max[i]);
     cpus_asid_bitmap_size[i] = BITMAP_SIZE(cpus_asid_max[i] + 1);
-    cpus_asid_bitmap[i] =
-        alloc(sizeof(unsigned long) * cpus_asid_bitmap_size[i], sizeof(unsigned long));
+    cpus_asid_bitmap[i] = kalloc(sizeof(unsigned long) * cpus_asid_bitmap_size[i]);
     csrw_satp(bak_satp.val);
     spinlock_init(&cpus_asid_bitmap_lock[i]);
   }

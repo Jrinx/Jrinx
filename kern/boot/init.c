@@ -12,6 +12,7 @@
 #include <kern/lock/lock.h>
 #include <kern/lock/spinlock.h>
 #include <kern/mm/asid.h>
+#include <kern/mm/kalloc.h>
 #include <kern/mm/vmm.h>
 #include <kern/multitask/sched.h>
 #include <kern/traps/traps.h>
@@ -70,6 +71,7 @@ void __attribute__((noreturn)) kernel_init(unsigned long hartid, void *dtb_addr)
 
     info("Hello Jrinx, I am master hart!\n");
 
+    kalloc_init();
     panic_e(dt_load(dtb_addr, &boot_dt));
     boot_dt_model = dt_get_model(&boot_dt);
     panic_e(device_probe(&boot_dt));
