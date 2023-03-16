@@ -1,5 +1,8 @@
 #include <aligns.h>
 #include <brpred.h>
+#include <kern/lib/debug.h>
+#include <kern/lock/lock.h>
+#include <kern/lock/spinlock.h>
 #include <layouts.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -19,8 +22,9 @@ struct buddy_block {
   struct buddy_block *prev;
 };
 
-uint8_t kalloc_pool[KALLOCSIZE] __attribute__((aligned(KALLOC_MAX_SIZE)));
-struct buddy_block *kalloc_block_list = NULL;
+static uint8_t kalloc_pool[KALLOCSIZE] __attribute__((aligned(KALLOC_MAX_SIZE)));
+static struct buddy_block *kalloc_block_list = NULL;
+static with_spinlock(kalloc_mod);
 
 static struct buddy_block *get_buddy(struct buddy_block *block) {
   if (block->size == KALLOC_MAX_SIZE) {
@@ -44,6 +48,7 @@ void kalloc_init(void) {
 }
 
 size_t kalloc_get_used(void) {
+  panic_e(lk_acquire(&spinlock_of(kalloc_mod)));
   unsigned long used = 0;
   struct buddy_block *block = kalloc_block_list;
   while (block != NULL) {
@@ -52,6 +57,7 @@ size_t kalloc_get_used(void) {
     }
     block = block->next;
   }
+  panic_e(lk_release(&spinlock_of(kalloc_mod)));
   return used;
 }
 
@@ -64,6 +70,7 @@ void *kalloc(size_t size) {
   if (size > KALLOC_MAX_SIZE) {
     return NULL;
   }
+  panic_e(lk_acquire(&spinlock_of(kalloc_mod)));
   struct buddy_block *block = kalloc_block_list;
   while (block != NULL) {
     if (block->state == FREE && block->size >= size) {
@@ -72,6 +79,7 @@ void *kalloc(size_t size) {
     block = block->next;
   }
   if (block == NULL) {
+    panic_e(lk_release(&spinlock_of(kalloc_mod)));
     return NULL;
   }
   while (block->size / 2 >= size) {
@@ -87,12 +95,14 @@ void *kalloc(size_t size) {
     block->size /= 2;
   }
   block->state = USED;
+  panic_e(lk_release(&spinlock_of(kalloc_mod)));
   return (void *)((uint8_t *)block + sizeof(struct buddy_block));
 }
 
 void kfree(void *ptr) {
   struct buddy_block *block =
       (struct buddy_block *)((uint8_t *)ptr - sizeof(struct buddy_block));
+  panic_e(lk_acquire(&spinlock_of(kalloc_mod)));
   block->state = FREE;
   struct buddy_block *buddy = get_buddy(block);
   while (buddy != NULL && buddy->state == FREE && buddy->size == block->size) {
@@ -106,4 +116,5 @@ void kfree(void *ptr) {
     block = merged_block;
     buddy = get_buddy(block);
   }
+  panic_e(lk_release(&spinlock_of(kalloc_mod)));
 }
