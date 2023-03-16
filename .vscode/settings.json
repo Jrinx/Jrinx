@@ -1,5 +1,5 @@
 {
-  "C_Cpp.default.compilerPath": "/usr/bin/riscv64-unknown-elf-gcc",
+  "C_Cpp.default.compilerPath": "/usr/bin/riscv64-unknown-linux-gnu-gcc",
   "C_Cpp.default.cStandard": "gnu99",
   "C_Cpp.default.defines": [
     "CONFIG_ENDIAN=LITTLE_ENDIAN",
@@ -9,7 +9,7 @@
   ],
   "C_Cpp.default.includePath": [
     "${workspaceFolder}/include",
-    "/usr/riscv64-unknown-elf/include"
+    "/usr/riscv64-unknown-linux-gnu/include"
   ],
   "editor.tabSize": 2,
 }

@@ -5,8 +5,8 @@ CPUS		?= 5
 COLOR		?= y
 ARGS		?=
 SYSCONF		?=
-BOARD		?= virt
-CROSS_COMPILE	?= riscv64-unknown-elf-
+BOARD		?= virt  # OR sifive_u
+CROSS_COMPILE	?= riscv64-unknown-linux-gnu-
 
 JRINX_LOGO	:= jrinx.logo
 
@@ -41,7 +41,7 @@ JRINX		:= $(TARGET_DIR)/jrinx
 
 OPENSBI_ROOT	:= opensbi
 OPENSBI_FW_PATH	:= $(OPENSBI_ROOT)/build/platform/generic/firmware
-BOOTLOADER	:= $(OPENSBI_FW_PATH)/fw_jump.elf
+OPENSBI_FW_JUMP	:= $(OPENSBI_FW_PATH)/fw_jump.elf
 
 DTC		:= dtc
 
@@ -72,8 +72,6 @@ debug: build
 build: clean
 	@$(MAKE) $(JRINX)
 
-sbi-fw: $(BOOTLOADER)
-
 $(JRINX): SHELL := $(shell which bash)
 $(JRINX): $(MODULES) $(USER_MODULES) $(LDSCRIPT) $(TARGET_DIR)
 	shopt -s nullglob globstar
@@ -85,7 +83,9 @@ $(MODULES) $(USER_MODULES):
 		echo '-f $(BUILD_ROOT_DIR)/mk/auto-make.mk'; \
 	fi)
 
-$(BOOTLOADER):
+$(OPENSBI_FW_JUMP): sbi-fw
+
+sbi-fw:
 	@$(MAKE) -C $(OPENSBI_ROOT) all PLATFORM=generic PLATFORM_RISCV_XLEN=64
 
 $(TARGET_DIR):
@@ -120,8 +120,8 @@ objdump:
 objcopy:
 	@$(OBJCOPY) -O binary $(JRINX) $(JRINX).bin
 
-run: EMU_OPTS			+= -kernel $(JRINX) -bios $(BOOTLOADER) -append '$(EMU_ARGS)'
-run: $(BOOTLOADER)
+run: EMU_OPTS			+= -kernel $(JRINX) -bios $(OPENSBI_FW_JUMP) -append '$(EMU_ARGS)'
+run: $(OPENSBI_FW_JUMP)
 	@$(EMU) $(EMU_OPTS)
 
 dbg: EMU_OPTS			+= -s -S
@@ -130,7 +130,7 @@ dbg: run
 gdb:
 	@$(GDB) $(GDB_EVAL_CMD) $(JRINX)
 
-gdb-sbi: GDB_EVAL_CMD		+= -ex 'set confirm off' -ex 'add-symbol-file $(BOOTLOADER)' \
+gdb-sbi: GDB_EVAL_CMD		+= -ex 'set confirm off' -ex 'add-symbol-file $(OPENSBI_FW_JUMP)' \
 				-ex 'set confirm on'
 gdb-sbi: gdb
 
