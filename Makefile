@@ -3,6 +3,7 @@ TARGET_ENDIAN	:= little
 
 CPUS		?= 5
 COLOR		?= y
+DTB		?=
 ARGS		?=
 SYSCONF		?=
 BOARD		?= virt  # OR sifive_u
@@ -52,7 +53,7 @@ export MAKEFLAGS := -j$(shell nproc) -s $(MAKEFLAGS)
 .ONESHELL:
 .PHONY: all debug release release-debug build sbi-fw clean clean-dt clean-opensbi clean-all \
 	run dbg gdb gdb-sbi \
-	preprocess objdump objcopy dumpdts \
+	preprocess objdump objcopy mkimage dumpdts \
 	$(JRINX) $(MODULES) $(USER_MODULES) \
 	check-style fix-style register-git-hooks cloc
 
@@ -119,7 +120,14 @@ objdump:
 objcopy:
 	@$(OBJCOPY) -O binary $(JRINX) $(JRINX).bin
 
+mkimage: objcopy
+	mkimage -A riscv -O linux -C none -a 0x80200000 -e 0x80200000 \
+		-d $(JRINX).bin $(JRINX).uImage
+
 run: EMU_OPTS			+= -kernel $(JRINX) -bios $(OPENSBI_FW_JUMP) -append '$(EMU_ARGS)'
+ifneq ($(DTB),)
+	EMU_OPTS		+= -dtb $(DTB)
+endif
 run: $(OPENSBI_FW_JUMP)
 	@$(EMU) $(EMU_OPTS)
 

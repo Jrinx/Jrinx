@@ -4,3 +4,4 @@ LD	= @echo '  LINK    '$@; $(CROSS_COMPILE)ld
 BINTOC	= @echo '  BINTOC  '$@; $(BUILD_ROOT_DIR)/scripts/bintoc
 OBJDUMP	= $(CROSS_COMPILE)objdump
 OBJCOPY	= $(CROSS_COMPILE)objcopy
+STRIP   = $(CROSS_COMPILE)strip
