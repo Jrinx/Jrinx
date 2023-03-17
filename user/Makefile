@@ -20,4 +20,4 @@ $(USER_BARE_APPS) $(USER_APPS):
 	fi
 
 $(USER_LIBS):
-	$(MAKE) -C $@
+	$(MAKE) -C $@ -f $(BUILD_ROOT_DIR)/mk/auto-make.mk

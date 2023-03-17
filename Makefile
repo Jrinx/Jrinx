@@ -31,7 +31,6 @@ EMU_RAM_SIZE	:= 1G
 EMU_ARGS	:= $(ARGS) $(shell if [ -n "$(SYSCONF)" ]; then ./scripts/sysconf $(SYSCONF); fi)
 EMU_OPTS	:= -M $(EMU_MACH) -m $(EMU_RAM_SIZE) -nographic -smp $(EMU_CPUS) -no-reboot
 
-INCLUDES	:= -I./include
 MODULES		:= kern lib
 USER_MODULES	:= user
 OBJECTS		:= $(addsuffix /**/*.o, $(MODULES)) $(addsuffix /**/*.x, $(USER_MODULES))

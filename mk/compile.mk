@@ -1,5 +1,7 @@
 include $(BUILD_ROOT_DIR)/mk/silent.mk
 
+INCLUDES	+= -I$(BUILD_ROOT_DIR)/include
+
 %.i: %.c
 	$(CPP) $(CFLAGS) $(INCLUDES) -E -P $< > $@
 
@@ -12,11 +14,8 @@ include $(BUILD_ROOT_DIR)/mk/silent.mk
 %.o: %.S
 	$(CC) $(CFLAGS) $(INCLUDES) -c -o $@ $<
 
-USER_LD_FILE = user.ld
-
-%.b: %.o $(USER_LD_FILE)
-	[ -z "$^" ] && exit 59 || true
-	$(LD) $(LDFLAGS) -T $(USER_LD_FILE) -o $@ $< $(USER_LINK_LIBS)
+%.b: %.o user.ld
+	$(LD) $(LDFLAGS) -T user.ld -o $@ $< $(USER_LINK_LIBS)
 
 %.b.c: %.b
 ifneq ($(BINTOC_PREFIX),)

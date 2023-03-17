@@ -1,6 +1,4 @@
-INCLUDES := -I../../include
-
-include ../../mk/compile.mk ../../mk/auto-tar.mk
+include $(BUILD_ROOT_DIR)/mk/compile.mk $(BUILD_ROOT_DIR)/mk/auto-tar.mk
 
 DRIVERS := $(dir $(wildcard ./*/))
 
