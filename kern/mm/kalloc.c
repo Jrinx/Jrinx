@@ -8,7 +8,7 @@
 #include <stdint.h>
 
 #define KALLOC_MIN_SIZE (sizeof(long) * 4)
-#define KALLOC_MAX_SIZE (PGSIZE << 11)
+#define KALLOC_MAX_SIZE (PGSIZE << 3)
 
 enum buddy_block_state_t {
   FREE = 0,
