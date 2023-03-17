@@ -57,13 +57,14 @@ done
 
 source "${0%/*}"/bash/utils.bash
 
+git_submodules="$(git config --file .gitmodules --get-regexp path | awk '{print $2}')"
 all_files=$(
-  echo -e "$(git ls-files --full-name)" | \
+  git ls-files --full-name | \
   while IFS= read -r f; do \
     [[ -f "$f" ]] && echo "$f"; \
   done | \
-  grep -ve '\.md$' | \
-  grep -Fxv "$(grep '^\s*\[submodule ' .gitmodules | cut -d '"' -f2)"
+  grep -vE '\.(md|logo)$' | \
+  grep -Fxv "$git_submodules"
 )
 
 function check-ln() {
