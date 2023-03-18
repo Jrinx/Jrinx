@@ -31,6 +31,9 @@ EMU_CPUS 	:= $(CPUS)
 EMU_RAM_SIZE	:= 1G
 EMU_ARGS	:= $(ARGS) $(shell if [ -n "$(SYSCONF)" ]; then ./scripts/sysconf $(SYSCONF); fi)
 EMU_OPTS	:= -M $(EMU_MACH) -m $(EMU_RAM_SIZE) -nographic -smp $(EMU_CPUS) -no-reboot
+ifneq ($(DTB),)
+EMU_OPTS	+= -dtb $(DTB)
+endif
 
 MODULES		:= kern lib
 USER_MODULES	:= user
@@ -125,9 +128,6 @@ mkimage: objcopy
 		-n Jrinx -d $(JRINX).bin $(JRINX).uImage
 
 run: EMU_OPTS			+= -kernel $(JRINX) -bios $(OPENSBI_FW_JUMP) -append '$(EMU_ARGS)'
-ifneq ($(DTB),)
-	EMU_OPTS		+= -dtb $(DTB)
-endif
 run: $(OPENSBI_FW_JUMP)
 	@$(EMU) $(EMU_OPTS)
 
