@@ -6,7 +6,7 @@ COLOR		?= y
 DTB		?=
 ARGS		?=
 SYSCONF		?=
-BOARD		?= virt  # OR sifive_u
+BOARD		?= virt
 CROSS_COMPILE	?= riscv64-unknown-linux-gnu-
 
 JRINX_LOGO	:= jrinx.logo
@@ -122,7 +122,7 @@ objcopy:
 
 mkimage: objcopy
 	mkimage -A riscv -O linux -C none -a 0x80200000 -e 0x80200000 \
-		-d $(JRINX).bin $(JRINX).uImage
+		-n Jrinx -d $(JRINX).bin $(JRINX).uImage
 
 run: EMU_OPTS			+= -kernel $(JRINX) -bios $(OPENSBI_FW_JUMP) -append '$(EMU_ARGS)'
 ifneq ($(DTB),)
