@@ -26,6 +26,13 @@ static void asid_test(void) {
   assert(asid_free(asid_allocated_max / 2) == KER_SUCCESS);
   assert(asid_alloc(&asid) == KER_SUCCESS);
   assert(asid == asid_allocated_max / 2);
+
+  info("test generation\n");
+  assert(asid_alloc(&asid) != KER_SUCCESS);
+  uint64_t old_generation = asid_get_generation();
+  asid_inc_generation();
+  assert(old_generation + 1 == asid_get_generation());
+  assert(asid_alloc(&asid) == KER_SUCCESS);
 }
 
 static struct kern_test asid_testcase = {
