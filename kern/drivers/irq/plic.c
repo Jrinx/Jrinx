@@ -140,7 +140,8 @@ static long plic_probe(const struct dev_node *node) {
   }
   if (strcmp(boot_dt_model, "riscv-virtio,qemu") == 0) {
     external_int_ctx = SYSCORE * 2 + 1;
-  } else if (strcmp(boot_dt_model, "SiFive HiFive Unleashed A00") == 0) {
+  } else if (strcmp(boot_dt_model, "SiFive HiFive Unleashed A00") == 0 ||
+             strcmp(boot_dt_model, "SiFive HiFive Unmatched A00") == 0) {
     external_int_ctx = SYSCORE * 2;
   }
 
