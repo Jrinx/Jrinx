@@ -70,7 +70,13 @@ int serial_getc(uint8_t *c) {
 }
 
 int serial_putc(uint8_t c) {
-  return cb_invoke(selected_output_dev->sr_putc_callback)(c);
+  if (!cb_invoke(selected_output_dev->sr_putc_callback)(c)) {
+    return 0;
+  }
+  if (c == '\n') {
+    serial_blocked_putc('\r');
+  }
+  return 1;
 }
 
 uint8_t serial_blocked_getc(void) {
