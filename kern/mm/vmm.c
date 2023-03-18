@@ -164,7 +164,7 @@ void vmm_setup_mmio(void) {
     info("set up %s mmio at %pM (size: %pB)\n", mmio->mm_name, &mem_range, &mmio->mm_size);
     vaddr_t va = {.val = *mmio->mm_addr + MMIOBASE};
     paddr_t pa = {.val = *mmio->mm_addr};
-    perm_t perm = {.bits = {.r = 1, .w = 1, .g = 1}};
+    perm_t perm = {.bits = {.a = 1, .d = 1, .r = 1, .w = 1, .g = 1}};
     for (; pa.val < *mmio->mm_addr + mmio->mm_size; pa.val += PGSIZE, va.val += PGSIZE) {
       panic_e(pt_map(kern_pgdir, va, pa, perm));
     }
@@ -178,8 +178,9 @@ void vmm_setup_kern(void) {
   paddr_t pa = {.val = KERNBASE};
   size_t text_end = align_up((size_t)kern_text_end, PGSIZE);
 
+  info("set up kernel vmm at %016lx\n", va.val);
   for (; va.val < text_end; va.val += PGSIZE, pa.val += PGSIZE) {
-    perm_t perm = {.bits = {.r = 1, .x = 1, .w = 1, .g = 1}};
+    perm_t perm = {.bits = {.a = 1, .d = 1, .r = 1, .x = 1, .w = 1, .g = 1}};
     panic_e(pt_map(kern_pgdir, va, pa, perm));
   }
 
@@ -190,7 +191,7 @@ void vmm_setup_kern(void) {
     panic_e(mem_get_addr(i, &mem_addr));
     panic_e(mem_get_size(i, &mem_size));
     vaddr_t va;
-    perm_t perm = {.bits = {.r = 1, .w = 1, .g = 1}};
+    perm_t perm = {.bits = {.a = 1, .d = 1, .r = 1, .w = 1, .g = 1}};
     if (text_end >= mem_addr && text_end < mem_addr + mem_size) {
       va.val = text_end;
     } else {
@@ -202,8 +203,10 @@ void vmm_setup_kern(void) {
     }
   }
 
+  info("init physical memory management\n");
   pmm_init();
 
+  info("switch to physical frame allocator\n");
   pt_frame_alloc = pt_phy_frame_alloc;
   pt_frame_ref_inc = pt_phy_frame_ref_inc;
   pt_frame_ref_dec = pt_phy_frame_ref_dec;
