@@ -161,15 +161,19 @@ class Rules:
                         fatal(f'detecting unexpected pattern \
 "{self.__unexpected_patterns}"', file=sys.stdout)
                     raise RulesNotSatisified('unexpected pattern detected')
-        retire, pick = self.__expected_patterns(line)
-        if pick:
-            if self.__verbose:
-                info(f'picking expected string {pick}')
-            if retire:
+        if not self.__done:
+            retire, pick = self.__expected_patterns(line)
+            if pick:
                 if self.__verbose:
-                    info(f'detecting expected pattern "{self.__expected_patterns}"')
-        self.__done = retire
-        return retire
+                    info(f'picking expected string {pick}')
+                if retire:
+                    if self.__verbose:
+                        info(f'detecting expected pattern "{self.__expected_patterns}"')
+            self.__done = retire
+            if self.__done:
+                info('rules satisfied')
+                return True
+        return False
 
     def __enter__(self, *_):
         return self
