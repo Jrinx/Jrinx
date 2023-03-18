@@ -1,3 +1,4 @@
+#include <kern/drivers/aliases.h>
 #include <kern/drivers/device.h>
 #include <kern/drivers/serialport.h>
 #include <kern/lib/debug.h>
@@ -49,32 +50,30 @@ const char *chosen_get_bootargs(void) {
   return chosen_bootargs;
 }
 
-const char *chosen_get_stdout_dev_name(void) {
-  if (chosen_stdout == NULL) {
+static const char *chosen_get_dev_name(const char *path) {
+  if (path == NULL) {
     return NULL;
+  }
+  const char *realname = aliases_get(path);
+  if (realname != NULL) {
+    path = realname;
   }
   size_t i;
   size_t j;
-  for (i = 0, j = 0; chosen_stdout[i]; i++) {
-    if (chosen_stdout[i] == '/' && chosen_stdout[i + 1]) {
+  for (i = 0, j = 0; path[i]; i++) {
+    if (path[i] == '/' && path[i + 1]) {
       j = i;
     }
   }
-  return &chosen_stdout[j + 1];
+  return &path[j + 1];
+}
+
+const char *chosen_get_stdout_dev_name(void) {
+  return chosen_get_dev_name(chosen_stdout);
 }
 
 const char *chosen_get_stdin_dev_name(void) {
-  if (chosen_stdin == NULL) {
-    return NULL;
-  }
-  size_t i;
-  size_t j;
-  for (i = 0, j = 0; chosen_stdin[i]; i++) {
-    if (chosen_stdin[i] == '/' && chosen_stdin[i + 1]) {
-      j = i;
-    }
-  }
-  return &chosen_stdin[j + 1];
+  return chosen_get_dev_name(chosen_stdin);
 }
 
 long chosen_select_dev(void) {

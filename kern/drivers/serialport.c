@@ -39,8 +39,12 @@ void serial_register_dev(char *name, putc_callback_t putc_callback,
   dev->sr_putc_callback = putc_callback;
   dev->sr_getc_callback = getc_callback;
   hashmap_put(&serial_map, &dev->sr_link);
-  selected_output_dev = dev;
-  selected_input_dev = dev;
+  if (selected_input_dev == NULL) {
+    selected_input_dev = dev;
+  }
+  if (selected_output_dev == NULL) {
+    selected_output_dev = dev;
+  }
 }
 
 int serial_select_out_dev(const char *name) {
