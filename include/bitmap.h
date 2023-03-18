@@ -19,7 +19,7 @@ static inline void bitmap_clr_bit(unsigned long *bitmap, unsigned long i) {
 }
 
 static inline unsigned bitmap_get_bit(unsigned long *bitmap, unsigned long i) {
-  return (bitmap[BIT_WORD(i)] >> (i % (sizeof(unsigned long) * 8))) & 1UL;
+  return !!(bitmap[BIT_WORD(i)] & BIT_MASK(i));
 }
 
 static inline unsigned bitmap_find_first_zero_bit(unsigned long *bitmap, size_t nr) {
