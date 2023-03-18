@@ -6,6 +6,7 @@
 #include <kern/lib/sync.h>
 #include <kern/lock/lock.h>
 #include <kern/lock/spinlock.h>
+#include <kern/mm/asid.h>
 #include <kern/mm/kalloc.h>
 #include <kern/mm/pmm.h>
 #include <kern/mm/vmm.h>
@@ -214,6 +215,7 @@ void vmm_start(void) {
   csrw_satp(satp_reg.val);
   sfence_vma;
   info("enable virtual memory (satp: %016lx)\n", satp_reg.val);
+  asid_init();
 }
 
 void vmm_summary(void) {

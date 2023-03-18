@@ -147,7 +147,7 @@ typedef union {
     unsigned long ppn : 44;
     unsigned long asid : 16;
     enum rv64_satp_mode_t mode : 4;
-  } bits;
+  } __attribute__((packed)) bits;
 } rv64_satp;
 
 R_CSR_DEF(satp)

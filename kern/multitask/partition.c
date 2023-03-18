@@ -63,7 +63,8 @@ long part_alloc(struct part **part, const char *name, unsigned long memory_req) 
   tmp->pa_ustasktop = USTKLIMIT;
   tmp->pa_id = part_id_alloc();
   tmp->pa_cpus_asid = kalloc(sizeof(unsigned long) * cpus_get_count());
-  memset(tmp->pa_cpus_asid, -1, sizeof(unsigned long) * cpus_get_count());
+  tmp->pa_cpus_asid_generation = kalloc(sizeof(unsigned long) * cpus_get_count());
+  memset(tmp->pa_cpus_asid_generation, 0, sizeof(unsigned long) * cpus_get_count());
   tmp->pa_pgdir = (pte_t *)pa;
   *part = tmp;
   panic_e(lk_acquire(&spinlock_of(part_id_map)));

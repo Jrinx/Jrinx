@@ -11,6 +11,7 @@ struct part {
   const char *pa_name;
   pte_t *pa_pgdir;
   unsigned long *pa_cpus_asid;
+  uint64_t *pa_cpus_asid_generation;
   unsigned long pa_mem_req;
   unsigned long pa_mem_rem;
   unsigned long pa_ustasktop;

@@ -78,7 +78,7 @@ void __attribute__((noreturn)) kernel_init(unsigned long hartid, void *dtb_addr)
     panic_e(chosen_select_dev());
     panic_e(args_evaluate(chosen_get_bootargs()));
 
-    asid_init();
+    asid_array_init();
     vmm_setup_mmio();
     vmm_setup_kern();
     vmm_start();

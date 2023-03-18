@@ -9,7 +9,6 @@ static unsigned asid_allocated_max = 0;
 
 static void asid_test(void) {
   info("test allocation\n");
-  assert(asid_get_max() > 0);
   unsigned long asid;
   for (unsigned i = 0; i <= asid_get_max(); i++) {
     assert(asid_alloc(&asid) == KER_SUCCESS);

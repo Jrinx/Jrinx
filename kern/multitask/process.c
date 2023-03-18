@@ -110,8 +110,11 @@ void proc_run(struct proc *proc) {
   if (part == NULL) {
     fatal("unknown partition id: %lu\n", proc->pr_part_id);
   }
-  if (part->pa_cpus_asid[hrt_get_id()] > asid_get_max()) {
-    panic_e(asid_alloc(&part->pa_cpus_asid[hrt_get_id()])); // TODO: asid generation
+  if (part->pa_cpus_asid_generation[hrt_get_id()] < asid_get_generation()) {
+    while (asid_alloc(&part->pa_cpus_asid[hrt_get_id()]) != KER_SUCCESS) {
+      asid_inc_generation();
+    }
+    part->pa_cpus_asid_generation[hrt_get_id()] = asid_get_generation();
   }
   rv64_satp proc_satp = {.bits = {.mode = SV39,
                                   .asid = part->pa_cpus_asid[hrt_get_id()],

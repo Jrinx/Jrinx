@@ -3,7 +3,7 @@
 
 #define fence(x, y) asm volatile("fence " #x ", " #y : : : "memory")
 #define fence_i asm volatile("fence.i" : : : "memory")
-#define sfence_vma asm volatile("sfence.vma" : : : "memory")
+#define sfence_vma asm volatile("sfence.vma x0, x0" : : : "memory")
 
 __attribute__((always_inline)) static inline void sfence_vma_va_asid(unsigned long va,
                                                                      unsigned long asid) {
