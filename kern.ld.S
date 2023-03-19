@@ -12,12 +12,12 @@ SECTIONS {
   PROVIDE(kern_text_end = .);
   . = ALIGN(PGSIZE);
   .rodata : {
-    *(.rodata .rodata.*)
+    *(.rodata .rodata.* .srodata .srodata.*)
   }
 
   . = ALIGN(PGSIZE);
   .data : {
-    *(.data .data.*)
+    *(.data .data.* .sdata .sdata.*)
     PROVIDE(kern_dev_init_begin = .);
     *(.ksec.dev_init_highest.*)
     *(.ksec.dev_init_high.*)
