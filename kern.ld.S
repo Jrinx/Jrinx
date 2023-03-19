@@ -7,17 +7,17 @@ SECTIONS {
   . = ALIGN(PGSIZE);
   .text : {
     *(.boot)
-    *(.text .text.*)
+    *(.text .text*)
   }
   PROVIDE(kern_text_end = .);
   . = ALIGN(PGSIZE);
   .rodata : {
-    *(.rodata .rodata.* .srodata .srodata.*)
+    *(.rodata .rodata* .srodata .srodata*)
   }
 
   . = ALIGN(PGSIZE);
   .data : {
-    *(.data .data.* .sdata .sdata.*)
+    *(.data .data* .sdata .sdata*)
     PROVIDE(kern_dev_init_begin = .);
     *(.ksec.dev_init_highest.*)
     *(.ksec.dev_init_high.*)
@@ -38,7 +38,7 @@ SECTIONS {
 
   . = ALIGN(PGSIZE);
   .bss : {
-    *(.bss .bss.* .sbss .sbss.*)
+    *(.bss .bss* .sbss .sbss*)
   }
 
   . = ALIGN(PGSIZE);
