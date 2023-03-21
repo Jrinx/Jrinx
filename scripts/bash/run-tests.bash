@@ -3,6 +3,7 @@
 set -e
 
 [ ! -v COMPILE_MODE ] && COMPILE_MODE=debug
+[ ! -v BOARD ] && BOARD=virt
 
 test_name=''
 verbose='n'
@@ -31,7 +32,7 @@ done
 
 source "${0%/*}"/bash/utils.bash
 
-prefix="[ $COMPILE_MODE mode ]"
+prefix="[ $COMPILE_MODE, $BOARD ]"
 
 r=0
 
@@ -61,17 +62,17 @@ else
 fi
 
 for test_case in $test_list; do
-  bgreen "$prefix run $test_case"
+  bgreen "$prefix run    $test_case"
   conf_file="tests-conf/$test_case.json"
   if [ "$verbose" = 'y' ]; then
     scripts/judge "$conf_file" || r=$?
   else
-    scripts/judge "$conf_file" -n || r=$?
+    scripts/judge "$conf_file" -sn 2> /dev/null || r=$?
   fi
   if [ "$r" -ne 0 ]; then
-    bfatal "$prefix judge failed on $test_case"
+    bfatal "$prefix failed $test_case"
     exit $r
   else
-    bgreen "$prefix judge passed on $test_case"
+    bgreen "$prefix passed $test_case"
   fi
 done

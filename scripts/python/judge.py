@@ -171,7 +171,6 @@ class Rules:
                         info(f'detecting expected pattern "{self.__expected_patterns}"')
             self.__done = retire
             if self.__done:
-                info('rules satisfied')
                 return True
         return False
 
