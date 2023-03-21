@@ -1,3 +1,4 @@
+#include <lib/printfmt.h>
 #include <stddef.h>
 #include <stdint.h>
 
@@ -107,4 +108,21 @@ static long strtol(const char *str) {
 
 int atoi(const char *str) {
   return (int)strtol(str);
+}
+
+static void _sprintf_output(void *data, const char *buf, size_t len) {
+  char **ptr = data;
+  memcpy(*ptr, buf, len);
+  *ptr += len;
+}
+
+int sprintf(char *buf, const char *restrict fmt, ...) {
+  char *ptr = buf;
+  cb_decl(fmt_callback_t, sprintf_cb, _sprintf_output, &ptr);
+  va_list ap;
+  va_start(ap, fmt);
+  vprintfmt(sprintf_cb, fmt, ap);
+  va_end(ap);
+  *ptr = '\0';
+  return ptr - buf;
 }

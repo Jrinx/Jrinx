@@ -35,9 +35,11 @@ ifneq ($(DTB),)
 EMU_OPTS	+= -dtb $(DTB)
 endif
 
-MODULES		:= kern lib
+MODULES		:= kern
 USER_MODULES	:= user
-OBJECTS		:= $(addsuffix /**/*.o, $(MODULES)) $(addsuffix /**/*.x, $(USER_MODULES))
+LIB_MODULES	:= lib
+OBJECTS		:= $(addsuffix /**/*.o, $(MODULES) $(LIB_MODULES)) \
+		$(addsuffix /**/*.x, $(USER_MODULES))
 LDSCRIPT	:= kern.ld
 TARGET_DIR	:= target
 JRINX		:= $(TARGET_DIR)/jrinx
@@ -49,6 +51,7 @@ OPENSBI_FW_JUMP	:= $(OPENSBI_FW_PATH)/fw_jump.elf
 DTC		:= dtc
 
 export CROSS_COMPILE CFLAGS LDFLAGS
+export LIB_MODULES
 export CHECK_PREPROC ?= n
 export BUILD_ROOT_DIR ?= $(abspath ./)
 export MAKEFLAGS := -j$(shell nproc) -s $(MAKEFLAGS)
@@ -57,7 +60,7 @@ export MAKEFLAGS := -j$(shell nproc) -s $(MAKEFLAGS)
 .PHONY: all debug release release-debug build sbi-fw clean clean-dt clean-opensbi clean-all \
 	run dbg gdb gdb-sbi \
 	preprocess objdump objcopy mkimage dumpdts \
-	$(JRINX) $(MODULES) $(USER_MODULES) \
+	$(JRINX) $(MODULES) $(USER_MODULES) $(LIB_MODULES) \
 	check-style fix-style register-git-hooks cloc
 
 all: debug
@@ -80,7 +83,10 @@ $(JRINX): $(MODULES) $(USER_MODULES) $(LDSCRIPT) $(TARGET_DIR)
 	shopt -s nullglob globstar
 	$(LD) $(LDFLAGS) -T $(LDSCRIPT) -o $(JRINX) $(OBJECTS)
 
-$(MODULES) $(USER_MODULES):
+$(MODULES): $(LIB_MODULES)
+$(USER_MODULES): $(LIB_MODULES)
+
+$(MODULES) $(USER_MODULES) $(LIB_MODULES):
 	$(MAKE) -C $@ $(shell \
 	if [ ! -f $@/Makefile ]; then \
 		echo '-f $(BUILD_ROOT_DIR)/mk/auto-make.mk'; \

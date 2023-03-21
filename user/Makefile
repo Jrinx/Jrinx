@@ -1,4 +1,4 @@
-USER_LIBS	:= lib
+USER_LIBS	:= os sys lib
 USER_BARE_APPS	:= bare
 USER_APPS	:= general
 

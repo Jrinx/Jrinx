@@ -1,3 +1,4 @@
+#include <stddef.h>
 #include <sysno.h>
 
 static inline unsigned long syscall(unsigned long sysno, unsigned long arg0, unsigned long arg1,
@@ -18,12 +19,16 @@ static inline unsigned long syscall(unsigned long sysno, unsigned long arg0, uns
   return a0;
 }
 
-long sys_write_cons(int ch) {
-  return syscall(SYS_WRITE_CONS, ch, 0, 0, 0, 0, 0, 0);
+void sys_cons_write_char(int ch) {
+  syscall(SYS_CONS_WRITE_CHAR, ch, 0, 0, 0, 0, 0, 0);
 }
 
-int sys_read_cons(void) {
-  return syscall(SYS_READ_CONS, 0, 0, 0, 0, 0, 0, 0);
+int sys_cons_read_char(void) {
+  return syscall(SYS_CONS_READ_CHAR, 0, 0, 0, 0, 0, 0, 0);
+}
+
+void sys_cons_write_buf(const char *buf, size_t len) {
+  syscall(SYS_CONS_WRITE_BUF, (unsigned long)buf, len, 0, 0, 0, 0, 0);
 }
 
 void sys_yield(void) {

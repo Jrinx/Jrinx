@@ -5,25 +5,34 @@
 #include <kern/traps/traps.h>
 #include <sysno.h>
 
-long do_write_cons(int ch) {
+void do_cons_write_char(int ch) {
   serial_blocked_putc(ch);
-  return E_NOERR;
 }
 
-long do_read_cons(void) {
+int do_cons_read_char(void) {
   return serial_blocked_getc();
 }
 
+void do_cons_write_buf(const char *buf, size_t len) {
+  for (size_t i = 0; i < len; i++) {
+    serial_blocked_putc(buf[i]);
+  }
+}
+
 void do_syscall(struct context *context) {
+  // TODO: check pointer from user space
   context->ctx_sepc += sizeof(long);
   unsigned long sysno = context->ctx_regs.names.a7;
-  long ret;
+  long ret = E_NOERR;
   switch (sysno) {
-  case SYS_WRITE_CONS:
-    ret = do_write_cons(context->ctx_regs.names.a0);
+  case SYS_CONS_WRITE_CHAR:
+    do_cons_write_char(context->ctx_regs.names.a0);
     break;
-  case SYS_READ_CONS:
-    ret = do_read_cons();
+  case SYS_CONS_READ_CHAR:
+    ret = do_cons_read_char();
+    break;
+  case SYS_CONS_WRITE_BUF:
+    do_cons_write_buf((char *)context->ctx_regs.names.a0, context->ctx_regs.names.a1);
     break;
   case SYS_YIELD:
     sched();

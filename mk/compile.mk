@@ -2,6 +2,7 @@ include $(BUILD_ROOT_DIR)/mk/silent.mk
 
 INCLUDES	+= -I$(BUILD_ROOT_DIR)/include
 
+.ONESHELL:
 %.i: %.c
 	$(CPP) $(CFLAGS) $(INCLUDES) -E -P $< > $@
 
@@ -14,8 +15,11 @@ INCLUDES	+= -I$(BUILD_ROOT_DIR)/include
 %.o: %.S
 	$(CC) $(CFLAGS) $(INCLUDES) -c -o $@ $<
 
+%.b: SHELL := $(shell which bash)
 %.b: %.o user.ld
-	$(LD) $(LDFLAGS) -T user.ld -o $@ $< $(USER_LINK_LIBS)
+	shopt -s nullglob globstar
+	$(LD) $(LDFLAGS) -T user.ld -o $@ $< $(USER_LINK_LIBS) \
+		$(addsuffix /**/*.o, $(addprefix $(BUILD_ROOT_DIR)/, $(LIB_MODULES)))
 
 %.b.c: %.b
 ifneq ($(BINTOC_PREFIX),)
