@@ -11,8 +11,8 @@
 
 struct goldfish {
   char *gf_name;
-  uint64_t gf_addr;
-  uint64_t gf_size;
+  uintptr_t gf_addr;
+  uintmax_t gf_size;
 };
 
 static long goldfish_read_time(void *ctx, uint64_t *re) {

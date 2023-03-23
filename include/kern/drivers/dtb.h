@@ -21,8 +21,8 @@ struct fdt_header {
 #define DTB_COMPAT_VER 16
 
 struct fdt_reserve_entry {
-  uint64_t e_addr;
-  uint64_t e_size;
+  uintptr_t e_addr;
+  uintmax_t e_size;
 };
 
 #define FDT_BEGIN_NODE 0x00000001

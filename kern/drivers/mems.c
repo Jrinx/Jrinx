@@ -6,8 +6,8 @@
 #include <lib/string.h>
 
 static size_t mem_num;
-static uint64_t *mem_addr;
-static uint64_t *mem_size;
+static uintptr_t *mem_addr;
+static uintmax_t *mem_size;
 
 static int mem_pred(const struct dev_node *node) {
   struct dev_node_prop *prop = dt_node_prop_extract(node, "device_type");
@@ -25,8 +25,8 @@ static long mem_probe(const struct dev_node *node) {
     return -KER_DTB_ER;
   }
   mem_num = prop->pr_len / (sizeof(uint64_t) * 2);
-  mem_addr = kalloc(sizeof(uint64_t) * mem_num);
-  mem_size = kalloc(sizeof(uint64_t) * mem_num);
+  mem_addr = kalloc(sizeof(uintptr_t) * mem_num);
+  mem_size = kalloc(sizeof(uintmax_t) * mem_num);
   uint64_t *reg_table = (uint64_t *)prop->pr_values;
   for (size_t i = 0; i < mem_num; i++) {
     mem_addr[i] = from_be(reg_table[i * 2]);
@@ -47,7 +47,7 @@ size_t mem_get_num(void) {
   return mem_num;
 }
 
-long mem_get_addr(unsigned i, uint64_t *addr) {
+long mem_get_addr(unsigned i, uintptr_t *addr) {
   if (i >= mem_num) {
     return -KER_MEM_ER;
   }
@@ -55,7 +55,7 @@ long mem_get_addr(unsigned i, uint64_t *addr) {
   return KER_SUCCESS;
 }
 
-long mem_get_size(unsigned i, uint64_t *size) {
+long mem_get_size(unsigned i, uintmax_t *size) {
   if (i >= mem_num) {
     return -KER_MEM_ER;
   }

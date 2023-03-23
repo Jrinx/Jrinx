@@ -13,8 +13,8 @@
 
 struct plic {
   char *pl_name;
-  unsigned long pl_addr;
-  unsigned long pl_size;
+  uintptr_t pl_addr;
+  uintmax_t pl_size;
   trap_callback_t pl_int_map[PLIC_SOURCE_MAX + 1];
   struct lock spinlock_of(pl);
 };
@@ -126,8 +126,8 @@ static long plic_probe(const struct dev_node *node) {
   if (prop == NULL) {
     return -KER_DTB_ER;
   }
-  unsigned long addr = from_be(*((uint64_t *)prop->pr_values));
-  unsigned long size = from_be(*((uint64_t *)prop->pr_values + 1));
+  uint64_t addr = from_be(*((uint64_t *)prop->pr_values));
+  uint64_t size = from_be(*((uint64_t *)prop->pr_values + 1));
 
   prop = dt_node_prop_extract(node, "phandle");
   if (prop == NULL) {

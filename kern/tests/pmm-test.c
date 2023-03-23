@@ -7,8 +7,8 @@ static void pmm_test(void) {
   struct phy_frame *frame1;
   struct phy_frame *frame2;
   struct phy_frame *tmp_frame;
-  unsigned long addr1;
-  unsigned long addr2;
+  uintptr_t addr1;
+  uintptr_t addr2;
 
   info("test allocation\n");
   assert(phy_frame_alloc(&frame1) == KER_SUCCESS);

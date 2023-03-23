@@ -11,8 +11,8 @@
 
 struct sifiveuart0 {
   char *su_name;
-  unsigned long su_addr;
-  unsigned long su_size;
+  uintptr_t su_addr;
+  uintmax_t su_size;
 };
 
 static inline void sifiveuart0_write(struct sifiveuart0 *uart, unsigned long addr,
@@ -69,8 +69,8 @@ static long sifiveuart0_probe(const struct dev_node *node) {
   if (prop == NULL) {
     return -KER_DTB_ER;
   }
-  unsigned long addr = from_be(*((uint64_t *)prop->pr_values));
-  unsigned long size = from_be(*((uint64_t *)prop->pr_values + 1));
+  uint64_t addr = from_be(*((uint64_t *)prop->pr_values));
+  uint64_t size = from_be(*((uint64_t *)prop->pr_values + 1));
 
   prop = dt_node_prop_extract(node, "interrupt-parent");
   if (prop == NULL) {

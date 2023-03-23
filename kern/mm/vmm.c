@@ -186,8 +186,8 @@ void vmm_setup_kern(void) {
 
   size_t mem_num = mem_get_num();
   for (size_t i = 0; i < mem_num; i++) {
-    uint64_t mem_addr;
-    uint64_t mem_size;
+    uintptr_t mem_addr;
+    uintmax_t mem_size;
     panic_e(mem_get_addr(i, &mem_addr));
     panic_e(mem_get_size(i, &mem_size));
     vaddr_t va;

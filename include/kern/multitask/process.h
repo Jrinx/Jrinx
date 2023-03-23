@@ -9,8 +9,8 @@
 
 struct proc {
   struct trapframe pr_trapframe;
-  uint64_t pr_id;
-  uint64_t pr_part_id;
+  uintmax_t pr_id;
+  uintmax_t pr_part_id;
   const char *pr_name;
   unsigned long pr_ustacktop;
   size_t pr_ustacksize;

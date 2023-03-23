@@ -7,7 +7,7 @@
 #include <stdint.h>
 
 struct part {
-  uint64_t pa_id;
+  uintmax_t pa_id;
   const char *pa_name;
   pte_t *pa_pgdir;
   unsigned long *pa_cpus_asid;
@@ -35,7 +35,7 @@ struct prog_def_t {
 #define link_prog(name)                                                                        \
   struct prog_def_t *name##_prog __attribute__((section(".ksec.prog_def." #name))) = &name
 
-struct part *part_from_id(uint64_t id);
+struct part *part_from_id(uintmax_t id);
 long part_alloc(struct part **part, const char *name, unsigned long memory_req)
     __attribute__((warn_unused_result));
 long part_free(struct part *part) __attribute__((warn_unused_result));

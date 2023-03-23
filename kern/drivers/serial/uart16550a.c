@@ -12,8 +12,8 @@
 
 struct uart16550a {
   char *ur_name;
-  unsigned long ur_addr;
-  unsigned long ur_size;
+  uintptr_t ur_addr;
+  uintmax_t ur_size;
   uint32_t ur_shift;
 };
 
@@ -70,8 +70,8 @@ static long uart16550a_probe(const struct dev_node *node) {
   if (prop == NULL) {
     return -KER_DTB_ER;
   }
-  unsigned long addr = from_be(*((uint64_t *)prop->pr_values));
-  unsigned long size = from_be(*((uint64_t *)prop->pr_values + 1));
+  uint64_t addr = from_be(*((uint64_t *)prop->pr_values));
+  uint64_t size = from_be(*((uint64_t *)prop->pr_values + 1));
 
   uint32_t shift = 0;
   prop = dt_node_prop_extract(node, "reg-shift");

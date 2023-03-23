@@ -39,8 +39,8 @@ static size_t *pf_array_len;
 static long __attribute__((warn_unused_result)) pa2sel(unsigned long addr, unsigned long *sel) {
   size_t mem_num = mem_get_num();
   for (size_t i = 0; i < mem_num; i++) {
-    uint64_t mem_addr;
-    uint64_t mem_size;
+    uintptr_t mem_addr;
+    uintmax_t mem_size;
     catch_e(mem_get_addr(i, &mem_addr));
     catch_e(mem_get_size(i, &mem_size));
     if (addr >= mem_addr && addr < mem_addr + mem_size) {
@@ -70,7 +70,7 @@ void pmm_init(void) {
   pf_array_len = kalloc(sizeof(size_t) * mem_num);
   for (size_t i = 0; i < mem_num; i++) {
     list_init(&pf_free_list[i]);
-    uint64_t mem_size;
+    uintmax_t mem_size;
     panic_e(mem_get_size(i, &mem_size));
     pf_array_len[i] = mem_size / PGSIZE;
     pf_array[i] = palloc(sizeof(struct phy_frame) * pf_array_len[i], PGSIZE);
@@ -92,21 +92,21 @@ void pmm_init(void) {
   }
 }
 
-long pa2frame(unsigned long addr, struct phy_frame **frame) {
+long pa2frame(uintptr_t addr, struct phy_frame **frame) {
   unsigned long sel;
   catch_e(pa2sel(addr, &sel));
-  uint64_t mem_addr;
+  uintptr_t mem_addr;
   catch_e(mem_get_addr(sel, &mem_addr));
   unsigned long off = addr - mem_addr;
   *frame = &pf_array[sel][off / PGSIZE];
   return KER_SUCCESS;
 }
 
-long frame2pa(struct phy_frame *frame, unsigned long *addr) {
+long frame2pa(struct phy_frame *frame, uintptr_t *addr) {
   unsigned long sel;
   catch_e(frame2sel(frame, &sel));
   unsigned long off = (frame - pf_array[sel]) * PGSIZE;
-  uint64_t mem_addr;
+  uintptr_t mem_addr;
   catch_e(mem_get_addr(sel, &mem_addr));
   *addr = mem_addr + off;
   return KER_SUCCESS;

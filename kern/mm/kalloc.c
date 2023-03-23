@@ -30,7 +30,7 @@ static struct buddy_block *get_buddy(struct buddy_block *block) {
   if (block->size == KALLOC_MAX_SIZE) {
     return NULL;
   }
-  unsigned long addr = (unsigned long)block;
+  uintptr_t addr = (uintptr_t)block;
   if (addr % (block->size * 2) == 0) {
     return (struct buddy_block *)(addr + block->size);
   } else {
@@ -65,7 +65,7 @@ void *kalloc(size_t size) {
   if (size < KALLOC_MIN_SIZE) {
     size = KALLOC_MIN_SIZE;
   }
-  size = align_up(size, sizeof(uint64_t));
+  size = align_up(size, sizeof(uintmax_t));
   size += sizeof(struct buddy_block);
   if (size > KALLOC_MAX_SIZE) {
     return NULL;
