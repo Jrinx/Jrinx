@@ -54,7 +54,8 @@ export CROSS_COMPILE CFLAGS LDFLAGS
 export LIB_MODULES
 export CHECK_PREPROC ?= n
 export BUILD_ROOT_DIR ?= $(abspath ./)
-export MAKEFLAGS := -j$(shell nproc) -s $(MAKEFLAGS)
+
+MAKEFLAGS	:= -j$(shell nproc) -s $(MAKEFLAGS)
 
 .ONESHELL:
 .PHONY: all debug release release-debug build sbi-fw clean clean-dt clean-opensbi clean-all \
