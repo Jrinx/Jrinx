@@ -51,6 +51,13 @@ static inline void list_insert_tail(struct list_head *head, struct linked_node *
   head->l_last = &node->next;
 }
 
+static inline void list_insert_before(struct linked_node *listnode, struct linked_node *node) {
+  node->next = listnode;
+  node->prev = listnode->prev;
+  *listnode->prev = node;
+  listnode->prev = &node->next;
+}
+
 static inline void list_remove_node(struct list_head *head, struct linked_node *node) {
   if (node->next != NULL) {
     node->next->prev = node->prev;
