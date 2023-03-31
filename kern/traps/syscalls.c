@@ -20,8 +20,8 @@ void do_cons_write_buf(const char *buf, size_t len) {
 }
 
 void do_syscall(struct context *context) {
-  // TODO: check pointer from user space
-  context->ctx_sepc += sizeof(long);
+  // TODO: check pointer and enum from user space
+  context->ctx_sepc += sizeof(uint32_t);
   unsigned long sysno = context->ctx_regs.names.a7;
   long ret = E_NOERR;
   switch (sysno) {
