@@ -1,6 +1,6 @@
 # Sifive Hifive Unmatched 板上实验
 
-主要流程：opensbi 引导进入 u-boot（u-boot 提供设备树，而不是 opensbi 提供设备树），使用 u-boot 的 tftpboot 功能从网络加载操作系统到内存。
+主要流程：u-boot-spl 引导进入 opensbi，opensbi 启动后将控制权转交给 u-boot（u-boot 提供设备树，而不是 opensbi 提供设备树），使用 u-boot 的 tftpboot 功能从网络加载操作系统到内存。
 
 ## 硬件准备
 
@@ -87,6 +87,7 @@ $ make mkimage
 => setenv serverip 10.0.0.5
 => setenv ipaddr 10.0.0.6
 => setenv netmask 255.255.255.0
+=> setenv kernel_addr_r 0x80200000
 => saveenv
 ```
 
@@ -105,7 +106,7 @@ $ sudo mkdir -p /srv/tftp
 $ sudo systemctl restart tftpd-hpa
 ```
 
-配置网线接口的 IP 地址为 `10.0.0.5`，并将操作系统镜像文件 `jrinx.uImage`、开发板设备树二进制文件 `<path to u-boot repo>/arch/riscv/dts/hifive-unmatched-a00.dtb` 放入 `/srv/tftp` 目录下。随后可用如下命令测试 tftp 服务器：
+配置网线接口的 IP 地址为 `10.0.0.5`，并将操作系统镜像文件 `jrinx.uImage` 放入 `/srv/tftp` 目录下。随后可用如下命令测试 tftp 服务器：
 
 ```console
 $ tftp
@@ -126,7 +127,7 @@ tftp> get jrinx.uImage
 然后在 u-boot 命令行中输入如下命令，以从网络加载并运行操作系统：
 
 ```console
-=> tftp 0x80200000 jrinx.uImage; tftp 0x90200000 hifive-unmatched-a00.dtb; bootm 0x80200000 - 0x90200000
+=> tftp ${kernel_addr_r} jrinx.uImage; bootm ${kernel_addr_r} - ${fdtcontroladdr}
 ```
 
 ### 系统启动命令
@@ -144,25 +145,25 @@ tftp> get jrinx.uImage
 在 u-boot 命令行中，设置 `bootcmd` 环境变量以设置 u-boot 启动命令以方便调试，如：
 
 ```console
-=> setenv bootcmd 'tftp 0x80200000 jrinx.uImage; tftp 0x90200000 hifive-unmatched-a00.dtb; bootm 0x80200000 - 0x90200000'
+=> setenv bootcmd 'tftp ${kernel_addr_r} jrinx.uImage; bootm ${kernel_addr_r} - ${fdtcontroladdr}'
 => saveenv
 ```
 
 ## 启动举例
 
-在使用：
+设置 `bootargs` 环境变量：
 
 ```console
-=> tftp 0x80200000 jrinx.uImage; tftp 0x90200000 hifive-unmatched-a00.dtb
+=> setenv bootargs '--pa-conf name=put-a-b,prog=app_put_a_b,memory=8388608,period=200,duration=100'
 ```
 
-加载内核与 dtb 到内存后，设置 `bootargs` 环境变量：
+随后用：
 
 ```console
-=> setenv bootargs '--pa-conf name=loop1,prog=bare_loop,memory=4194304;name=loop2,prog=bare_loop,memory=8388608 --debug-as-switch --debug-kalloc-used'
+=> tftp ${kernel_addr_r} jrinx.uImage; bootm ${kernel_addr_r} - ${fdtcontroladdr}
 ```
 
-随后用 `bootm 0x80200000 - 0x90200000` 启动内核。以下是完整的输出：
+启动内核。以下是完整的输出：
 
 ```plaintext
 U-Boot SPL 2022.01-00566-g4e81f3be34-dirty (Apr 15 2022 - 14:24:34 +0800)
@@ -192,9 +193,8 @@ Err:   serial@10010000
 Model: SiFive HiFive Unmatched A00
 Net:   eth0: ethernet@10090000
 Hit any key to stop autoboot:  0
-=> tftp 0x80200000 jrinx.uImage; tftp 0x90200000 hifive-unmatched-a00.dtb
-=> setenv bootargs '--pa-conf name=loop1,prog=bare_loop,memory=4194304;name=loop2,prog=bare_loop,memory=8388608 --debug-as-switch --debug-kalloc-used'
-=> bootm 0x80200000 - 0x90200000
+=> setenv bootargs '--pa-conf name=put-a-b,prog=app_put_a_b,memory=8388608,period=200,duration=100'
+=> tftp ${kernel_addr_r} jrinx.uImage; bootm ${kernel_addr_r} - ${fdtcontroladdr}
 ethernet@10090000: PHY present at 0
 ethernet@10090000: Starting autonegotiation...
 ethernet@10090000: Autonegotiation complete
@@ -203,39 +203,26 @@ Using ethernet@10090000 device
 TFTP from server 10.0.0.5; our IP address is 10.0.0.6
 Filename 'jrinx.uImage'.
 Load address: 0x80200000
-Loading: #################################################################
-         ######
-         168.9 KiB/s
+Loading: #########################################################
+         140.6 KiB/s
 done
-Bytes transferred = 1028160 (fb040 hex)
-ethernet@10090000: PHY present at 0
-ethernet@10090000: Starting autonegotiation...
-ethernet@10090000: Autonegotiation complete
-ethernet@10090000: link up, 1000Mbps full-duplex (lpa: 0x6800)
-Using ethernet@10090000 device
-TFTP from server 10.0.0.5; our IP address is 10.0.0.6
-Filename 'hifive-unmatched-a00.dtb'.
-Load address: 0x90200000
-Loading: ##
-         3.9 KiB/s
-done
-Bytes transferred = 22036 (5614 hex)
+Bytes transferred = 831552 (cb040 hex)
 ## Booting kernel from Legacy Image at 80200000 ...
    Image Name:   Jrinx
    Image Type:   RISC-V Linux Kernel Image (uncompressed)
-   Data Size:    1028096 Bytes = 1004 KiB
+   Data Size:    831488 Bytes = 812 KiB
    Load Address: 80200000
    Entry Point:  80200000
    Verifying Checksum ... OK
-## Flattened Device Tree blob at 90200000
-   Booting using the fdt blob at 0x90200000
+## Flattened Device Tree blob at ff7394d0
+   Booting using the fdt blob at 0xff7394d0
    Loading Kernel Image
-   Loading Device Tree to 00000000ff72f000, end 00000000ff737613 ... OK
+   Loading Device Tree to 00000000ff72d000, end 00000000ff737937 ... OK
 
 Starting kernel ...
 
 
-Jrinx OS (revision: 15948f5)
+Jrinx OS (revision: 068ef15)
 
       .                           .
   .x88888x.                      @88>
@@ -253,82 +240,64 @@ Jrinx OS (revision: 15948f5)
    "8888     8%
     `"888x:-"
 
-[ ?.??? hart#1 ] init.c:72 <kernel_init> Hello Jrinx, I am master hart!
-[ 0.040 hart#1 ] cpus.c:97 <cpus_probe> cpu@1 (master) probed (stack top: 00000000802fb000)
-[ 0.048 hart#1 ] cpus.c:93 <cpus_probe> cpu@2 (slave)  probed (stack top: 000000008030c000)
-[ 0.057 hart#1 ] cpus.c:93 <cpus_probe> cpu@3 (slave)  probed (stack top: 000000008031d000)
-[ 0.066 hart#1 ] cpus.c:93 <cpus_probe> cpu@4 (slave)  probed (stack top: 000000008032e000)
-[ 0.075 hart#1 ] mems.c:36 <mem_probe> memory@80000000 probed (consists of 1 memory):
-[ 0.083 hart#1 ] mems.c:40 <mem_probe>  memory[0] locates at [80000000, 480000000) (size: 16 GiB)
-[ 0.092 hart#1 ] plic.c:156 <plic_probe> interrupt-controller@c000000 probed (phandle: 10) to handle user external int
-[ 0.103 hart#1 ] plic.c:158 <plic_probe>        locates at [c000000, 10000000) (size: 64 MiB)
-[ 0.112 hart#1 ] plic.c:98 <plic_init> set all interrupt sources priority to MIN
-[ 0.120 hart#1 ] plic.c:105 <plic_init> disable all interrupt sources for all context (0 - 15871)
-[ 0.129 hart#1 ] plic.c:106 <plic_init> set all context priority threshold to MAX
-[ 0.144 hart#1 ] plic.c:112 <plic_init> all interrupt sources shall be handled by context 2
-[ 0.152 hart#1 ] sifiveuart0.c:100 <sifiveuart0_probe> serial@10010000 probed, interrupt 00000027 registered to intc 10
-[ 0.163 hart#1 ] sifiveuart0.c:102 <sifiveuart0_probe>  locates at [10010000, 10011000) (size: 4 KiB)
-[ 0.173 hart#1 ] sifiveuart0.c:100 <sifiveuart0_probe> serial@10011000 probed, interrupt 00000028 registered to intc 10
-[ 0.184 hart#1 ] sifiveuart0.c:102 <sifiveuart0_probe>  locates at [10011000, 10012000) (size: 4 KiB)
-[ 0.194 hart#1 ] aliases.c:43 <aliases_probe> aliases probed, props listed:
-[ 0.201 hart#1 ] aliases.c:49 <aliases_probe>   spi0: /soc/spi@10050000
-[ 0.209 hart#1 ] aliases.c:49 <aliases_probe>   serial1: /soc/serial@10011000
-[ 0.216 hart#1 ] aliases.c:49 <aliases_probe>   ethernet0: /soc/ethernet@10090000
-[ 0.224 hart#1 ] aliases.c:49 <aliases_probe>   serial0: /soc/serial@10010000
-[ 0.231 hart#1 ] chosen.c:18 <chosen_probe> chosen probed, props listed:
-[ 0.239 hart#1 ] chosen.c:24 <chosen_probe>     bootargs: --pa-conf name=loop1,prog=bare_loop,memory=4194304;name=loop2,prog=bare_loop,memory=8388608 --debug-as-switch --debug-kalloc-used
-[ 0.256 hart#1 ] chosen.c:30 <chosen_probe>     stdout-path: serial0
-[ 0.262 hart#1 ] serialport.c:56 <serial_select_out_dev> select serial@10010000 as serial output device
-[ 0.272 hart#1 ] serialport.c:67 <serial_select_in_dev> select serial@10010000 as serial input device
-[ 0.282 hart#1 ] vmm.c:164 <vmm_setup_mmio> set up serial@10011000 mmio at [3010011000, 3010012000) (size: 4 KiB)
-[ 0.293 hart#1 ] vmm.c:164 <vmm_setup_mmio> set up serial@10010000 mmio at [3010010000, 3010011000) (size: 4 KiB)
-[ 0.303 hart#1 ] vmm.c:164 <vmm_setup_mmio> set up interrupt-controller@c000000 mmio at [300c000000, 3010000000) (size: 64 MiB)
-[ 0.321 hart#1 ] vmm.c:181 <vmm_setup_kern> set up kernel vmm at 0000000080200000
-[ 1.867 hart#1 ] vmm.c:206 <vmm_setup_kern> init physical memory management
-[ 2.544 hart#1 ] vmm.c:209 <vmm_setup_kern> switch to physical frame allocator
-[ 2.551 hart#1 ] vmm.c:220 <vmm_start> enable virtual memory (satp: 80000000000802a9)
-[ 2.560 hart#1 ] asid.c:34 <asid_init> asid in cpu@1 impl probed [0, 0]
-[ 2.567 hart#1 ] vmm.c:228 <vmm_summary> os kernel reserves memory [80200000, 8a393000) (size: 161 MiB + 588 KiB)
-[ 2.577 hart#1 ] logger.c:27 <log_localize_output> switch to local serial output
-[ 2.586 hart#4 ] vmm.c:220 <vmm_start> enable virtual memory (satp: 80000000000802a9)
-[ 2.594 hart#3 ] vmm.c:220 <vmm_start> enable virtual memory (satp: 80000000000802a9)
-[ 2.602 hart#2 ] vmm.c:220 <vmm_start> enable virtual memory (satp: 80000000000802a9)
-[ 2.610 hart#4 ] asid.c:34 <asid_init> asid in cpu@4 impl probed [0, 0]
-[ 2.618 hart#3 ] asid.c:34 <asid_init> asid in cpu@3 impl probed [0, 0]
-[ 2.625 hart#4 ] init.c:94 <kernel_init> Hello Jrinx, I am slave hart!
-[ 2.632 hart#2 ] asid.c:34 <asid_init> asid in cpu@2 impl probed [0, 0]
-[ 2.639 hart#3 ] init.c:94 <kernel_init> Hello Jrinx, I am slave hart!
-[ 2.646 hart#2 ] init.c:94 <kernel_init> Hello Jrinx, I am slave hart!
-[ 2.653 hart#1 ] partition.c:181 <part_create> create partition: name='loop1',prog='bare_loop',memory=4 MiB
-[ 2.663 hart#1 ] partition.c:189 <part_create> program 'bare_loop' found at [80215a40, 80217070) (size: 5 KiB + 560 B)
-[ 2.675 hart#1 ] partition.c:194 <part_create> create main process for partition 'loop1': name='main',entrypoint=0000000000400000,stacksize=4 KiB
-[ 2.688 hart#1 ] partition.c:199 <part_create> remaining memory of partition 'loop1': 3 MiB + 1012 KiB
-[ 2.698 hart#1 ] sched.c:28 <sched_assign_proc> assign 'main' of partition 1 to cpu@1
-[ 2.706 hart#1 ] partition.c:181 <part_create> create partition: name='loop2',prog='bare_loop',memory=8 MiB
-[ 2.716 hart#1 ] partition.c:189 <part_create> program 'bare_loop' found at [80215a40, 80217070) (size: 5 KiB + 560 B)
-[ 2.728 hart#1 ] partition.c:194 <part_create> create main process for partition 'loop2': name='main',entrypoint=0000000000400000,stacksize=4 KiB
-[ 2.741 hart#1 ] partition.c:199 <part_create> remaining memory of partition 'loop2': 7 MiB + 1012 KiB
-[ 2.751 hart#1 ] sched.c:28 <sched_assign_proc> assign 'main' of partition 2 to cpu@1
-[ 2.759 hart#1 ] process.c:126 <proc_run> switch to address space of 'loop1' (asid: 0)
-[ 2.768 hart#1 ] traps.c:44 <handle_trap> kalloc used: 262 KiB + 128 B
-[ 2.778 hart#1 ] traps.c:44 <handle_trap> kalloc used: 262 KiB + 128 B
-[ 2.784 hart#1 ] process.c:126 <proc_run> switch to address space of 'loop2' (asid: 0)
-[ 2.793 hart#1 ] traps.c:44 <handle_trap> kalloc used: 262 KiB + 128 B
-[ 2.803 hart#1 ] traps.c:44 <handle_trap> kalloc used: 262 KiB + 128 B
-[ 2.809 hart#1 ] process.c:126 <proc_run> switch to address space of 'loop1' (asid: 0)
-[ 2.827 hart#1 ] traps.c:44 <handle_trap> kalloc used: 262 KiB + 128 B
-[ 2.834 hart#1 ] process.c:126 <proc_run> switch to address space of 'loop2' (asid: 0)
-[ 2.852 hart#1 ] traps.c:44 <handle_trap> kalloc used: 262 KiB + 128 B
-[ 2.858 hart#1 ] process.c:126 <proc_run> switch to address space of 'loop1' (asid: 0)
-[ 2.877 hart#1 ] traps.c:44 <handle_trap> kalloc used: 262 KiB + 128 B
-[ 2.883 hart#1 ] process.c:126 <proc_run> switch to address space of 'loop2' (asid: 0)
-[ 2.902 hart#1 ] traps.c:44 <handle_trap> kalloc used: 262 KiB + 128 B
-[ 2.908 hart#1 ] process.c:126 <proc_run> switch to address space of 'loop1' (asid: 0)
-[ 2.926 hart#1 ] traps.c:44 <handle_trap> kalloc used: 262 KiB + 128 B
-[ 2.933 hart#1 ] process.c:126 <proc_run> switch to address space of 'loop2' (asid: 0)
-[ 2.951 hart#1 ] traps.c:44 <handle_trap> kalloc used: 262 KiB + 128 B
-[ 2.957 hart#1 ] process.c:126 <proc_run> switch to address space of 'loop1' (asid: 0)
-[ 2.976 hart#1 ] traps.c:44 <handle_trap> kalloc used: 262 KiB + 128 B
-[ 2.982 hart#1 ] process.c:126 <proc_run> switch to address space of 'loop2' (asid: 0)
-[ 3.001 hart#1 ] traps.c:44 <handle_trap> kalloc used: 262 KiB + 128 B
+[ ?.??? hart#1 ] init.c:77 <kernel_init> Hello Jrinx, I am master hart!
+[ 0.043 hart#1 ] cpus.c:97 <cpus_probe> cpu@1 (master) probed (stack top: 00000000802cb000)
+[ 0.051 hart#1 ] cpus.c:93 <cpus_probe> cpu@2 (slave)  probed (stack top: 00000000802dc000)
+[ 0.060 hart#1 ] cpus.c:93 <cpus_probe> cpu@3 (slave)  probed (stack top: 00000000802ed000)
+[ 0.069 hart#1 ] cpus.c:93 <cpus_probe> cpu@4 (slave)  probed (stack top: 00000000802fe000)
+[ 0.078 hart#1 ] mems.c:36 <mem_probe> memory@80000000 probed (consists of 1 memory):
+[ 0.086 hart#1 ] mems.c:40 <mem_probe>  memory[0] locates at [80000000, 480000000) (size: 16 GiB)
+[ 0.095 hart#1 ] plic.c:156 <plic_probe> interrupt-controller@c000000 probed (phandle: 10) to handle user external int
+[ 0.106 hart#1 ] plic.c:158 <plic_probe>        locates at [c000000, 10000000) (size: 64 MiB)
+[ 0.115 hart#1 ] plic.c:98 <plic_init> set all interrupt sources priority to MIN
+[ 0.123 hart#1 ] plic.c:105 <plic_init> disable all interrupt sources for all context (0 - 15871)
+[ 0.132 hart#1 ] plic.c:106 <plic_init> set all context priority threshold to MAX
+[ 0.147 hart#1 ] plic.c:112 <plic_init> all interrupt sources shall be handled by context 2
+[ 0.155 hart#1 ] sifiveuart0.c:100 <sifiveuart0_probe> serial@10010000 probed, interrupt 00000027 registered to intc 10
+[ 0.166 hart#1 ] sifiveuart0.c:102 <sifiveuart0_probe>  locates at [10010000, 10011000) (size: 4 KiB)
+[ 0.176 hart#1 ] sifiveuart0.c:100 <sifiveuart0_probe> serial@10011000 probed, interrupt 00000028 registered to intc 10
+[ 0.187 hart#1 ] sifiveuart0.c:102 <sifiveuart0_probe>  locates at [10011000, 10012000) (size: 4 KiB)
+[ 0.197 hart#1 ] aliases.c:43 <aliases_probe> aliases probed, props listed:
+[ 0.204 hart#1 ] aliases.c:49 <aliases_probe>   spi0: /soc/spi@10050000
+[ 0.211 hart#1 ] aliases.c:49 <aliases_probe>   serial1: /soc/serial@10011000
+[ 0.219 hart#1 ] aliases.c:49 <aliases_probe>   ethernet0: /soc/ethernet@10090000
+[ 0.227 hart#1 ] aliases.c:49 <aliases_probe>   serial0: /soc/serial@10010000
+[ 0.234 hart#1 ] chosen.c:18 <chosen_probe> chosen probed, props listed:
+[ 0.242 hart#1 ] chosen.c:24 <chosen_probe>     bootargs: --pa-conf name=put-a-b,prog=app_put_a_b,memory=8388608,period=200,duration=100
+[ 0.254 hart#1 ] chosen.c:30 <chosen_probe>     stdout-path: serial0
+[ 0.261 hart#1 ] serialport.c:56 <serial_select_out_dev> select serial@10010000 as serial output device
+[ 0.271 hart#1 ] serialport.c:67 <serial_select_in_dev> select serial@10010000 as serial input device
+[ 0.281 hart#1 ] vmm.c:164 <vmm_setup_mmio> set up serial@10011000 mmio at [ffffffc010011000, ffffffc010012000) (size: 4 KiB)
+[ 0.292 hart#1 ] vmm.c:164 <vmm_setup_mmio> set up serial@10010000 mmio at [ffffffc010010000, ffffffc010011000) (size: 4 KiB)
+[ 0.304 hart#1 ] vmm.c:164 <vmm_setup_mmio> set up interrupt-controller@c000000 mmio at [ffffffc00c000000, ffffffc010000000) (size: 64 MiB)
+[ 0.323 hart#1 ] vmm.c:181 <vmm_setup_kern> set up kernel vmm at 0000000080200000
+[ 1.797 hart#1 ] vmm.c:206 <vmm_setup_kern> init physical memory management
+[ 2.473 hart#1 ] vmm.c:209 <vmm_setup_kern> switch to physical frame allocator
+[ 2.480 hart#1 ] vmm.c:220 <vmm_start> enable virtual memory (satp: 80000000000802b9)
+[ 2.488 hart#1 ] asid.c:34 <asid_init> asid in cpu@1 impl probed [0, 0]
+[ 2.496 hart#1 ] vmm.c:228 <vmm_summary> os kernel reserves memory [80200000, 8a363000) (size: 161 MiB + 396 KiB)
+[ 2.506 hart#1 ] logger.c:27 <log_localize_output> switch to local serial output
+[ 2.514 hart#2 ] vmm.c:220 <vmm_start> enable virtual memory (satp: 80000000000802b9)
+[ 2.522 hart#3 ] vmm.c:220 <vmm_start> enable virtual memory (satp: 80000000000802b9)
+[ 2.531 hart#4 ] vmm.c:220 <vmm_start> enable virtual memory (satp: 80000000000802b9)
+[ 2.539 hart#2 ] asid.c:34 <asid_init> asid in cpu@2 impl probed [0, 0]
+[ 2.546 hart#4 ] asid.c:34 <asid_init> asid in cpu@4 impl probed [0, 0]
+[ 2.553 hart#3 ] asid.c:34 <asid_init> asid in cpu@3 impl probed [0, 0]
+[ 2.560 hart#2 ] init.c:99 <kernel_init> Hello Jrinx, I am slave hart!
+[ 2.567 hart#3 ] init.c:99 <kernel_init> Hello Jrinx, I am slave hart!
+[ 2.574 hart#4 ] init.c:99 <kernel_init> Hello Jrinx, I am slave hart!
+[ 2.582 hart#1 ] partition.c:201 <part_create> create partition: name='put-a-b',prog='app_put_a_b',memory=8 MiB,period=200ms,duration=100ms
+[ 2.594 hart#1 ] partition.c:209 <part_create> program 'app_put_a_b' found at [80217cc0, 80229f08) (size: 72 KiB + 584 B)
+[ 2.607 hart#1 ] partition.c:215 <part_create> create main process for partition 'put-a-b': name='main',entrypoint=00000000004004e8,stacksize=4 KiB
+[ 2.621 hart#1 ] partition.c:221 <part_create> remaining memory of partition 'put-a-b': 7 MiB + 920 KiB
+[ 2.630 hart#1 ] sched.c:24 <sched_add_part> add partition 1 to scheduler
+[ part#1 proc#1 ] osmain.c:12 <_osmain> partition 1 init with status:
+[ part#1 proc#1 ] osmain.c:13 <_osmain> - period: 200ms
+[ part#1 proc#1 ] osmain.c:14 <_osmain> - duration: 100ms
+[ part#1 proc#1 ] osmain.c:15 <_osmain> - lock level: 0
+[ part#1 proc#1 ] osmain.c:16 <_osmain> - start cond: 0
+[ part#1 proc#1 ] osmain.c:17 <_osmain> - assigned cores: 1
+[ part#1 proc#2 index=1 ] put_a_b.c:23 <put_a> put 'A' to console
+[ part#1 proc#3 index=2 ] put_a_b.c:34 <put_b> put 'B' to console
+ABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABA
 ```
