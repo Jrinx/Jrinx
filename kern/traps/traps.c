@@ -12,6 +12,7 @@ void traps_init(void) {
   for (size_t i = 0; i < cpus_get_count(); i++) {
     cpus_context[i] = kalloc(sizeof(struct context));
     memset(cpus_context[i], 0, sizeof(struct context));
+    cpus_context[i]->ctx_hartid = i;
   }
 }
 
@@ -19,6 +20,7 @@ void trap_init_vec(void) {
   extern void trap_vec(void);
   rv64_stvec stvec_reg = {.bits = {.mode = DIRECT, .base = (unsigned long)trap_vec / 4}};
   csrw_stvec(stvec_reg.val);
+  csrw_sscratch((unsigned long)cpus_context[hrt_get_id()]);
 }
 
 static void prepare_nested_trap(void) {
