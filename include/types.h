@@ -1,0 +1,95 @@
+#ifndef _TYPES_H_
+#define _TYPES_H_
+
+#include <stddef.h>
+#include <stdint.h>
+
+#define SYS_TIME_MICROSECOND (1L)
+#define SYS_TIME_MILLISECOND (1000L * SYS_TIME_MICROSECOND)
+#define SYS_TIME_SECOND (1000L * SYS_TIME_MILLISECOND)
+
+typedef enum {
+  NO_ERROR = 0,
+  NO_ACTION = -1,
+  NOT_AVAILABLE = -2,
+  INVALID_PARAM = -3,
+  INVALID_CONFIG = -4,
+  INVALID_MODE = -5,
+  TIMED_OUT = -6,
+  INVALID_SYSNO = -4096,
+} RETURN_CODE_TYPE,
+    ret_code_t;
+
+typedef enum {
+  IDLE,
+  COLD_START,
+  WARM_START,
+  NORMAL,
+} OPERATING_MODE_TYPE,
+    op_mode_t;
+
+typedef enum {
+  NORMAL_START,
+  PARTITION_RESTART,
+  HM_MODULE_RESTART,
+  HM_PARTITION_RESTART,
+} START_CONDITION_TYPE,
+    start_cond_t;
+
+typedef enum {
+  DORMANT,
+  READY,
+  RUNNING,
+  WAITING,
+  FAULTED,
+} PROCESS_STATE_TYPE,
+    proc_state_t;
+
+typedef enum {
+  SOFT,
+  HARD,
+} DEADLINE_TYPE,
+    deadline_t;
+
+#define SYSTEM_TIME_INFINITE_VAL INTMAX_MAX
+
+typedef intmax_t SYSTEM_TIME_TYPE, sys_time_t;
+typedef uintmax_t PARTITION_ID_TYPE, part_id_t;
+typedef uintmax_t LOCK_LEVEL_TYPE, lock_level_t;
+typedef uintmax_t PROCESSOR_CORE_ID_TYPE, proc_core_id_t;
+typedef size_t NUM_CORES_TYPE, num_cores_t;
+typedef uintmax_t PROCESS_ID_TYPE, proc_id_t;
+typedef char *PROCESS_NAME_TYPE, *proc_name_t;
+typedef uintmax_t PRIORITY_TYPE, priority_t;
+typedef size_t STACK_SIZE_TYPE, stack_size_t;
+typedef unsigned long SYSTEM_ADDRESS_TYPE, sys_addr_t;
+typedef uintmax_t PROCESS_INDEX_TYPE, proc_index_t;
+
+typedef struct {
+  SYSTEM_TIME_TYPE PERIOD;
+  SYSTEM_TIME_TYPE DURATION;
+  PARTITION_ID_TYPE IDENTIFIER;
+  LOCK_LEVEL_TYPE LOCK_LEVEL;
+  OPERATING_MODE_TYPE OPERATING_MODE;
+  START_CONDITION_TYPE START_CONDITION;
+  NUM_CORES_TYPE NUM_ASSIGNED_CORES;
+} PARTITION_STATUS_TYPE;
+
+typedef struct {
+  SYSTEM_TIME_TYPE PERIOD;
+  SYSTEM_TIME_TYPE TIME_CAPACITY;
+  SYSTEM_ADDRESS_TYPE ENTRY_POINT;
+  STACK_SIZE_TYPE STACK_SIZE;
+  PRIORITY_TYPE BASE_PRIORITY;
+  DEADLINE_TYPE DEADLINE;
+  PROCESS_NAME_TYPE NAME;
+} PROCESS_ATTRIBUTE_TYPE;
+
+typedef struct {
+  SYSTEM_TIME_TYPE DEADLINE_TIME;
+  PRIORITY_TYPE CURRENT_PRIORITY;
+  PROCESS_STATE_TYPE PROCESS_STATE;
+  PROCESS_ATTRIBUTE_TYPE ATTRIBUTES;
+} PROCESS_STATUS_TYPE;
+
+#endif
