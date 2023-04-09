@@ -1,17 +1,12 @@
 USER_LIBS	:= os sys lib
-USER_BARE_APPS	:= bare
-USER_APPS	:= general
+USER_APPS	:= app test
 
-.PHONY: all $(USER_BARE_APPS) $(USER_APPS) $(USER_LIBS)
+.PHONY: all $(USER_APPS) $(USER_LIBS)
 
-all: $(USER_BARE_APPS) $(USER_APPS)
+all: $(USER_APPS)
 .ONESHELL:
-
-
 $(USER_APPS): export USER_LINK_LIBS := $(addsuffix /*.o, $(abspath $(USER_LIBS)))
 $(USER_APPS): $(USER_LIBS)
-
-$(USER_BARE_APPS) $(USER_APPS):
 	export BINTOC_PREFIX=$@
 	if [ ! -f $@/Makefile ]; then
 		$(MAKE) -C $@ -f $(BUILD_ROOT_DIR)/mk/auto-make-user.mk

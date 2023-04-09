@@ -1,8 +1,8 @@
 {
   "partitions": [
     {
-      "name": "put-a-b",
-      "prog": "app_put_a_b",
+      "name": "suspend-self-and-resume-check",
+      "prog": "test_suspend_self_and_resume",
       "memory": "8*1024*1024",
       "period": 200000,
       "duration": 100000

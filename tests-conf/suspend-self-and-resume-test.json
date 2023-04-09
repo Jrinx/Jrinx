@@ -1,0 +1,15 @@
+{
+  "sysconf": "suspend-self-and-resume-check.json",
+  "expected": {
+    "type": "ordered",
+    "vals": [
+      {
+        "type": "repeated",
+        "pat": "resume \\d+",
+        "count": 3
+      },
+      "done"
+    ]
+  },
+  "unexpected": "fatal at"
+}

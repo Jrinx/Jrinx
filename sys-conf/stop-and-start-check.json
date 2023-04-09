@@ -1,8 +1,8 @@
 {
   "partitions": [
     {
-      "name": "put-a-b",
-      "prog": "app_put_a_b",
+      "name": "stop-and-start-check",
+      "prog": "test_stop_and_start",
       "memory": "8*1024*1024",
       "period": 200000,
       "duration": 100000

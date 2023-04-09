@@ -1,0 +1,21 @@
+{
+  "sysconf": "stop-and-start-check.json",
+  "expected": {
+    "type": "ordered",
+    "vals": [
+      {
+        "type": "repeated",
+        "pat": {
+          "type": "ordered",
+          "vals": [
+            "start \\d+",
+            "(\\d+) started, stop \\1"
+          ]
+        },
+        "count": 3
+      },
+      "done"
+    ]
+  },
+  "unexpected": "fatal at"
+}
