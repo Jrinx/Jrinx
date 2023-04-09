@@ -103,6 +103,8 @@ void kfree(void *ptr) {
   struct buddy_block *block =
       (struct buddy_block *)((uint8_t *)ptr - sizeof(struct buddy_block));
   panic_e(lk_acquire(&spinlock_of(kalloc_mod)));
+  assert(ptr >= (void *)kalloc_pool && ptr < (void *)kalloc_pool + sizeof(kalloc_pool) &&
+         block->state != FREE);
   block->state = FREE;
   struct buddy_block *buddy = get_buddy(block);
   while (buddy != NULL && buddy->state == FREE && buddy->size == block->size) {
