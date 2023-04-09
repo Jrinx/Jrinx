@@ -125,7 +125,7 @@ preprocess: all
 
 objdump:
 	@find -- * \( -path $(JRINX) -o -name '*.b' \) -exec \
-		sh -c '$(OBJDUMP) {} -alDS > {}.objdump && echo {}.objdump' ';'
+		sh -c '$(OBJDUMP) {} -aldS > {}.objdump && echo {}.objdump' ';'
 
 objcopy:
 	@$(OBJCOPY) -O binary $(JRINX) $(JRINX).bin
