@@ -127,7 +127,8 @@ class UnorderedPattern(Pattern):
 class RepeatedPattern(Pattern):
     def __init__(self, pattern) -> None:
         super().__init__(pattern)
-        self.__pat = Pattern.of(pattern['pat'])
+        self.__origin_pat = pattern['pat']
+        self.__pat = Pattern.of(self.__origin_pat)
         self.__count = int(pattern['count'])
         self.__rem = self.__count
 
@@ -139,6 +140,7 @@ class RepeatedPattern(Pattern):
         if pick:
             if retire:
                 self.__rem -= 1
+                self.__pat = Pattern.of(self.__origin_pat)
         return self.__rem == 0, pick
 
 
