@@ -23,4 +23,4 @@ regression-test:
       - COMPILE_MODE: [debug, release]
         BOARD: [virt, sifive_u]
   script:
-    - ./scripts/run-tests
+    - ./scripts/run-tests -p
