@@ -1,10 +1,12 @@
 #include <kern/drivers/cpus.h>
 #include <kern/drivers/serialport.h>
+#include <kern/lib/boottime.h>
 #include <kern/lib/debug.h>
 #include <kern/lib/sbi.h>
 #include <kern/lock/lock.h>
 #include <kern/lock/spinlock.h>
 #include <lib/printfmt.h>
+#include <types.h>
 
 static with_spinlock(print);
 
@@ -42,33 +44,15 @@ void printk(const char *restrict fmt, ...) {
   va_end(ap);
 }
 
-static int sys_read_boot_time_sec_msec(uint64_t *sec, uint64_t *millisec) {
-  static uint64_t boot_nanosec = 0;
-  uint64_t time = r_time();
-  if (boot_nanosec == 0) {
-    boot_nanosec = time;
-  }
-  time -= boot_nanosec;
-  if (cpus_get_timebase_freq() == 0) {
-    *sec = 0;
-    *millisec = 0;
-    return 0;
-  }
-  *sec = time / cpus_get_timebase_freq();
-  *millisec = time / (cpus_get_timebase_freq() / 1000) - (*sec * 1000);
-  return 1;
-}
-
 #define print_timestamp(color)                                                                 \
   ({                                                                                           \
-    uint64_t sec;                                                                              \
-    uint64_t millisec;                                                                         \
     conslock_acquire();                                                                        \
-    if (sys_read_boot_time_sec_msec(&sec, &millisec)) {                                        \
-      printk(ANSI_COLOR_WRAP(color, "[ %lu.%03lu hart#%lu ] %s:%lu <%s> "), sec, millisec,     \
-             hrt_get_id(), file, lineno, func);                                                \
+    sys_time_t time = boottime_get_now();                                                      \
+    if (time != 0) {                                                                           \
+      printk(ANSI_COLOR_WRAP(color, "[ %pT hart#%lu ] %s:%lu <%s> "), &time, hrt_get_id(),     \
+             file, lineno, func);                                                              \
     } else {                                                                                   \
-      printk(ANSI_COLOR_WRAP(color, "[ ?.??? hart#%lu ] %s:%lu <%s> "), hrt_get_id(), file,    \
+      printk(ANSI_COLOR_WRAP(color, "[ ?.?????? hart#%lu ] %s:%lu <%s> "), hrt_get_id(), file, \
              lineno, func);                                                                    \
     }                                                                                          \
     va_list ap;                                                                                \

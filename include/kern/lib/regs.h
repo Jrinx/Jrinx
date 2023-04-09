@@ -38,6 +38,8 @@
 R_REG_DEF(tp)
 W_REG_DEF(tp)
 
+R_CSR_DEF(time)
+
 #define RISCV_U_MODE 0
 #define RISCV_S_MODE 1
 #define RISCV_H_MODE 2
@@ -157,12 +159,6 @@ W_CSR_DEF(satp)
 #undef W_REG_DEF
 #undef R_CSR_DEF
 #undef W_CSR_DEF
-
-__attribute__((always_inline)) static inline unsigned long r_time(void) {
-  unsigned long val;
-  asm volatile("rdtime %0" : "=r"(val));
-  return val;
-}
 
 #endif
 #endif

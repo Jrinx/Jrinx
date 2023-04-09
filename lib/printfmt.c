@@ -1,4 +1,5 @@
 #include <lib/printfmt.h>
+#include <types.h>
 
 static void print_mem_range_style(fmt_callback_t, struct fmt_mem_range *, int, int, char);
 static void print_bytes_style(fmt_callback_t, size_t);
@@ -143,6 +144,14 @@ void vprintfmt(fmt_callback_t out, const char *restrict fmt, va_list ap) {
       case 'B':
         size_t *bytes = (size_t *)va_arg(ap, void *);
         print_bytes_style(out, *bytes);
+        break;
+      case 'T':
+        sys_time_t *time = (int64_t *)va_arg(ap, void *);
+        uint64_t sec = *time / SYS_TIME_SECOND;
+        uint64_t microsec = *time - sec * SYS_TIME_SECOND;
+        print_num(out, sec, 10, 0, 0, 0, ' ', 0);
+        print_char(out, '.', 1, 0);
+        print_num(out, microsec, 10, 0, 6, 0, '0', 0);
         break;
       default:
         fmt--;
