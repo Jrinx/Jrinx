@@ -57,7 +57,9 @@ long part_alloc(struct part **part, const char *name, unsigned long memory_req) 
   memcpy((void *)pa, kern_pgdir, PGSIZE);
   struct part *tmp = kalloc(sizeof(struct part));
   memset(tmp, 0, sizeof(struct part));
-  tmp->pa_name = name;
+  size_t name_len = strlen(name);
+  tmp->pa_name = kalloc((name_len + 1) * sizeof(char));
+  strcpy(tmp->pa_name, name);
   tmp->pa_mem_req = memory_req;
   tmp->pa_mem_rem = memory_req;
   tmp->pa_ustasktop = USTKLIMIT;
