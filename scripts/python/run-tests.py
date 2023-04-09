@@ -51,6 +51,8 @@ def run_testset(testset):
         bfatal('failed to build opensbi firmware')
         return e.returncode
     if len(testset) > 1 and parallel:
+        binfo(f'Parallelize in {multiprocessing.cpu_count()} cores with pool size \
+{PARALLEL_POOL_SIZE}')
         return multiprocessing.Pool(PARALLEL_POOL_SIZE).map(run_test, testset)
     else:
         return map(run_test, testset)
