@@ -25,12 +25,24 @@ void trap_init_vec(void) {
 
 static void prepare_nested_trap(void) {
   struct context *context = cpus_context[hrt_get_id()];
-  struct proc *proc = cpus_cur_proc[hrt_get_id()];
+  struct proc *proc = sched_cur_proc();
   hlist_insert_head(&proc->pr_trapframe.tf_ctx_list, &context->ctx_link);
   cpus_context[hrt_get_id()] = kalloc(sizeof(struct context));
   memset(cpus_context[hrt_get_id()], 0, sizeof(struct context));
   cpus_context[hrt_get_id()]->ctx_hartid = hrt_get_id();
   csrw_sscratch((unsigned long)cpus_context[hrt_get_id()]);
+}
+
+static void enable_int(void) {
+  rv64_sstatus sstatus = {.val = csrr_sstatus()};
+  sstatus.bits.sie = 1;
+  csrw_sstatus(sstatus.val);
+}
+
+static void disable_int(void) {
+  rv64_sstatus sstatus = {.val = csrr_sstatus()};
+  sstatus.bits.sie = 0;
+  csrw_sstatus(sstatus.val);
 }
 
 extern void do_pagefault(struct context *context);
@@ -40,12 +52,14 @@ extern void do_syscall(struct context *context);
 void handle_trap(void) {
   struct context *context = cpus_context[hrt_get_id()];
   prepare_nested_trap();
+  if (!(context->ctx_scause & CAUSE_INT_OFFSET)) {
+    enable_int();
+  }
   size_t kalloc_used = kalloc_get_used();
   extern int args_debug_kalloc_used;
   if (args_debug_kalloc_used) {
     info("kalloc used: %pB\n", &kalloc_used);
   }
-  // Future: enable interrupt here
   switch (context->ctx_scause) {
   case CAUSE_EXC_IF_PAGE_FAULT:
   case CAUSE_EXC_LD_PAGE_FAULT:
@@ -62,7 +76,9 @@ void handle_trap(void) {
     fatal("failed to handle trap, cause=%016lx\n", context->ctx_scause);
     break;
   }
-  // Future: disable interrupt here
+  if (!(context->ctx_scause & CAUSE_INT_OFFSET)) {
+    disable_int();
+  }
   kfree(cpus_context[hrt_get_id()]);
   hlist_remove_node(&context->ctx_link);
   cpus_context[hrt_get_id()] = context;

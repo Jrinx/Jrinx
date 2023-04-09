@@ -19,8 +19,10 @@
 
 #define MMIOBASE 0xffffffC000000000
 
-#define USTKLIMIT 0x3000000000
+#define XSTKLIMIT 0x3000000000
+#define USTKLIMIT 0x2000000000
 #define UMAINSTKTOP_SYM _main_proc_stacktop
+#define USTKSIZEMAX (PGSIZE << 7)
 
 #define USERBASE 0x400000
 

@@ -99,6 +99,7 @@ struct context {
 };
 
 struct trapframe {
+  sys_addr_t tf_xstacktop;
   struct hlist_head tf_ctx_list;
 };
 

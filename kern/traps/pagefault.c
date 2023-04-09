@@ -9,11 +9,7 @@
 #include <kern/traps/traps.h>
 
 void do_pagefault(struct context *context) {
-  const struct proc *proc = cpus_cur_proc[hrt_get_id()];
-  const struct part *part = part_from_id(proc->pr_part_id);
-  if (part == NULL) {
-    fatal("unknown partition id: %lu\n", proc->pr_part_id);
-  }
+  const struct part *part = sched_cur_part();
   vaddr_t va = {.val = context->ctx_stval};
   pte_t *pte;
   panic_e(pt_lookup(part->pa_pgdir, va, &pte));

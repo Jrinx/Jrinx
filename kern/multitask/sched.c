@@ -7,36 +7,55 @@
 #include <kern/multitask/process.h>
 #include <lib/string.h>
 
+struct part **cpus_cur_part;
 struct proc **cpus_cur_proc;
-static struct list_head *cpus_sched_list;
-static with_spinlock(cpus_sched_list);
+static struct list_head sched_part_list;
+static with_spinlock(sched_part_list);
 
 void sched_init(void) {
+  cpus_cur_part = kalloc(sizeof(struct part *) * cpus_get_count());
   cpus_cur_proc = kalloc(sizeof(struct proc *) * cpus_get_count());
-  cpus_sched_list = kalloc(sizeof(struct list_head) * cpus_get_count());
+  memset(cpus_cur_part, 0, sizeof(struct part *) * cpus_get_count());
   memset(cpus_cur_proc, 0, sizeof(struct proc *) * cpus_get_count());
-  memset(cpus_sched_list, 0, sizeof(struct list_head) * cpus_get_count());
-  for (size_t i = 0; i < cpus_get_count(); i++) {
-    list_init(&cpus_sched_list[i]);
+  list_init(&sched_part_list);
+}
+
+void sched_add_part(struct part *part) {
+  info("add partition %lu to scheduler\n", part->pa_id);
+  panic_e(lk_acquire(&spinlock_of(sched_part_list)));
+  list_insert_tail(&sched_part_list, &part->pa_sched_link);
+  panic_e(lk_release(&spinlock_of(sched_part_list)));
+}
+
+// TODO: impl standard arinc 653 scheduler
+__attribute__((noreturn)) void sched_proc(void) {
+  struct proc *next_proc = NULL;
+  struct proc *proc;
+  do {
+    LINKED_NODE_ITER (cpus_cur_part[hrt_get_id()]->pa_proc_list.l_first, proc, pr_sched_link) {
+      if (proc->pr_state == READY &&
+          (next_proc == NULL || proc->pr_cur_pri > next_proc->pr_cur_pri)) {
+        next_proc = proc;
+      }
+    }
+  } while (next_proc == NULL);
+  cpus_cur_proc[hrt_get_id()] = next_proc;
+  proc_run(next_proc);
+}
+
+void sched_global(void) {
+  if (cpus_cur_part[hrt_get_id()] != NULL) {
+    list_remove_node(&sched_part_list, &cpus_cur_part[hrt_get_id()]->pa_sched_link);
+    list_insert_tail(&sched_part_list, &cpus_cur_part[hrt_get_id()]->pa_sched_link);
   }
+  assert(!list_empty(&sched_part_list));
+  struct part *next_part = CONTAINER_OF(sched_part_list.l_first, struct part, pa_sched_link);
+  cpus_cur_part[hrt_get_id()] = next_part;
+  cpus_cur_proc[hrt_get_id()] = NULL;
+  sched_proc();
 }
 
-long sched_assign_proc(unsigned long hartid, struct proc *proc) {
-  if (hartid >= cpus_get_count()) {
-    return -KER_SCHED_ER;
-  }
-  info("assign '%s' of partition %lu to cpu@%lu\n", proc->pr_name, proc->pr_part_id, hartid);
-  panic_e(lk_acquire(&spinlock_of(cpus_sched_list)));
-  list_insert_tail(&cpus_sched_list[hartid], &proc->pr_sched_link);
-  panic_e(lk_release(&spinlock_of(cpus_sched_list)));
-  return KER_SUCCESS;
-}
-
-int sched_has_proc(void) {
-  return !list_empty(&cpus_sched_list[hrt_get_id()]);
-}
-
-void sched(void) {
+void sched_proc_give_up() {
   extern int args_debug_sched_max_cnt;
   if (args_debug_sched_max_cnt) {
     static int sched_cnt = 0;
@@ -45,17 +64,10 @@ void sched(void) {
     }
     sched_cnt++;
   }
-
-  struct list_head *sched_list = &cpus_sched_list[hrt_get_id()];
-  struct proc **cur_proc = &cpus_cur_proc[hrt_get_id()];
-  if (*cur_proc != NULL) {
-    list_insert_tail(sched_list, &(*cur_proc)->pr_sched_link);
-  }
-  *cur_proc = NULL;
-  while (list_empty(sched_list)) {
-  }
-  struct proc *sched_proc = CONTAINER_OF(sched_list->l_first, struct proc, pr_sched_link);
-  list_remove_node(sched_list, &sched_proc->pr_sched_link);
-  *cur_proc = sched_proc;
-  proc_run(sched_proc);
+  struct proc *proc = cpus_cur_proc[hrt_get_id()];
+  struct context *context = kalloc(sizeof(struct context));
+  memset(context, 0, sizeof(struct context));
+  hlist_insert_head(&proc->pr_trapframe.tf_ctx_list, &context->ctx_link);
+  extern void _sched_proc_give_up(struct context * context);
+  _sched_proc_give_up(context);
 }

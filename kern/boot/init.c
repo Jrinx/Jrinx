@@ -15,6 +15,7 @@
 #include <kern/mm/kalloc.h>
 #include <kern/mm/vmm.h>
 #include <kern/multitask/sched.h>
+#include <kern/traps/timer.h>
 #include <kern/traps/traps.h>
 #include <layouts.h>
 #include <lib/string.h>
@@ -52,8 +53,13 @@ static void kernel_gen_init(void) {
 static void kernel_sched(void) {
   static volatile unsigned long sched_state = 0;
   static with_spinlock(sched_state);
-  if (sched_has_proc()) {
-    sched();
+  switch (hrt_get_id()) {
+  case SYSCORE:
+    sched_global();
+    break;
+  default:
+    // TODO: sched in smp
+    break;
   }
   panic_e(lk_acquire(&spinlock_of(sched_state)));
   sched_state++;
@@ -85,6 +91,7 @@ void __attribute__((noreturn)) kernel_init(unsigned long hartid, void *dtb_addr)
     vmm_summary();
 
     log_localize_output();
+    time_event_init();
     traps_init();
     sched_init();
   } else {

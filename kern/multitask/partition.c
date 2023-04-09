@@ -18,6 +18,11 @@ static const void *part_id_key_of(const struct linked_node *node) {
   return &part->pa_id;
 }
 
+static const void *part_proc_name_key_of(const struct linked_node *node) {
+  const struct proc *proc = CONTAINER_OF(node, struct proc, pr_name_link);
+  return proc->pr_name;
+}
+
 static struct hlist_head part_id_map_array[128];
 static struct hashmap part_id_map = {
     .h_array = part_id_map_array,
@@ -40,7 +45,7 @@ static uint64_t part_id_alloc(void) {
   return ret;
 }
 
-struct part *part_from_id(uint64_t pa_id) {
+struct part *part_from_id(part_id_t pa_id) {
   struct linked_node *node = hashmap_get(&part_id_map, &pa_id);
   if (node == NULL) {
     return NULL;
@@ -49,7 +54,8 @@ struct part *part_from_id(uint64_t pa_id) {
   return part;
 }
 
-long part_alloc(struct part **part, const char *name, unsigned long memory_req) {
+long part_alloc(struct part **part, const char *name, unsigned long memory_req,
+                sys_time_t period, sys_time_t duration) {
   struct phy_frame *frame;
   catch_e(phy_frame_alloc(&frame));
   unsigned long pa;
@@ -63,7 +69,19 @@ long part_alloc(struct part **part, const char *name, unsigned long memory_req) 
   tmp->pa_mem_req = memory_req;
   tmp->pa_mem_rem = memory_req;
   tmp->pa_ustasktop = USTKLIMIT;
+  tmp->pa_xstacktop = XSTKLIMIT;
   tmp->pa_id = part_id_alloc();
+  // TODO: init period, duration, num_cores
+  tmp->pa_period = period;
+  tmp->pa_duration = duration;
+  tmp->pa_num_cores = 1;
+  tmp->pa_lock_level = 0;
+  tmp->pa_op_mode = COLD_START;
+  tmp->pa_start_cond = NORMAL_START;
+  struct hlist_head *proc_name_map_array = kalloc(sizeof(struct hlist_head) * 16);
+  memset(proc_name_map_array, 0, sizeof(struct hlist_head) * 16);
+  HASHMAP_ALLOC(&tmp->pa_proc_name_map, proc_name_map_array, 16, str, part_proc_name_key_of);
+  list_init(&tmp->pa_proc_list);
   tmp->pa_cpus_asid = kalloc(sizeof(unsigned long) * cpus_get_count());
   tmp->pa_cpus_asid_generation = kalloc(sizeof(unsigned long) * cpus_get_count());
   memset(tmp->pa_cpus_asid_generation, 0, sizeof(unsigned long) * cpus_get_count());
@@ -180,8 +198,8 @@ static long part_load_prog(struct part *part, struct prog_def_t *prog) {
 }
 
 long part_create(struct part_conf *conf) {
-  info("create partition: name='%s',prog='%s',memory=%pB\n", conf->pa_name, conf->pa_prog,
-       &conf->pa_mem_req);
+  info("create partition: name='%s',prog='%s',memory=%pB,period=%lu us,duration=%lu us\n",
+       conf->pa_name, conf->pa_prog, &conf->pa_mem_req, conf->pa_period, conf->pa_duration);
   struct prog_def_t *prog_def = prog_find_by_name(conf->pa_prog);
   if (prog_def == NULL) {
     return -KER_PART_ER;
@@ -191,16 +209,16 @@ long part_create(struct part_conf *conf) {
   info("program '%s' found at %pM (size: %pB)\n", conf->pa_prog, &mem_range,
        &prog_def->pg_elf_size);
   struct part *part;
-  catch_e(part_alloc(&part, conf->pa_name, conf->pa_mem_req));
+  catch_e(
+      part_alloc(&part, conf->pa_name, conf->pa_mem_req, conf->pa_period, conf->pa_duration));
   panic_e(part_load_prog(part, prog_def));
   info("create main process for partition '%s': name='main',entrypoint=%016lx,stacksize=%pB\n",
        part->pa_name, part->pa_entrypoint, &part->pa_main_proc_stacksize);
   struct proc *main_proc;
-  catch_e(
-      proc_alloc(part, &main_proc, "main", part->pa_entrypoint, part->pa_main_proc_stacksize));
+  catch_e(proc_alloc(part, &main_proc, "main", 0, 0, part->pa_entrypoint,
+                     part->pa_main_proc_stacksize, 0, SOFT));
+  main_proc->pr_state = READY;
   info("remaining memory of partition '%s': %pB\n", part->pa_name, &part->pa_mem_rem);
-
-  // TODO assign to different processors
-  catch_e(sched_assign_proc(SYSCORE, main_proc));
+  sched_add_part(part);
   return KER_SUCCESS;
 }
