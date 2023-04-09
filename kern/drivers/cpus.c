@@ -54,10 +54,9 @@ static long cpus_probe(const struct dev_node *node) {
   struct dev_node_prop *prop;
   prop = dt_node_prop_extract(node, "timebase-frequency");
   if (prop == NULL) {
-    cpus_timebase_freq = 10000000;
-  } else {
-    cpus_timebase_freq = from_be(*((uint32_t *)prop->pr_values));
+    return -KER_DTB_ER;
   }
+  cpus_timebase_freq = from_be(*((uint32_t *)prop->pr_values));
 
   LINKED_NODE_ITER (node->nd_children_list.l_first, child, nd_link) {
     if (cpus_check(child)) {
