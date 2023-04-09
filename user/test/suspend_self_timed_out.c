@@ -5,7 +5,7 @@
 #include <user/sys/syscalls.h>
 
 void suspend_self_timed_out_check(void) {
-  const SYSTEM_TIME_TYPE interval = 2 * SYS_TIME_SECOND;
+  const SYSTEM_TIME_TYPE interval = SYS_TIME_SECOND;
   RETURN_CODE_TYPE ret;
   for (size_t i = 0; i < 3; i++) {
     SYSTEM_TIME_TYPE tick1, tick2;
