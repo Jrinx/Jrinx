@@ -61,7 +61,10 @@ static long do_partitions_create(const char *conf) {
     pc->pa_name = NULL;
     pc->pa_prog = NULL;
     pc->pa_mem_req = 0;
-    while (pc->pa_name == NULL || pc->pa_prog == NULL || pc->pa_mem_req == 0) {
+    pc->pa_period = 0;
+    pc->pa_duration = 0;
+    while (pc->pa_name == NULL || pc->pa_prog == NULL || pc->pa_mem_req == 0 ||
+           pc->pa_period == 0 || pc->pa_duration == 0) {
       if (q > conf_len) {
         goto error;
       }
@@ -74,6 +77,10 @@ static long do_partitions_create(const char *conf) {
         if (pc->pa_mem_req == 0) {
           goto error;
         }
+      } else if (strcmp(&conf_raw[q], "period") == 0) {
+        pc->pa_period = atoi(&conf_raw[q + sizeof("period")]);
+      } else if (strcmp(&conf_raw[q], "duration") == 0) {
+        pc->pa_duration = atoi(&conf_raw[q + sizeof("duration")]);
       } else {
         goto error;
       }
