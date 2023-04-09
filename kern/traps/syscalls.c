@@ -23,7 +23,7 @@ void do_syscall(struct context *context) {
   // TODO: check pointer and enum from user space
   context->ctx_sepc += sizeof(uint32_t);
   unsigned long sysno = context->ctx_regs.names.a7;
-  long ret = E_NOERR;
+  ret_code_t ret = NO_ERROR;
   switch (sysno) {
   case SYS_CONS_WRITE_CHAR:
     do_cons_write_char(context->ctx_regs.names.a0);
@@ -38,7 +38,7 @@ void do_syscall(struct context *context) {
     sched();
     break;
   default:
-    ret = -E_SYSNO;
+    ret = INVALID_SYSNO;
     break;
   }
   context->ctx_regs.names.a0 = ret;
