@@ -368,6 +368,232 @@ ret_code_t do_replenish(sys_time_t budget_time) {
   return NO_ERROR;
 }
 
+ret_code_t do_create_sampling_port(samp_port_name_t sampling_port_name,
+                                   msg_size_t max_message_size, port_dir_t port_direction,
+                                   sys_time_t refresh_period,
+                                   samp_port_id_t *sampling_port_id) {
+  // TODO
+  return NO_ERROR;
+}
+
+ret_code_t do_write_sampling_message(samp_port_id_t sampling_port_id, msg_addr_t message_addr,
+                                     msg_size_t length) {
+  // TODO
+  return NO_ERROR;
+}
+
+ret_code_t do_read_sampling_message(samp_port_id_t sampling_port_id, msg_addr_t message_addr,
+                                    msg_size_t *length, validity_t *validity) {
+  // TODO
+  return NO_ERROR;
+}
+
+ret_code_t do_get_sampling_port_id(samp_port_name_t sampling_port_name,
+                                   samp_port_id_t *sampling_port_id) {
+  // TODO
+  return NO_ERROR;
+}
+
+ret_code_t do_get_sampling_port_status(samp_port_id_t sampling_port_id,
+                                       SAMPLING_PORT_STATUS_TYPE *sampling_port_status) {
+  // TODO
+  return NO_ERROR;
+}
+
+ret_code_t do_create_queuing_port(que_port_name_t queuing_port_name,
+                                  msg_size_t max_message_size, msg_range_t max_nb_message,
+                                  port_dir_t port_direction, que_disc_t queuing_discipline,
+                                  que_port_id_t *queuing_port_id) {
+  // TODO
+  return NO_ERROR;
+}
+
+ret_code_t do_send_queuing_message(que_port_id_t queuing_port_id, msg_addr_t message_addr,
+                                   msg_size_t length, sys_time_t time_out) {
+  // TODO
+  return NO_ERROR;
+}
+
+ret_code_t do_receive_queuing_message(que_port_id_t queuing_port_id, sys_time_t time_out,
+                                      msg_addr_t message_addr, msg_size_t *length) {
+  // TODO
+  return NO_ERROR;
+}
+
+ret_code_t do_get_queuing_port_id(que_port_name_t queuing_port_name,
+                                  que_port_id_t *queuing_port_id) {
+  // TODO
+  return NO_ERROR;
+}
+
+ret_code_t do_get_queuing_port_status(que_port_id_t queuing_port_id,
+                                      QUEUING_PORT_STATUS_TYPE *queuing_port_status) {
+  // TODO
+  return NO_ERROR;
+}
+
+ret_code_t do_clear_queuing_port(que_port_id_t queuing_port_id) {
+  // TODO
+  return NO_ERROR;
+}
+
+ret_code_t do_create_buffer(buf_name_t buffer_name, msg_size_t max_message_size,
+                            msg_range_t max_nb_message, que_disc_t queuing_discipline,
+                            buf_id_t *buffer_id) {
+  // TODO
+  return NO_ERROR;
+}
+
+ret_code_t do_send_buffer(buf_id_t buffer_id, msg_addr_t message_addr, msg_size_t length,
+                          sys_time_t time_out) {
+  // TODO
+  return NO_ERROR;
+}
+
+ret_code_t do_receive_buffer(buf_id_t buffer_id, sys_time_t time_out, msg_addr_t message_addr,
+                             msg_size_t *length) {
+  // TODO
+  return NO_ERROR;
+}
+
+ret_code_t do_get_buffer_id(buf_name_t buffer_name, buf_id_t *buffer_id) {
+  // TODO
+  return NO_ERROR;
+}
+
+ret_code_t do_get_buffer_status(buf_id_t buffer_id, BUFFER_STATUS_TYPE *buffer_status) {
+  // TODO
+  return NO_ERROR;
+}
+
+ret_code_t do_create_blackboard(bb_name_t blackboard_name, msg_size_t max_message_size,
+                                bb_id_t *blackboard_id) {
+  // TODO
+  return NO_ERROR;
+}
+
+ret_code_t do_display_blackboard(bb_id_t blackboard_id, msg_addr_t message_addr,
+                                 msg_size_t length) {
+  // TODO
+  return NO_ERROR;
+}
+
+ret_code_t do_read_blackboard(bb_id_t blackboard_id, sys_time_t time_out,
+                              msg_addr_t message_addr, msg_size_t *length) {
+  // TODO
+  return NO_ERROR;
+}
+
+ret_code_t do_clear_blackboard(bb_id_t blackboard_id) {
+  // TODO
+  return NO_ERROR;
+}
+
+ret_code_t do_get_blackboard_id(bb_name_t blackboard_name, bb_id_t *blackboard_id) {
+  // TODO
+  return NO_ERROR;
+}
+
+ret_code_t do_get_blackboard_status(bb_id_t blackboard_id,
+                                    BLACKBOARD_STATUS_TYPE *blackboard_status) {
+  // TODO
+  return NO_ERROR;
+}
+
+ret_code_t do_create_semaphore(sem_name_t semaphore_name, sem_value_t current_value,
+                               sem_value_t maximum_value, que_disc_t queuing_discipline,
+                               sem_id_t *semaphore_id) {
+  // TODO
+  return NO_ERROR;
+}
+
+ret_code_t do_wait_semaphore(sem_id_t semaphore_id, sys_time_t time_out) {
+  // TODO
+  return NO_ERROR;
+}
+
+ret_code_t do_signal_semaphore(sem_id_t semaphore_id) {
+  // TODO
+  return NO_ERROR;
+}
+
+ret_code_t do_get_semaphore_id(sem_name_t semaphore_name, sem_id_t *semaphore_id) {
+  // TODO
+  return NO_ERROR;
+}
+
+ret_code_t do_get_semaphore_status(sem_id_t semaphore_id,
+                                   SEMAPHORE_STATUS_TYPE *semaphore_status) {
+  // TODO
+  return NO_ERROR;
+}
+
+ret_code_t do_create_event(event_name_t event_name, event_id_t *event_id) {
+  // TODO
+  return NO_ERROR;
+}
+
+ret_code_t do_set_event(event_id_t event_id) {
+  // TODO
+  return NO_ERROR;
+}
+
+ret_code_t do_reset_event(event_id_t event_id) {
+  // TODO
+  return NO_ERROR;
+}
+
+ret_code_t do_wait_event(event_id_t event_id, sys_time_t time_out) {
+  // TODO
+  return NO_ERROR;
+}
+
+ret_code_t do_get_event_id(event_name_t event_name, event_id_t *event_id) {
+  // TODO
+  return NO_ERROR;
+}
+
+ret_code_t do_get_event_status(event_id_t event_id, EVENT_STATUS_TYPE *event_status) {
+  // TODO
+  return NO_ERROR;
+}
+
+ret_code_t do_create_mutex(mutex_name_t mutex_name, priority_t mutex_priority,
+                           que_disc_t queuing_discipline, mutex_id_t *mutex_id) {
+  // TODO
+  return NO_ERROR;
+}
+
+ret_code_t do_acquire_mutex(mutex_id_t mutex_id, sys_time_t time_out) {
+  // TODO
+  return NO_ERROR;
+}
+
+ret_code_t do_release_mutex(mutex_id_t mutex_id) {
+  // TODO
+  return NO_ERROR;
+}
+
+ret_code_t do_reset_mutex(mutex_id_t mutex_id, proc_id_t process_id) {
+  // TODO
+  return NO_ERROR;
+}
+
+ret_code_t do_get_mutex_id(mutex_name_t mutex_name, mutex_id_t *mutex_id) {
+  // TODO
+  return NO_ERROR;
+}
+
+ret_code_t do_get_mutex_status(mutex_id_t mutex_id, MUTEX_STATUS_TYPE *mutex_status) {
+  // TODO
+  return NO_ERROR;
+}
+
+ret_code_t do_get_process_mutex_state(proc_id_t process_id, mutex_id_t *mutex_id) {
+  // TODO
+  return NO_ERROR;
+}
+
 void do_syscall(struct context *context) {
   // TODO: check pointer and enum from user space
   context->ctx_sepc += sizeof(uint32_t);
@@ -458,6 +684,171 @@ void do_syscall(struct context *context) {
     break;
   case SYS_REPLENISH:
     ret = do_replenish(context->ctx_regs.names.a0);
+    break;
+  case SYS_CREATE_SAMPLING_PORT:
+    ret = do_create_sampling_port((samp_port_name_t)context->ctx_regs.names.a0,
+                                  context->ctx_regs.names.a1, context->ctx_regs.names.a2,
+                                  context->ctx_regs.names.a3,
+                                  (samp_port_id_t *)context->ctx_regs.names.a4);
+    break;
+  case SYS_WRITE_SAMPLING_MESSAGE:
+    ret = do_write_sampling_message(context->ctx_regs.names.a0,
+                                    (msg_addr_t)context->ctx_regs.names.a1,
+                                    context->ctx_regs.names.a2);
+    break;
+  case SYS_READ_SAMPLING_MESSAGE:
+    ret = do_read_sampling_message(
+        context->ctx_regs.names.a0, (msg_addr_t)context->ctx_regs.names.a1,
+        (msg_size_t *)context->ctx_regs.names.a2, (validity_t *)context->ctx_regs.names.a3);
+    break;
+  case SYS_GET_SAMPLING_PORT_ID:
+    ret = do_get_sampling_port_id((samp_port_name_t)context->ctx_regs.names.a0,
+                                  (samp_port_id_t *)context->ctx_regs.names.a1);
+    break;
+  case SYS_GET_SAMPLING_PORT_STATUS:
+    ret = do_get_sampling_port_status(context->ctx_regs.names.a0,
+                                      (SAMPLING_PORT_STATUS_TYPE *)context->ctx_regs.names.a1);
+    break;
+  case SYS_CREATE_QUEUING_PORT:
+    ret = do_create_queuing_port((que_port_name_t)context->ctx_regs.names.a0,
+                                 context->ctx_regs.names.a1, context->ctx_regs.names.a2,
+                                 context->ctx_regs.names.a3, context->ctx_regs.names.a4,
+                                 (que_port_id_t *)context->ctx_regs.names.a5);
+    break;
+  case SYS_SEND_QUEUING_MESSAGE:
+    ret = do_send_queuing_message(context->ctx_regs.names.a0,
+                                  (msg_addr_t)context->ctx_regs.names.a1,
+                                  context->ctx_regs.names.a2, context->ctx_regs.names.a3);
+    break;
+  case SYS_RECEIVE_QUEUING_MESSAGE:
+    ret = do_receive_queuing_message(context->ctx_regs.names.a0, context->ctx_regs.names.a1,
+                                     (msg_addr_t)context->ctx_regs.names.a2,
+                                     (msg_size_t *)context->ctx_regs.names.a3);
+    break;
+  case SYS_GET_QUEUING_PORT_ID:
+    ret = do_get_queuing_port_id((que_port_name_t)context->ctx_regs.names.a0,
+                                 (que_port_id_t *)context->ctx_regs.names.a1);
+    break;
+  case SYS_GET_QUEUING_PORT_STATUS:
+    ret = do_get_queuing_port_status(context->ctx_regs.names.a0,
+                                     (QUEUING_PORT_STATUS_TYPE *)context->ctx_regs.names.a1);
+    break;
+  case SYS_CLEAR_QUEUING_PORT:
+    ret = do_clear_queuing_port(context->ctx_regs.names.a0);
+    break;
+  case SYS_CREATE_BUFFER:
+    ret = do_create_buffer((buf_name_t)context->ctx_regs.names.a0, context->ctx_regs.names.a1,
+                           context->ctx_regs.names.a2, context->ctx_regs.names.a3,
+                           (buf_id_t *)context->ctx_regs.names.a4);
+    break;
+  case SYS_SEND_BUFFER:
+    ret = do_send_buffer(context->ctx_regs.names.a0, (msg_addr_t)context->ctx_regs.names.a1,
+                         context->ctx_regs.names.a2, context->ctx_regs.names.a3);
+    break;
+  case SYS_RECEIVE_BUFFER:
+    ret = do_receive_buffer(context->ctx_regs.names.a0, context->ctx_regs.names.a1,
+                            (msg_addr_t)context->ctx_regs.names.a2,
+                            (msg_size_t *)context->ctx_regs.names.a3);
+    break;
+  case SYS_GET_BUFFER_ID:
+    ret = do_get_buffer_id((buf_name_t)context->ctx_regs.names.a0,
+                           (buf_id_t *)context->ctx_regs.names.a1);
+    break;
+  case SYS_GET_BUFFER_STATUS:
+    ret = do_get_buffer_status(context->ctx_regs.names.a0,
+                               (BUFFER_STATUS_TYPE *)context->ctx_regs.names.a1);
+    break;
+  case SYS_CREATE_BLACKBOARD:
+    ret =
+        do_create_blackboard((bb_name_t)context->ctx_regs.names.a0, context->ctx_regs.names.a1,
+                             (bb_id_t *)context->ctx_regs.names.a2);
+    break;
+  case SYS_DISPLAY_BLACKBOARD:
+    ret = do_display_blackboard(context->ctx_regs.names.a0,
+                                (msg_addr_t)context->ctx_regs.names.a1,
+                                context->ctx_regs.names.a2);
+    break;
+  case SYS_READ_BLACKBOARD:
+    ret = do_read_blackboard(context->ctx_regs.names.a0, context->ctx_regs.names.a1,
+                             (msg_addr_t)context->ctx_regs.names.a2,
+                             (msg_size_t *)context->ctx_regs.names.a3);
+    break;
+  case SYS_CLEAR_BLACKBOARD:
+    ret = do_clear_blackboard(context->ctx_regs.names.a0);
+    break;
+  case SYS_GET_BLACKBOARD_ID:
+    ret = do_get_blackboard_id((bb_name_t)context->ctx_regs.names.a0,
+                               (bb_id_t *)context->ctx_regs.names.a1);
+    break;
+  case SYS_GET_BLACKBOARD_STATUS:
+    ret = do_get_blackboard_status(context->ctx_regs.names.a0,
+                                   (BLACKBOARD_STATUS_TYPE *)context->ctx_regs.names.a1);
+    break;
+  case SYS_CREATE_SEMAPHORE:
+    ret =
+        do_create_semaphore((sem_name_t)context->ctx_regs.names.a0, context->ctx_regs.names.a1,
+                            context->ctx_regs.names.a2, context->ctx_regs.names.a3,
+                            (sem_id_t *)context->ctx_regs.names.a4);
+    break;
+  case SYS_WAIT_SEMAPHORE:
+    ret = do_wait_semaphore(context->ctx_regs.names.a0, context->ctx_regs.names.a1);
+    break;
+  case SYS_SIGNAL_SEMAPHORE:
+    ret = do_signal_semaphore(context->ctx_regs.names.a0);
+    break;
+  case SYS_GET_SEMAPHORE_ID:
+    ret = do_get_semaphore_id((sem_name_t)context->ctx_regs.names.a0,
+                              (sem_id_t *)context->ctx_regs.names.a1);
+    break;
+  case SYS_GET_SEMAPHORE_STATUS:
+    ret = do_get_semaphore_status(context->ctx_regs.names.a0,
+                                  (SEMAPHORE_STATUS_TYPE *)context->ctx_regs.names.a1);
+    break;
+  case SYS_CREATE_EVENT:
+    ret = do_create_event((event_name_t)context->ctx_regs.names.a0,
+                          (event_id_t *)context->ctx_regs.names.a1);
+    break;
+  case SYS_SET_EVENT:
+    ret = do_set_event(context->ctx_regs.names.a0);
+    break;
+  case SYS_RESET_EVENT:
+    ret = do_reset_event(context->ctx_regs.names.a0);
+    break;
+  case SYS_WAIT_EVENT:
+    ret = do_wait_event(context->ctx_regs.names.a0, context->ctx_regs.names.a1);
+    break;
+  case SYS_GET_EVENT_ID:
+    ret = do_get_event_id((event_name_t)context->ctx_regs.names.a0,
+                          (event_id_t *)context->ctx_regs.names.a1);
+    break;
+  case SYS_GET_EVENT_STATUS:
+    ret = do_get_event_status(context->ctx_regs.names.a0,
+                              (EVENT_STATUS_TYPE *)context->ctx_regs.names.a1);
+    break;
+  case SYS_CREATE_MUTEX:
+    ret = do_create_mutex((mutex_name_t)context->ctx_regs.names.a0, context->ctx_regs.names.a1,
+                          context->ctx_regs.names.a2, (mutex_id_t *)context->ctx_regs.names.a3);
+    break;
+  case SYS_ACQUIRE_MUTEX:
+    ret = do_acquire_mutex(context->ctx_regs.names.a0, context->ctx_regs.names.a1);
+    break;
+  case SYS_RELEASE_MUTEX:
+    ret = do_release_mutex(context->ctx_regs.names.a0);
+    break;
+  case SYS_RESET_MUTEX:
+    ret = do_reset_mutex(context->ctx_regs.names.a0, context->ctx_regs.names.a1);
+    break;
+  case SYS_GET_MUTEX_ID:
+    ret = do_get_mutex_id((mutex_name_t)context->ctx_regs.names.a0,
+                          (mutex_id_t *)context->ctx_regs.names.a1);
+    break;
+  case SYS_GET_MUTEX_STATUS:
+    ret = do_get_mutex_status(context->ctx_regs.names.a0,
+                              (MUTEX_STATUS_TYPE *)context->ctx_regs.names.a1);
+    break;
+  case SYS_GET_PROCESS_MUTEX_STATE:
+    ret = do_get_process_mutex_state(context->ctx_regs.names.a0,
+                                     (mutex_id_t *)context->ctx_regs.names.a1);
     break;
   default:
     ret = INVALID_SYSNO;
