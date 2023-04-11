@@ -275,7 +275,7 @@ def main():
     if interactive:
         interactive = [{'when': Pattern.of(i['when']), 'send': i['send']} for i in interactive]
     ch = subprocess.Popen(cmd,
-                          stdin=subprocess.PIPE if interactive else None,
+                          stdin=subprocess.PIPE if interactive else subprocess.DEVNULL,
                           stdout=subprocess.PIPE,
                           stderr=subprocess.STDOUT,
                           start_new_session=True,
