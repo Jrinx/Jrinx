@@ -14,14 +14,11 @@
 #include <types.h>
 
 static struct list_head *cpus_time_event_queue;
-static struct lock *cpus_time_event_queue_lock;
 
 void time_event_init(void) {
   cpus_time_event_queue = kalloc(sizeof(struct list_head) * cpus_get_count());
-  cpus_time_event_queue_lock = kalloc(sizeof(struct lock) * cpus_get_count());
   for (size_t i = 0; i < cpus_get_count(); i++) {
     list_init(&cpus_time_event_queue[i]);
-    spinlock_init(&cpus_time_event_queue_lock[i]);
   }
 }
 
@@ -43,7 +40,6 @@ void time_event_alloc(void *ctx, sys_time_t time, enum time_event_type type) {
   te->te_time = time;
   te->te_type = type;
   struct time_event *i;
-  panic_e(lk_acquire(&cpus_time_event_queue_lock[hrt_get_id()]));
   LINKED_NODE_ITER (cpus_time_event_queue[hrt_get_id()].l_first, i, te_queue_link) {
     if (i->te_time > te->te_time) {
       list_insert_before(&i->te_queue_link, &te->te_queue_link);
@@ -53,7 +49,6 @@ void time_event_alloc(void *ctx, sys_time_t time, enum time_event_type type) {
   list_insert_tail(&cpus_time_event_queue[hrt_get_id()], &te->te_queue_link);
 succ:
   time_event_set_head();
-  panic_e(lk_release(&cpus_time_event_queue_lock[hrt_get_id()]));
   switch (type) {
   case TE_PROCESS_SUSPEND_TIMEOUT:
   case TE_PROCESS_DELAYED_START:
@@ -113,7 +108,6 @@ void time_event_proc_free_filter_type(struct proc *proc, unsigned type) {
 }
 
 void time_event_action(void) {
-  panic_e(lk_acquire(&cpus_time_event_queue_lock[hrt_get_id()]));
   while (!list_empty(&cpus_time_event_queue[hrt_get_id()])) {
     struct time_event *te = CONTAINER_OF(cpus_time_event_queue[hrt_get_id()].l_first,
                                          struct time_event, te_queue_link);
@@ -131,6 +125,5 @@ void time_event_action(void) {
       break;
     }
   }
-  panic_e(lk_release(&cpus_time_event_queue_lock[hrt_get_id()]));
   sched_proc_give_up();
 }
