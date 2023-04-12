@@ -76,16 +76,19 @@ void infou(const char *restrict file, unsigned long lineno, const char *restrict
 
 void fatalu(const char *restrict file, unsigned long lineno, const char *restrict func,
             const char *restrict fmt, ...) {
+  SYSTEM_TIME_TYPE time;
   PROCESS_ID_TYPE my_id;
   PROCESS_INDEX_TYPE my_index;
+  check_e(GET_TIME(&time, &ret));
   check_e(GET_MY_ID(&my_id, &ret));
   RETURN_CODE_TYPE ret;
   GET_MY_INDEX(&my_index, &ret);
   if (ret == NO_ERROR) {
-    printu("[ part#%lu proc#%lu index=%lu ] fatal at %s:%lu <%s> ", part_id, my_id, my_index,
-           file, lineno, func);
+    printu("[ %pT part#%lu proc#%lu index=%lu ] fatal at %s:%lu <%s> ", &time, part_id, my_id,
+           my_index, file, lineno, func);
   } else {
-    printu("[ part#%lu proc#%lu ] fatal at %s:%lu <%s> ", part_id, my_id, file, lineno, func);
+    printu("[ %pT part#%lu proc#%lu ] fatal at %s:%lu <%s> ", &time, part_id, my_id, file,
+           lineno, func);
   }
   va_list ap;
   va_start(ap, fmt);
@@ -96,16 +99,19 @@ void fatalu(const char *restrict file, unsigned long lineno, const char *restric
 
 void haltu(const char *restrict file, unsigned long lineno, const char *restrict func,
            const char *restrict fmt, ...) {
+  SYSTEM_TIME_TYPE time;
   PROCESS_ID_TYPE my_id;
   PROCESS_INDEX_TYPE my_index;
+  check_e(GET_TIME(&time, &ret));
   check_e(GET_MY_ID(&my_id, &ret));
   RETURN_CODE_TYPE ret;
   GET_MY_INDEX(&my_index, &ret);
   if (ret == NO_ERROR) {
-    printu("[ part#%lu proc#%lu index=%lu ] halt at %s:%lu <%s> ", part_id, my_id, my_index,
-           file, lineno, func);
+    printu("[ %pT part#%lu proc#%lu index=%lu ] halt at %s:%lu <%s> ", &time, part_id, my_id,
+           my_index, file, lineno, func);
   } else {
-    printu("[ part#%lu proc#%lu ] halt at %s:%lu <%s> ", part_id, my_id, file, lineno, func);
+    printu("[ %pT part#%lu proc#%lu ] halt at %s:%lu <%s> ", &time, part_id, my_id, file,
+           lineno, func);
   }
   va_list ap;
   va_start(ap, fmt);
