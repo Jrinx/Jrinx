@@ -26,7 +26,7 @@ $ scp ./scripts/launch-ci-runner ci-server:
 最后运行脚本：
 
 ```console
-$ ~/launch-ci-runner 001
+$ ~/launch-ci-runner 2
 ```
 
-即可为本仓库的 CI 创建 id 为 `001` 的 CI-Runner。
+即可为本仓库的 CI 创建并发度为 2 的 CI-Runner。
