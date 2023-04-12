@@ -32,6 +32,48 @@ Jrinx 是一个多分区、多核操作系统，其命名来源于 ARINC 653 与
   - [ ] `PERIODIC_WAIT`
   - [x] `GET_TIME`
   - [ ] `REPLENISH`
+- 分区间通信：
+  - [ ] `CREATE_SAMPLING_PORT`
+  - [ ] `WRITE_SAMPLING_MESSAGE`
+  - [ ] `READ_SAMPLING_MESSAGE`
+  - [ ] `GET_SAMPLING_PORT_ID`
+  - [ ] `GET_SAMPLING_PORT_STATUS`
+  - [ ] `CREATE_QUEUING_PORT`
+  - [ ] `SEND_QUEUING_MESSAGE`
+  - [ ] `RECEIVE_QUEUING_MESSAGE`
+  - [ ] `GET_QUEUING_PORT_ID`
+  - [ ] `GET_QUEUING_PORT_STATUS`
+  - [ ] `CLEAR_QUEUING_PORT`
+- 分区内通信：
+  - [ ] `CREATE_BUFFER`
+  - [ ] `SEND_BUFFER`
+  - [ ] `RECEIVE_BUFFER`
+  - [ ] `GET_BUFFER_ID`
+  - [ ] `GET_BUFFER_STATUS`
+  - [ ] `CREATE_BLACKBOARD`
+  - [ ] `DISPLAY_BLACKBOARD`
+  - [ ] `READ_BLACKBOARD`
+  - [ ] `CLEAR_BLACKBOARD`
+  - [ ] `GET_BLACKBOARD_ID`
+  - [ ] `GET_BLACKBOARD_STATUS`
+  - [ ] `CREATE_SEMAPHORE`
+  - [ ] `WAIT_SEMAPHORE`
+  - [ ] `SIGNAL_SEMAPHORE`
+  - [ ] `GET_SEMAPHORE_ID`
+  - [ ] `GET_SEMAPHORE_STATUS`
+  - [ ] `CREATE_EVENT`
+  - [ ] `SET_EVENT`
+  - [ ] `RESET_EVENT`
+  - [ ] `WAIT_EVENT`
+  - [ ] `GET_EVENT_ID`
+  - [ ] `GET_EVENT_STATUS`
+  - [ ] `CREATE_MUTEX`
+  - [ ] `ACQUIRE_MUTEX`
+  - [ ] `RELEASE_MUTEX`
+  - [ ] `RESET_MUTEX`
+  - [ ] `GET_MUTEX_ID`
+  - [ ] `GET_MUTEX_STATUS`
+  - [ ] `GET_PROCESS_MUTEX_STATE`
 
 ## 未来需要做的事情
 
