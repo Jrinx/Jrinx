@@ -129,8 +129,8 @@ long proc_alloc(struct part *part, struct proc **proc, const char *name, sys_tim
   tmp->pr_period = period;
   tmp->pr_time_cap = time_cap;
   tmp->pr_entrypoint = entrypoint;
-  proc_ustack_setup(part, tmp, aligned_stacksize);
-  proc_xstack_setup(part, tmp);
+  panic_e(proc_ustack_setup(part, tmp, aligned_stacksize));
+  panic_e(proc_xstack_setup(part, tmp));
   tmp->pr_base_pri = base_pri;
   tmp->pr_deadline = deadline;
   tmp->pr_cur_pri = 0;
