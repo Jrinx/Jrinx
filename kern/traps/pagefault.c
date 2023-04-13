@@ -14,7 +14,7 @@ void do_pagefault(struct context *context) {
   pte_t *pte;
   panic_e(pt_lookup(part->pa_pgdir, va, &pte));
   if (pte == NULL) {
-    info("pagefault from illegal va=%016lx\n", va.val);
+    info("pagefault from illegal va=%016lx, epc=%016lx\n", va.val, context->ctx_sepc);
     return;
   }
   if (pte->bits.a == 0) {
