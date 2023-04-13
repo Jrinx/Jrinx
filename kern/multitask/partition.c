@@ -54,6 +54,19 @@ struct part *part_from_id(part_id_t pa_id) {
   return part;
 }
 
+void part_add_proc_name(struct part *part, struct proc *proc) {
+  hashmap_put(&part->pa_proc_name_map, &proc->pr_name_link);
+}
+
+struct proc *part_get_proc_by_name(struct part *part, const char *name) {
+  struct linked_node *node = hashmap_get(&part->pa_proc_name_map, name);
+  if (node == NULL) {
+    return NULL;
+  }
+  struct proc *proc = CONTAINER_OF(node, struct proc, pr_name_link);
+  return proc;
+}
+
 long part_alloc(struct part **part, const char *name, unsigned long memory_req,
                 sys_time_t period, sys_time_t duration) {
   struct phy_frame *frame;

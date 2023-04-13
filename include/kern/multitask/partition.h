@@ -49,6 +49,8 @@ struct prog_def_t {
   struct prog_def_t *name##_prog __attribute__((section(".ksec.prog_def." #name))) = &name
 
 struct part *part_from_id(part_id_t id);
+void part_add_proc_name(struct part *part, struct proc *proc);
+struct proc *part_get_proc_by_name(struct part *part, const char *name);
 long part_alloc(struct part **part, const char *name, unsigned long memory_req,
                 sys_time_t period, sys_time_t duration) __attribute__((warn_unused_result));
 long part_free(struct part *part) __attribute__((warn_unused_result));

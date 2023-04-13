@@ -87,12 +87,10 @@ ret_code_t do_set_partition_mode(uintmax_t operating_mode) {
 }
 
 ret_code_t do_get_process_id(proc_name_t process_name, proc_id_t *process_id) {
-  struct part *part = sched_cur_part();
-  struct linked_node *proc_node = hashmap_get(&part->pa_proc_name_map, process_name);
-  if (proc_node == NULL) {
+  struct proc *proc = part_get_proc_by_name(sched_cur_part(), process_name);
+  if (proc == NULL) {
     return INVALID_CONFIG;
   }
-  struct proc *proc = CONTAINER_OF(proc_node, struct proc, pr_name_link);
   *process_id = proc->pr_id;
   return NO_ERROR;
 }
@@ -118,8 +116,8 @@ ret_code_t do_get_process_status(proc_id_t process_id, PROCESS_STATUS_TYPE *proc
 
 ret_code_t do_create_process(PROCESS_ATTRIBUTE_TYPE *attributes, proc_id_t *process_id) {
   struct part *part = sched_cur_part();
-  struct linked_node *proc_node = hashmap_get(&part->pa_proc_name_map, attributes->NAME);
-  if (proc_node != NULL) {
+  struct proc *proc = part_get_proc_by_name(sched_cur_part(), attributes->NAME);
+  if (proc != NULL) {
     return NO_ACTION;
   }
   if (attributes->STACK_SIZE > USTKSIZEMAX) {
@@ -136,7 +134,6 @@ ret_code_t do_create_process(PROCESS_ATTRIBUTE_TYPE *attributes, proc_id_t *proc
   if (part->pa_op_mode == NORMAL) {
     return INVALID_MODE;
   }
-  struct proc *proc;
   catch_e(proc_alloc(part, &proc, attributes->NAME, attributes->PERIOD,
                      attributes->TIME_CAPACITY, attributes->ENTRY_POINT, attributes->STACK_SIZE,
                      attributes->BASE_PRIORITY, attributes->DEADLINE),

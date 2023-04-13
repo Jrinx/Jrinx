@@ -137,7 +137,7 @@ long proc_alloc(struct part *part, struct proc **proc, const char *name, sys_tim
   tmp->pr_deadline_time = 0;
   tmp->pr_state = DORMANT;
   tmp->pr_core_id = SYSCORE;
-  hashmap_put(&part->pa_proc_name_map, &tmp->pr_name_link);
+  part_add_proc_name(part, tmp);
   list_insert_tail(&part->pa_proc_list, &tmp->pr_sched_link);
   *proc = tmp;
   panic_e(lk_acquire(&spinlock_of(proc_id_map)));
