@@ -48,6 +48,7 @@
 #include <kern/lib/hart.h>
 #include <list.h>
 #include <stddef.h>
+#include <types.h>
 
 struct context {
   union {
