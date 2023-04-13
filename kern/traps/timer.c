@@ -1,3 +1,4 @@
+#include <kern/comm/buffer.h>
 #include <kern/drivers/cpus.h>
 #include <kern/lib/boottime.h>
 #include <kern/lib/debug.h>
@@ -55,6 +56,10 @@ succ:
     struct proc *proc = ctx;
     proc->pr_asso_timer = te;
     break;
+  case BUFFER_BLOCKED:
+    struct te_proc_buf *tepb = ctx;
+    tepb->tepb_proc->pr_asso_timer = te;
+    break;
   default:
     break;
   }
@@ -75,6 +80,10 @@ void time_event_free(struct time_event *te) {
     struct proc *proc = te->te_ctx;
     proc->pr_asso_timer = NULL;
     break;
+  case BUFFER_BLOCKED:
+    struct te_proc_buf *tepb = te->te_ctx;
+    tepb->tepb_proc->pr_asso_timer = NULL;
+    break;
   default:
     break;
   }
@@ -91,6 +100,11 @@ void time_event_action(void) {
       case TE_PROCESS_DELAYED_START:
         struct proc *proc = te->te_ctx;
         proc->pr_state = READY;
+        break;
+      case BUFFER_BLOCKED:
+        struct te_proc_buf *tepb = te->te_ctx;
+        tepb->tepb_proc->pr_state = READY;
+        buffer_del_waiting_proc(tepb->tepb_buf, tepb->tepb_proc);
         break;
       default:
         break;

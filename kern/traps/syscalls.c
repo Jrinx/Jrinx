@@ -1,3 +1,4 @@
+#include <kern/comm/buffer.h>
 #include <kern/drivers/serialport.h>
 #include <kern/lib/boottime.h>
 #include <kern/lib/debug.h>
@@ -440,29 +441,133 @@ ret_code_t do_clear_queuing_port(que_port_id_t queuing_port_id) {
 ret_code_t do_create_buffer(buf_name_t buffer_name, msg_size_t max_message_size,
                             msg_range_t max_nb_message, que_disc_t queuing_discipline,
                             buf_id_t *buffer_id) {
-  // TODO
+  struct part *part = sched_cur_part();
+  struct buffer *buf = part_get_buf_by_name(part, buffer_name);
+  if (buf != NULL) {
+    return NO_ACTION;
+  }
+  if (max_message_size == 0) {
+    return INVALID_PARAM;
+  }
+  if (!buffer_is_legal_size(max_message_size, max_nb_message)) {
+    return INVALID_PARAM;
+  }
+  if (part->pa_op_mode == NORMAL) {
+    return INVALID_MODE;
+  }
+  catch_e(buffer_alloc(part, &buf, buffer_name, max_message_size, max_nb_message,
+                       queuing_discipline),
+          { return INVALID_CONFIG; });
+  *buffer_id = buf->buf_id;
   return NO_ERROR;
 }
 
 ret_code_t do_send_buffer(buf_id_t buffer_id, msg_addr_t message_addr, msg_size_t length,
                           sys_time_t time_out) {
-  // TODO
+  struct proc *proc = sched_cur_proc();
+  struct buffer *buf = buffer_from_id(buffer_id);
+  if (buf == NULL || buf->buf_part_id != sched_cur_part()->pa_id) {
+    return INVALID_PARAM;
+  }
+  if (length > buf->buf_max_msg_size) {
+    return INVALID_PARAM;
+  }
+  if (length == 0) {
+    return INVALID_PARAM;
+  }
+  if (buffer_is_full(buf)) {
+    if (time_out == 0) {
+      return NOT_AVAILABLE;
+      // TODO: check if proc owns a mutex or is error handler
+    } else {
+      proc->pr_state = WAITING;
+      buffer_add_waiting_proc(buf, proc);
+      sys_time_t wakeup_time = boottime_get_now() + time_out;
+      if (time_out != SYSTEM_TIME_INFINITE_VAL) {
+        proc->pr_waiting_reason = BUFFER_BLOCKED_WITH_TIMEOUT;
+        struct te_proc_buf tepb = {.tepb_proc = proc, .tepb_buf = buf};
+        time_event_alloc(&tepb, wakeup_time, TE_BUFFER_BLOCK_TIMEOUT);
+      } else {
+        proc->pr_waiting_reason = BUFFER_BLOCKED;
+      }
+      sched_proc_give_up();
+      if (time_out != SYSTEM_TIME_INFINITE_VAL && boottime_get_now() > wakeup_time) {
+        return TIMED_OUT;
+      }
+    }
+  }
+  buffer_send(buf, message_addr, length);
+  struct proc *to_wakeup = buffer_wakeup_waiting_proc(buf);
+  if (to_wakeup != NULL) {
+    if (to_wakeup->pr_waiting_reason == BUFFER_BLOCKED_WITH_TIMEOUT) {
+      time_event_free(to_wakeup->pr_asso_timer);
+    }
+    to_wakeup->pr_state = READY;
+    sched_proc_give_up();
+  }
   return NO_ERROR;
 }
 
 ret_code_t do_receive_buffer(buf_id_t buffer_id, sys_time_t time_out, msg_addr_t message_addr,
                              msg_size_t *length) {
-  // TODO
+  struct proc *proc = sched_cur_proc();
+  struct buffer *buf = buffer_from_id(buffer_id);
+  if (buf == NULL || buf->buf_part_id != sched_cur_part()->pa_id) {
+    return INVALID_PARAM;
+  }
+  if (buffer_is_empty(buf)) {
+    if (time_out == 0) {
+      *length = 0;
+      return NOT_AVAILABLE;
+      // TODO: check if proc owns a mutex or is error handler
+    } else {
+      proc->pr_state = WAITING;
+      buffer_add_waiting_proc(buf, proc);
+      sys_time_t wakeup_time = boottime_get_now() + time_out;
+      if (time_out != SYSTEM_TIME_INFINITE_VAL) {
+        proc->pr_waiting_reason = BUFFER_BLOCKED_WITH_TIMEOUT;
+        struct te_proc_buf tepb = {.tepb_proc = proc, .tepb_buf = buf};
+        time_event_alloc(&tepb, wakeup_time, TE_BUFFER_BLOCK_TIMEOUT);
+      } else {
+        proc->pr_waiting_reason = BUFFER_BLOCKED;
+      }
+      sched_proc_give_up();
+      if (time_out != SYSTEM_TIME_INFINITE_VAL && boottime_get_now() > wakeup_time) {
+        *length = 0;
+        return TIMED_OUT;
+      }
+    }
+  }
+  buffer_recv(buf, message_addr, length);
+  struct proc *to_wakeup = buffer_wakeup_waiting_proc(buf);
+  if (to_wakeup != NULL) {
+    if (to_wakeup->pr_waiting_reason == BUFFER_BLOCKED_WITH_TIMEOUT) {
+      time_event_free(to_wakeup->pr_asso_timer);
+    }
+    to_wakeup->pr_state = READY;
+    sched_proc_give_up();
+  }
   return NO_ERROR;
 }
 
 ret_code_t do_get_buffer_id(buf_name_t buffer_name, buf_id_t *buffer_id) {
-  // TODO
+  struct buffer *buf = part_get_buf_by_name(sched_cur_part(), buffer_name);
+  if (buf == NULL) {
+    return INVALID_CONFIG;
+  }
+  *buffer_id = buf->buf_id;
   return NO_ERROR;
 }
 
 ret_code_t do_get_buffer_status(buf_id_t buffer_id, BUFFER_STATUS_TYPE *buffer_status) {
-  // TODO
+  struct buffer *buf = buffer_from_id(buffer_id);
+  if (buf == NULL || buf->buf_part_id != sched_cur_part()->pa_id) {
+    return INVALID_PARAM;
+  }
+  buffer_status->NB_MESSAGE = buf->buf_nb_msg;
+  buffer_status->MAX_NB_MESSAGE = buf->buf_max_nb_msg;
+  buffer_status->MAX_MESSAGE_SIZE = buf->buf_max_msg_size;
+  buffer_status->WAITING_PROCESSES = buffer_get_waiting_proc_nb(buf);
   return NO_ERROR;
 }
 

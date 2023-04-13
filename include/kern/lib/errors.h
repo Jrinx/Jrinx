@@ -15,6 +15,7 @@ enum {
   KER_PART_ER,
   KER_PROC_ER,
   KER_SCHED_ER,
+  KER_BUF_ER,
   KER_ERR_MAX,
 };
 

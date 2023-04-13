@@ -1,3 +1,4 @@
+#include <kern/comm/buffer.h>
 #include <kern/drivers/cpus.h>
 #include <kern/lib/debug.h>
 #include <kern/lib/logger.h>
@@ -21,6 +22,11 @@ static const void *part_id_key_of(const struct linked_node *node) {
 static const void *part_proc_name_key_of(const struct linked_node *node) {
   const struct proc *proc = CONTAINER_OF(node, struct proc, pr_name_link);
   return proc->pr_name;
+}
+
+static const void *part_buf_name_key_of(const struct linked_node *node) {
+  const struct buffer *buf = CONTAINER_OF(node, struct buffer, buf_name_link);
+  return buf->buf_name;
 }
 
 static struct hlist_head part_id_map_array[128];
@@ -67,6 +73,19 @@ struct proc *part_get_proc_by_name(struct part *part, const char *name) {
   return proc;
 }
 
+void part_add_buf_name(struct part *part, struct buffer *buf) {
+  hashmap_put(&part->pa_buf_name_map, &buf->buf_name_link);
+}
+
+struct buffer *part_get_buf_by_name(struct part *part, const char *name) {
+  struct linked_node *node = hashmap_get(&part->pa_buf_name_map, name);
+  if (node == NULL) {
+    return NULL;
+  }
+  struct buffer *buf = CONTAINER_OF(node, struct buffer, buf_name_link);
+  return buf;
+}
+
 long part_alloc(struct part **part, const char *name, unsigned long memory_req,
                 sys_time_t period, sys_time_t duration) {
   struct phy_frame *frame;
@@ -94,6 +113,9 @@ long part_alloc(struct part **part, const char *name, unsigned long memory_req,
   struct hlist_head *proc_name_map_array = kalloc(sizeof(struct hlist_head) * 16);
   memset(proc_name_map_array, 0, sizeof(struct hlist_head) * 16);
   HASHMAP_ALLOC(&tmp->pa_proc_name_map, proc_name_map_array, 16, str, part_proc_name_key_of);
+  struct hlist_head *buf_name_map_array = kalloc(sizeof(struct hlist_head) * 64);
+  memset(buf_name_map_array, 0, sizeof(struct hlist_head) * 64);
+  HASHMAP_ALLOC(&tmp->pa_buf_name_map, buf_name_map_array, 64, str, part_buf_name_key_of);
   list_init(&tmp->pa_proc_list);
   tmp->pa_cpus_asid = kalloc(sizeof(unsigned long) * cpus_get_count());
   tmp->pa_cpus_asid_generation = kalloc(sizeof(unsigned long) * cpus_get_count());

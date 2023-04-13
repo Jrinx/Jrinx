@@ -15,6 +15,7 @@ static const char *messages[KER_ERR_MAX] = {
     [KER_PART_ER] = "partition error",
     [KER_PROC_ER] = "process error",
     [KER_SCHED_ER] = "schedule error",
+    [KER_BUF_ER] = "buffer error",
 };
 
 inline const char *msg_of(long err) {

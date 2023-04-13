@@ -14,6 +14,8 @@ typedef enum {
   DELAYED_STARTED,
   SUSPENDED,
   SUSPENDED_WITH_TIMEOUT,
+  BUFFER_BLOCKED,
+  BUFFER_BLOCKED_WITH_TIMEOUT,
 } proc_waiting_reason_t;
 
 struct proc {
@@ -38,6 +40,7 @@ struct proc {
   struct linked_node pr_id_link;
   struct linked_node pr_sched_link;
   struct linked_node pr_name_link;
+  struct linked_node pr_wait_link;
 };
 
 struct proc *proc_from_id(proc_id_t pr_id);
