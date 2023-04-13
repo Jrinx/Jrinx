@@ -53,14 +53,14 @@ succ:
   case TE_PROCESS_SUSPEND_TIMEOUT:
   case TE_PROCESS_DELAYED_START:
     struct proc *proc = ctx;
-    hlist_insert_head(&proc->pr_time_events, &te->te_proc_link);
+    proc->pr_asso_timer = te;
     break;
   default:
     break;
   }
 }
 
-static void time_event_free(struct time_event *te) {
+void time_event_free(struct time_event *te) {
   struct time_event *i;
   LINKED_NODE_ITER (cpus_time_event_queue[hrt_get_id()].l_first, i, te_queue_link) {
     if (i == te) {
@@ -72,39 +72,13 @@ static void time_event_free(struct time_event *te) {
   switch (te->te_type) {
   case TE_PROCESS_SUSPEND_TIMEOUT:
   case TE_PROCESS_DELAYED_START:
-    hlist_remove_node(&te->te_proc_link);
+    struct proc *proc = te->te_ctx;
+    proc->pr_asso_timer = NULL;
     break;
   default:
     break;
   }
   kfree(te);
-}
-
-int time_event_proc_has_type(struct proc *proc, enum time_event_type type) {
-  struct time_event *te;
-  LINKED_NODE_ITER (proc->pr_time_events.h_first, te, te_proc_link) {
-    if (te->te_type == type) {
-      return 1;
-    }
-  }
-  return 0;
-}
-
-void time_event_proc_free_filter_type(struct proc *proc, unsigned type) {
-  while (!hlist_empty(&proc->pr_time_events)) {
-    struct time_event *te;
-    struct time_event *rm = NULL;
-    LINKED_NODE_ITER (proc->pr_time_events.h_first, te, te_proc_link) {
-      if (te->te_type & type) {
-        rm = te;
-        break;
-      }
-    }
-    if (rm == NULL) {
-      break;
-    }
-    time_event_free(te);
-  }
 }
 
 void time_event_action(void) {
@@ -117,6 +91,7 @@ void time_event_action(void) {
       case TE_PROCESS_DELAYED_START:
         struct proc *proc = te->te_ctx;
         proc->pr_state = READY;
+        break;
       default:
         break;
       }

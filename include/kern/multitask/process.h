@@ -3,6 +3,7 @@
 
 #include <kern/lib/regs.h>
 #include <kern/multitask/partition.h>
+#include <kern/traps/timer.h>
 #include <kern/traps/traps.h>
 #include <list.h>
 #include <stdint.h>
@@ -33,7 +34,7 @@ struct proc {
   proc_state_t pr_state;
   proc_waiting_reason_t pr_waiting_reason;
   proc_core_id_t pr_core_id;
-  struct hlist_head pr_time_events;
+  struct time_event *pr_asso_timer;
   struct linked_node pr_id_link;
   struct linked_node pr_sched_link;
   struct linked_node pr_name_link;

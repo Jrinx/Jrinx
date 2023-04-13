@@ -22,8 +22,7 @@ struct time_event {
 
 void time_event_init(void);
 void time_event_alloc(void *ctx, sys_time_t time, enum time_event_type type);
-int time_event_proc_has_type(struct proc *proc, enum time_event_type type);
-void time_event_proc_free_filter_type(struct proc *proc, unsigned type);
+void time_event_free(struct time_event *te);
 void time_event_action(void);
 
 #endif

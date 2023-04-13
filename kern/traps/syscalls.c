@@ -175,6 +175,7 @@ ret_code_t do_suspend_self(sys_time_t time_out) {
       return TIMED_OUT;
     }
   } else {
+    proc->pr_waiting_reason = SUSPENDED;
     sched_proc_give_up();
   }
   return NO_ERROR;
@@ -218,7 +219,7 @@ ret_code_t do_resume(proc_id_t process_id) {
     return NO_ACTION;
   }
   if (proc->pr_state == WAITING && proc->pr_waiting_reason == SUSPENDED_WITH_TIMEOUT) {
-    time_event_proc_free_filter_type(proc, TE_PROCESS_SUSPEND_TIMEOUT);
+    time_event_free(proc->pr_asso_timer);
   }
   // TODO: check if proc is waiting on a process queue or TIMED_WAIT time delay or DELAYED_START
   // time delay
@@ -246,7 +247,9 @@ ret_code_t do_stop(proc_id_t process_id) {
   // TODO: check if proc owns preemption lock mutex, release...
   proc->pr_state = DORMANT;
   // TODO: check if proc is waiting on a process queue, remove it from queue
-  time_event_proc_free_filter_type(proc, TE_ANY);
+  if (proc->pr_asso_timer != NULL) {
+    time_event_free(proc->pr_asso_timer);
+  }
   // TODO: prevent the process from causing any deadline overrun faults
   sched_proc_give_up();
   return NO_ERROR;
