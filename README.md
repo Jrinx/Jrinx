@@ -45,11 +45,11 @@ Jrinx 是一个多分区、多核操作系统，其命名来源于 ARINC 653 与
   - [ ] `GET_QUEUING_PORT_STATUS`
   - [ ] `CLEAR_QUEUING_PORT`
 - 分区内通信：
-  - [ ] `CREATE_BUFFER`
-  - [ ] `SEND_BUFFER`
-  - [ ] `RECEIVE_BUFFER`
-  - [ ] `GET_BUFFER_ID`
-  - [ ] `GET_BUFFER_STATUS`
+  - [x] `CREATE_BUFFER`
+  - [x] `SEND_BUFFER`
+  - [x] `RECEIVE_BUFFER`
+  - [x] `GET_BUFFER_ID`
+  - [x] `GET_BUFFER_STATUS`
   - [ ] `CREATE_BLACKBOARD`
   - [ ] `DISPLAY_BLACKBOARD`
   - [ ] `READ_BLACKBOARD`
@@ -78,3 +78,4 @@ Jrinx 是一个多分区、多核操作系统，其命名来源于 ARINC 653 与
 ## 未来需要做的事情
 
 - 实现异步的串口 I/O，提高串口性能
+- 对内核的上下文切换、时钟中断等关键功能进行实时性分析，并做针对性优化
