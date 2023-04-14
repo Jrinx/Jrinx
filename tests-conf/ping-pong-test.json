@@ -1,0 +1,58 @@
+{
+  "sysconf": "ping-pong.json",
+  "expected": {
+    "type": "ordered",
+    "vals": [
+      {
+        "type": "unordered",
+        "vals": [
+          {
+            "type": "ordered",
+            "vals": [
+              "\\(round=1\\) send ball 0",
+              "\\(round=1\\) wait ball with timeout 2 s",
+              "\\(round=1\\) wait ball",
+              "\\(round=1\\) got ball 0",
+              "\\(round=1\\) send ball 1",
+              "\\(round=1\\) got ball 1"
+            ]
+          },
+          {
+            "type": "ordered",
+            "vals": [
+              "\\(round=2\\) send ball 2",
+              "\\(round=2\\) wait ball with timeout 2 s",
+              "\\(round=2\\) wait ball",
+              "\\(round=2\\) got ball 2",
+              "\\(round=2\\) oh, ball lost",
+              "\\(round=2\\) suspend timed out"
+            ]
+          },
+          {
+            "type": "ordered",
+            "vals": [
+              "\\(round=3\\) send ball 3",
+              "\\(round=3\\) wait ball with timeout 2 s",
+              "\\(round=3\\) wait ball",
+              "\\(round=3\\) got ball 3",
+              "\\(round=3\\) oh, ball sent but out of table",
+              "\\(round=3\\) recv timed out"
+            ]
+          },
+          {
+            "type": "ordered",
+            "vals": [
+              "\\(round=4\\) wait ball with timeout 4 s",
+              "\\(round=4\\) send ball 4",
+              "\\(round=4\\) wait ball with timeout 2 s",
+              "\\(round=4\\) got ball 4",
+              "\\(round=4\\) send ball 5",
+              "\\(round=4\\) got ball 5"
+            ]
+          }
+        ]
+      },
+      "game over"
+    ]
+  }
+}
