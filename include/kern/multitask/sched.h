@@ -10,6 +10,7 @@ extern struct proc **cpus_cur_proc;
 void sched_init(void);
 void sched_add_part(struct part *part);
 void sched_global(void) __attribute__((noreturn));
+void sched_proc(void) __attribute__((noreturn));
 void sched_proc_give_up();
 
 static inline struct proc *sched_cur_proc(void) {

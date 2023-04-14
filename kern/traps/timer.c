@@ -114,5 +114,5 @@ void time_event_action(void) {
       break;
     }
   }
-  sched_proc_give_up();
+  sched_proc();
 }
