@@ -19,6 +19,7 @@ int *cpus_retained_intp;
 
 static uint32_t cpus_timebase_freq;
 static unsigned long cpus_count;
+static unsigned long cpus_valid_count;
 
 uint32_t cpus_get_timebase_freq(void) {
   return cpus_timebase_freq;
@@ -26,6 +27,10 @@ uint32_t cpus_get_timebase_freq(void) {
 
 unsigned long cpus_get_count(void) {
   return cpus_count;
+}
+
+unsigned long cpus_get_valid_count(void) {
+  return cpus_valid_count;
 }
 
 static int cpus_pred(const struct dev_node *node) {
@@ -40,10 +45,6 @@ static int cpus_check(const struct dev_node *node) {
   }
   prop = dt_node_prop_extract(node, "compatible");
   if (prop == NULL || !dt_match_strlist(prop->pr_values, prop->pr_len, "riscv")) {
-    return 0;
-  }
-  prop = dt_node_prop_extract(node, "mmu-type");
-  if (prop == NULL) {
     return 0;
   }
   return 1;
@@ -64,6 +65,14 @@ static long cpus_probe(const struct dev_node *node) {
     if (cpus_check(child)) {
       cpus_count++;
     }
+  }
+
+  extern const char *boot_dt_model;
+  if (strcmp(boot_dt_model, "SiFive HiFive Unleashed A00") == 0 ||
+      strcmp(boot_dt_model, "SiFive HiFive Unmatched A00") == 0) {
+    cpus_valid_count = cpus_count - 1;
+  } else {
+    cpus_valid_count = cpus_count;
   }
 
   cpus_stacktop = palloc(sizeof(unsigned long) * cpus_count, sizeof(unsigned long));

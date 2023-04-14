@@ -10,5 +10,6 @@ extern int *cpus_retained_intp;
 
 uint32_t cpus_get_timebase_freq(void);
 unsigned long cpus_get_count(void);
+unsigned long cpus_get_valid_count(void);
 
 #endif

@@ -46,7 +46,7 @@ static void kernel_gen_init(void) {
     break;
   }
   trap_init_vec();
-  while (gen_init_state != cpus_get_count()) {
+  while (gen_init_state != cpus_get_valid_count()) {
   }
 }
 
@@ -64,7 +64,7 @@ static void kernel_sched(void) {
   panic_e(lk_acquire(&spinlock_of(sched_state)));
   sched_state++;
   panic_e(lk_release(&spinlock_of(sched_state)));
-  while (sched_state != cpus_get_count()) {
+  while (sched_state != cpus_get_valid_count()) {
   }
 }
 
@@ -103,7 +103,7 @@ void __attribute__((noreturn)) kernel_init(unsigned long hartid, void *dtb_addr)
   panic_e(lk_acquire(&spinlock_of(init_state)));
   init_state++;
   panic_e(lk_release(&spinlock_of(init_state)));
-  while (init_state != cpus_get_count()) {
+  while (init_state != cpus_get_valid_count()) {
   }
 
   kernel_gen_init();
