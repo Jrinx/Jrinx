@@ -5,11 +5,10 @@
 #include <user/sys/syscalls.h>
 
 static void yield(PROCESS_ID_TYPE fr, PROCESS_ID_TYPE to) {
-  char fr_name[32];
   PROCESS_STATUS_TYPE fr_status = {
       .ATTRIBUTES =
           {
-              .NAME = fr_name,
+              .NAME = NULL,
           },
   };
   check_e(GET_PROCESS_STATUS(fr, &fr_status, &ret));

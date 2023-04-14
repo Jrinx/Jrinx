@@ -111,7 +111,9 @@ ret_code_t do_get_process_status(proc_id_t process_id, PROCESS_STATUS_TYPE *proc
   process_status->ATTRIBUTES.STACK_SIZE = proc->pr_ustacksize;
   process_status->ATTRIBUTES.BASE_PRIORITY = proc->pr_base_pri;
   process_status->ATTRIBUTES.DEADLINE = proc->pr_deadline;
-  strcpy(process_status->ATTRIBUTES.NAME, proc->pr_name);
+  if (process_status->ATTRIBUTES.NAME != NULL) {
+    strcpy(process_status->ATTRIBUTES.NAME, proc->pr_name);
+  }
   return NO_ERROR;
 }
 

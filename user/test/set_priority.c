@@ -5,11 +5,10 @@
 #include <user/sys/syscalls.h>
 
 void set_priority_check(void) {
-  char name[20];
   PROCESS_STATUS_TYPE this_status = {
       .ATTRIBUTES =
           {
-              .NAME = name,
+              .NAME = NULL,
           },
   };
   PROCESS_ID_TYPE proc_id[2];
