@@ -84,7 +84,7 @@ void fatalu(const char *restrict file, unsigned long lineno, const char *restric
   RETURN_CODE_TYPE ret;
   GET_MY_INDEX(&my_index, &ret);
   if (ret == NO_ERROR) {
-    printu("[ %pT part#%lu proc#%lu index=%lu ] fatal at %s:%lu <%s> ", &time, part_id, my_id,
+    printu("[ %pT part#%lu proc#%lu(%lu) ] fatal at %s:%lu <%s> ", &time, part_id, my_id,
            my_index, file, lineno, func);
   } else {
     printu("[ %pT part#%lu proc#%lu ] fatal at %s:%lu <%s> ", &time, part_id, my_id, file,
@@ -107,7 +107,7 @@ void haltu(const char *restrict file, unsigned long lineno, const char *restrict
   RETURN_CODE_TYPE ret;
   GET_MY_INDEX(&my_index, &ret);
   if (ret == NO_ERROR) {
-    printu("[ %pT part#%lu proc#%lu index=%lu ] halt at %s:%lu <%s> ", &time, part_id, my_id,
+    printu("[ %pT part#%lu proc#%lu(%lu) ] halt at %s:%lu <%s> ", &time, part_id, my_id,
            my_index, file, lineno, func);
   } else {
     printu("[ %pT part#%lu proc#%lu ] halt at %s:%lu <%s> ", &time, part_id, my_id, file,
