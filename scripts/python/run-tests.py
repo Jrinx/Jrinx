@@ -69,9 +69,6 @@ def main():
     verbose = args.verbose
     parallel = args.parallel
 
-    if verbose and parallel:
-        raise ValueError('-p/--parallel and -v/--verbose are mutually exclusive')
-
     try:
         compile_mode = os.environ['COMPILE_MODE']
     except KeyError:
