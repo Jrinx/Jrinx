@@ -32,7 +32,7 @@ static struct proc *sched_elect_next_proc(void) {
   struct proc *proc;
   do {
     LINKED_NODE_ITER (cpus_cur_part[hrt_get_id()]->pa_proc_list.l_first, proc, pr_sched_link) {
-      if (proc->pr_state == READY &&
+      if ((proc->pr_state == READY || proc->pr_state == RUNNING) &&
           (next_proc == NULL || proc->pr_cur_pri > next_proc->pr_cur_pri)) {
         next_proc = proc;
       }
@@ -43,8 +43,13 @@ static struct proc *sched_elect_next_proc(void) {
 
 // TODO: impl standard arinc 653 scheduler
 __attribute__((noreturn)) void sched_proc(void) {
+  struct proc *cur_proc = cpus_cur_proc[hrt_get_id()];
+  if (cur_proc != NULL && cur_proc->pr_state == RUNNING) {
+    cur_proc->pr_state = READY;
+  }
   struct proc *next_proc = sched_elect_next_proc();
   cpus_cur_proc[hrt_get_id()] = next_proc;
+  next_proc->pr_state = RUNNING;
   proc_run(next_proc);
 }
 
