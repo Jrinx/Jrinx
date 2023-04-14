@@ -9,7 +9,7 @@
     RETURN_CODE_TYPE ret;                                                                      \
     (expr);                                                                                    \
     if (ret != NO_ERROR) {                                                                     \
-      fatal("expected error: %d\n", ret);                                                      \
+      fatal("unexpected error: %d\n", ret);                                                    \
     }                                                                                          \
   })
 
