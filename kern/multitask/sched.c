@@ -27,8 +27,7 @@ void sched_add_part(struct part *part) {
   panic_e(lk_release(&spinlock_of(sched_part_list)));
 }
 
-// TODO: impl standard arinc 653 scheduler
-__attribute__((noreturn)) void sched_proc(void) {
+static struct proc *sched_elect_next_proc(void) {
   struct proc *next_proc = NULL;
   struct proc *proc;
   do {
@@ -39,6 +38,12 @@ __attribute__((noreturn)) void sched_proc(void) {
       }
     }
   } while (next_proc == NULL);
+  return next_proc;
+}
+
+// TODO: impl standard arinc 653 scheduler
+__attribute__((noreturn)) void sched_proc(void) {
+  struct proc *next_proc = sched_elect_next_proc();
   cpus_cur_proc[hrt_get_id()] = next_proc;
   proc_run(next_proc);
 }
@@ -65,9 +70,12 @@ void sched_proc_give_up() {
     sched_cnt++;
   }
   struct proc *proc = cpus_cur_proc[hrt_get_id()];
-  struct context *context = kalloc(sizeof(struct context));
-  memset(context, 0, sizeof(struct context));
-  hlist_insert_head(&proc->pr_trapframe.tf_ctx_list, &context->ctx_link);
-  extern void _sched_proc_give_up(struct context * context);
-  _sched_proc_give_up(context);
+  struct proc *next_proc = sched_elect_next_proc();
+  if (proc != next_proc) {
+    struct context *context = kalloc(sizeof(struct context));
+    memset(context, 0, sizeof(struct context));
+    hlist_insert_head(&proc->pr_trapframe.tf_ctx_list, &context->ctx_link);
+    extern void _sched_proc_give_up(struct context * context);
+    _sched_proc_give_up(context);
+  }
 }
