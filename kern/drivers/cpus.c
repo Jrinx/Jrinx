@@ -14,6 +14,8 @@ static uint8_t kern_master_stack[KSTKSIZE]
 const uint8_t *kern_master_stacktop = kern_master_stack + KSTKSIZE;
 
 unsigned long *cpus_stacktop = NULL;
+size_t *cpus_intp_layer;
+int *cpus_retained_intp;
 
 static uint32_t cpus_timebase_freq;
 static unsigned long cpus_count;
@@ -65,6 +67,10 @@ static long cpus_probe(const struct dev_node *node) {
   }
 
   cpus_stacktop = palloc(sizeof(unsigned long) * cpus_count, sizeof(unsigned long));
+  cpus_intp_layer = palloc(sizeof(size_t) * cpus_count, sizeof(size_t));
+  memset(cpus_intp_layer, 0, sizeof(size_t) * cpus_count);
+  cpus_retained_intp = palloc(sizeof(int) * cpus_count, sizeof(int));
+  memset(cpus_retained_intp, 0, sizeof(int) * cpus_count);
 
   LINKED_NODE_ITER (node->nd_children_list.l_first, child, nd_link) {
     if (!cpus_check(child)) {

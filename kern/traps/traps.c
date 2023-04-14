@@ -33,13 +33,13 @@ static void prepare_nested_trap(void) {
   csrw_sscratch((unsigned long)cpus_context[hrt_get_id()]);
 }
 
-static void enable_int(void) {
+void enable_int(void) {
   rv64_sstatus sstatus = {.val = csrr_sstatus()};
   sstatus.bits.sie = 1;
   csrw_sstatus(sstatus.val);
 }
 
-static void disable_int(void) {
+void disable_int(void) {
   rv64_sstatus sstatus = {.val = csrr_sstatus()};
   sstatus.bits.sie = 0;
   csrw_sstatus(sstatus.val);
