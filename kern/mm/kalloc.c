@@ -82,6 +82,9 @@ void *kalloc(size_t size) {
     panic_e(lk_release(&spinlock_of(kalloc_mod)));
     return NULL;
   }
+  block->state = USED;
+  panic_e(lk_release(&spinlock_of(kalloc_mod)));
+  panic_e(lk_acquire(&spinlock_of(kalloc_mod)));
   while (block->size / 2 >= size) {
     struct buddy_block *new_block = (struct buddy_block *)((uint8_t *)block + block->size / 2);
     new_block->size = block->size / 2;
@@ -94,7 +97,6 @@ void *kalloc(size_t size) {
     block->next = new_block;
     block->size /= 2;
   }
-  block->state = USED;
   panic_e(lk_release(&spinlock_of(kalloc_mod)));
   return (void *)((uint8_t *)block + sizeof(struct buddy_block));
 }
