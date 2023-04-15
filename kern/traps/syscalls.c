@@ -451,7 +451,8 @@ ret_code_t do_create_buffer(buf_name_t buffer_name, msg_size_t max_message_size,
   if (max_message_size == 0) {
     return INVALID_PARAM;
   }
-  if (!buffer_is_legal_size(max_message_size, max_nb_message)) {
+  if (part->pa_comm_base + (max_message_size + sizeof(struct comm_msg)) * max_nb_message >=
+      COMM_LIMT) {
     return INVALID_PARAM;
   }
   if (part->pa_op_mode == NORMAL) {

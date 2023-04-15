@@ -51,15 +51,6 @@ struct buffer *buffer_from_id(buf_id_t buf_id) {
 
 long buffer_alloc(struct part *part, struct buffer **buf, buf_name_t name,
                   msg_size_t max_msg_size, msg_range_t max_nb_msg, que_disc_t que_disc) {
-  assert((max_msg_size + sizeof(struct comm_msg)) * max_nb_msg <= BUFFER_MAX_SIZE);
-  if (part->pa_mem_rem < BUFFER_MAX_SIZE) {
-    return -KER_BUF_ER;
-  }
-  part->pa_mem_rem -= BUFFER_MAX_SIZE;
-  struct phy_frame *frame;
-  catch_e(phy_frame_alloc(&frame));
-  sys_addr_t pa;
-  panic_e(frame2pa(frame, &pa));
   struct buffer *tmp = kalloc(sizeof(struct buffer));
   memset(tmp, 0, sizeof(struct buffer));
   tmp->buf_id = buf_id_alloc();
@@ -69,8 +60,8 @@ long buffer_alloc(struct part *part, struct buffer **buf, buf_name_t name,
   tmp->buf_que_disc = que_disc;
   tmp->buf_max_msg_size = max_msg_size;
   tmp->buf_max_nb_msg = max_nb_msg;
-  tmp->buf_data = (void *)pa;
   tmp->buf_cap = (max_msg_size + sizeof(struct comm_msg)) * max_nb_msg;
+  tmp->buf_data = (void *)(part->pa_comm_base += tmp->buf_cap);
   tmp->buf_off_b = 0;
   tmp->buf_off_e = -(max_msg_size + sizeof(struct comm_msg));
   tmp->buf_nb_msg = 0;

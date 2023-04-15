@@ -16,6 +16,7 @@ struct part {
   unsigned long pa_mem_rem;
   unsigned long pa_ustasktop;
   unsigned long pa_xstacktop;
+  unsigned long pa_comm_base;
   unsigned long pa_entrypoint;
   unsigned long pa_main_proc_stacksize;
   sys_time_t pa_period;

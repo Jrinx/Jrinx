@@ -19,6 +19,8 @@
 
 #define MMIOBASE 0xffffffC000000000
 
+#define COMM_LIMT 0x3f00000000
+#define COMM_BASE 0x3100000000
 #define XSTKLIMIT 0x3000000000
 #define USTKLIMIT 0x2000000000
 #define UMAINSTKTOP_SYM _main_proc_stacktop

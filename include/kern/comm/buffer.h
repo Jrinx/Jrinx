@@ -41,8 +41,4 @@ void buffer_del_waiting_proc(struct buffer *buf, struct proc *proc);
 struct proc *buffer_wakeup_waiting_proc(struct buffer *buf);
 wait_range_t buffer_get_waiting_proc_nb(struct buffer *buf);
 
-static inline int buffer_is_legal_size(msg_size_t max_msg_size, msg_range_t max_nb_msg) {
-  return (max_msg_size + sizeof(struct comm_msg)) * max_nb_msg <= BUFFER_MAX_SIZE;
-}
-
 #endif

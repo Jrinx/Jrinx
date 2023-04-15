@@ -102,6 +102,7 @@ long part_alloc(struct part **part, const char *name, unsigned long memory_req,
   tmp->pa_mem_rem = memory_req;
   tmp->pa_ustasktop = USTKLIMIT;
   tmp->pa_xstacktop = XSTKLIMIT;
+  tmp->pa_comm_base = COMM_BASE;
   tmp->pa_id = part_id_alloc();
   // TODO: init period, duration, num_cores
   tmp->pa_period = period;
