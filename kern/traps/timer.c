@@ -101,7 +101,7 @@ void time_event_action(void) {
         struct proc *proc = te->te_ctx;
         proc->pr_state = READY;
         break;
-      case BUFFER_BLOCKED:
+      case TE_BUFFER_BLOCK_TIMEOUT:
         struct te_proc_buf *tepb = te->te_ctx;
         tepb->tepb_proc->pr_state = READY;
         buffer_del_waiting_proc(tepb->tepb_buf, tepb->tepb_proc);
