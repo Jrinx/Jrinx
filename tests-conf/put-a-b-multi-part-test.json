@@ -1,16 +1,28 @@
 {
   "sysconf": "put-a-b-multi-part.json",
   "expected": {
-    "type": "ordered",
+    "type": "unordered",
     "vals": [
       {
-        "type": "unordered",
+        "type": "ordered",
         "vals": [
           "put 'A' to console",
-          "put 'B' to console"
+          "\\(0\\) A",
+          "\\(1\\) A",
+          "\\(2\\) A",
+          "\\(3\\) A"
         ]
       },
-      "(AB){10}|(BA){10}"
+      {
+        "type": "ordered",
+        "vals": [
+          "put 'B' to console",
+          "\\(0\\) B",
+          "\\(1\\) B",
+          "\\(2\\) B",
+          "\\(3\\) B"
+        ]
+      }
     ]
   }
 }

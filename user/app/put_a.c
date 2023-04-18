@@ -7,9 +7,9 @@
 void put_a(void) {
   RETURN_CODE_TYPE ret;
   info("put 'A' to console\n");
-  for (size_t i = 0; i < 20; i++) {
-    sys_cons_write_char('A');
-    SUSPEND_SELF(150 * SYS_TIME_MILLISECOND, &ret);
+  for (size_t i = 0; i < 4; i++) {
+    info("(%lu) A\n", i);
+    SUSPEND_SELF(1500 * SYS_TIME_MILLISECOND, &ret);
   }
   halt("done\n");
 }

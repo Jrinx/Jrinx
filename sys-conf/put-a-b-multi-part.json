@@ -4,27 +4,27 @@
       "name": "put-a",
       "prog": "app_put_a",
       "memory": "8*1024*1024",
-      "period": 200000,
-      "duration": 100000
+      "period": 2000000,
+      "duration": 1000000
     },
     {
       "name": "put-b",
       "prog": "app_put_b",
       "memory": "8*1024*1024",
-      "period": 200000,
-      "duration": 100000
+      "period": 2000000,
+      "duration": 1000000
     }
   ],
   "scheduler": [
     {
       "part": "put-a",
       "offset": 0,
-      "duration": 100000
+      "duration": 1000000
     },
     {
       "part": "put-b",
-      "offset": 100000,
-      "duration": 100000
+      "offset": 1000000,
+      "duration": 1000000
     }
   ]
 }
