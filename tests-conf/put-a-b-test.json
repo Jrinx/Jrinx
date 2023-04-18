@@ -1,5 +1,4 @@
 {
-  "bootargs": "--debug-sched-max-cnt 30",
   "sysconf": "put-a-b.json",
   "expected": {
     "type": "ordered",

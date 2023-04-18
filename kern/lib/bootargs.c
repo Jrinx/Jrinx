@@ -11,7 +11,6 @@ static const char *args_test;
 static int args_debug_dt = 0;
 int args_debug_kalloc_used = 0;
 int args_debug_as_switch = 0;
-int args_debug_sched_max_cnt = 0;
 static const char *args_partitions_conf;
 
 static struct arg_opt args_collections[] = {
@@ -20,7 +19,6 @@ static struct arg_opt args_collections[] = {
     arg_of_bool(0, "debug-dt", &args_debug_dt),
     arg_of_bool(0, "debug-kalloc-used", &args_debug_kalloc_used),
     arg_of_bool(0, "debug-as-switch", &args_debug_as_switch),
-    arg_of_int(0, "debug-sched-max-cnt", &args_debug_sched_max_cnt),
     arg_of_end,
 };
 

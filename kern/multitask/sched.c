@@ -66,14 +66,6 @@ void sched_global(void) {
 }
 
 void sched_proc_give_up() {
-  extern int args_debug_sched_max_cnt;
-  if (args_debug_sched_max_cnt) {
-    static int sched_cnt = 0;
-    if (sched_cnt >= args_debug_sched_max_cnt) {
-      halt("sched count exceeded!\n");
-    }
-    sched_cnt++;
-  }
   struct proc *proc = cpus_cur_proc[hrt_get_id()];
   struct proc *next_proc = sched_elect_next_proc();
   if (proc != next_proc) {

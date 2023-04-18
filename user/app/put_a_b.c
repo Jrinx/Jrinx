@@ -5,6 +5,12 @@
 #include <user/sys/syscalls.h>
 
 static void yield(PROCESS_ID_TYPE fr, PROCESS_ID_TYPE to) {
+  static unsigned count = 0;
+  count++;
+  if (count > 30) {
+    sys_cons_write_char('\n');
+    halt("done\n");
+  }
   PROCESS_STATUS_TYPE fr_status = {
       .ATTRIBUTES =
           {
