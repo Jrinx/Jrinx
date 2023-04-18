@@ -34,22 +34,23 @@ def run_test(test):
 
 
 def run_testset(testset):
-    try:
-        subprocess.check_call(['make', compile_mode],
-                              env=dict(os.environ, COLOR='n'),
-                              stdout=subprocess.DEVNULL,
-                              )
-    except subprocess.CalledProcessError as e:
-        bfatal('failed to build jrinx')
-        return e.returncode
-    try:
-        subprocess.check_call(['make', 'sbi-fw'],
-                              stdout=subprocess.DEVNULL,
-                              stderr=subprocess.DEVNULL,
-                              )
-    except subprocess.CalledProcessError as e:
-        bfatal('failed to build opensbi firmware')
-        return e.returncode
+    if not no_make:
+        try:
+            subprocess.check_call(['make', compile_mode],
+                                  env=dict(os.environ, COLOR='n'),
+                                  stdout=subprocess.DEVNULL,
+                                  )
+        except subprocess.CalledProcessError as e:
+            bfatal('failed to build jrinx')
+            return e.returncode
+        try:
+            subprocess.check_call(['make', 'sbi-fw'],
+                                  stdout=subprocess.DEVNULL,
+                                  stderr=subprocess.DEVNULL,
+                                  )
+        except subprocess.CalledProcessError as e:
+            bfatal('failed to build opensbi firmware')
+            return e.returncode
     if len(testset) > 1 and parallel:
         binfo(f'Parallelize with pool size {PARALLEL_POOL_SIZE}')
         return multiprocessing.Pool(PARALLEL_POOL_SIZE).map(run_test, testset)
@@ -62,12 +63,14 @@ def main():
     args.add_argument('-t', '--test')
     args.add_argument('-v', '--verbose', action='store_true')
     args.add_argument('-p', '--parallel', action='store_true')
+    args.add_argument('-n', '--no-make', action='store_true')
     args = args.parse_args()
     test = args.test
 
-    global verbose, parallel, compile_mode, board
+    global verbose, parallel, no_make, compile_mode, board
     verbose = args.verbose
     parallel = args.parallel
+    no_make = args.no_make
 
     try:
         compile_mode = os.environ['COMPILE_MODE']
