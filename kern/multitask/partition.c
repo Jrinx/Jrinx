@@ -19,6 +19,11 @@ static const void *part_id_key_of(const struct linked_node *node) {
   return &part->pa_id;
 }
 
+static const void *part_name_key_of(const struct linked_node *node) {
+  const struct part *part = CONTAINER_OF(node, struct part, pa_name_link);
+  return part->pa_name;
+}
+
 static const void *part_proc_name_key_of(const struct linked_node *node) {
   const struct proc *proc = CONTAINER_OF(node, struct proc, pr_name_link);
   return proc->pr_name;
@@ -57,6 +62,26 @@ struct part *part_from_id(part_id_t pa_id) {
     return NULL;
   }
   struct part *part = CONTAINER_OF(node, struct part, pa_id_link);
+  return part;
+}
+
+static struct hlist_head part_name_map_array[128];
+static struct hashmap part_name_map = {
+    .h_array = part_name_map_array,
+    .h_num = 0,
+    .h_cap = 128,
+    .h_code = hash_code_str,
+    .h_equals = hash_eq_str,
+    .h_key = part_name_key_of,
+};
+static with_spinlock(part_name_map);
+
+struct part *part_from_name(const char *name) {
+  struct linked_node *node = hashmap_get(&part_name_map, name);
+  if (node == NULL) {
+    return NULL;
+  }
+  struct part *part = CONTAINER_OF(node, struct part, pa_name_link);
   return part;
 }
 
@@ -126,6 +151,9 @@ long part_alloc(struct part **part, const char *name, unsigned long memory_req,
   panic_e(lk_acquire(&spinlock_of(part_id_map)));
   hashmap_put(&part_id_map, &tmp->pa_id_link);
   panic_e(lk_release(&spinlock_of(part_id_map)));
+  panic_e(lk_acquire(&spinlock_of(part_name_map)));
+  hashmap_put(&part_name_map, &tmp->pa_name_link);
+  panic_e(lk_release(&spinlock_of(part_name_map)));
   return KER_SUCCESS;
 }
 

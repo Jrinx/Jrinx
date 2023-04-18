@@ -30,6 +30,7 @@ struct part {
   struct hashmap pa_buf_name_map;
   struct list_head pa_proc_list;
   struct linked_node pa_id_link;
+  struct linked_node pa_name_link;
   struct linked_node pa_sched_link;
 };
 
@@ -54,6 +55,7 @@ struct proc;
 struct buffer;
 
 struct part *part_from_id(part_id_t id);
+struct part *part_from_name(const char *name);
 void part_add_proc_name(struct part *part, struct proc *proc);
 struct proc *part_get_proc_by_name(struct part *part, const char *name);
 void part_add_buf_name(struct part *part, struct buffer *buf);
