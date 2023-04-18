@@ -56,29 +56,29 @@ static long do_partitions_create(const char *conf) {
   size_t p = 0, q = 0;
   do {
     struct part_conf *pc = &part_confs[p++];
-    pc->pa_name = NULL;
-    pc->pa_prog = NULL;
-    pc->pa_mem_req = 0;
-    pc->pa_period = 0;
-    pc->pa_duration = 0;
-    while (pc->pa_name == NULL || pc->pa_prog == NULL || pc->pa_mem_req == 0 ||
-           pc->pa_period == 0 || pc->pa_duration == 0) {
+    unsigned long pc_init = 0;
+    while (pc_init < 5) {
       if (q > conf_len) {
         goto error;
       }
       if (strcmp(&conf_raw[q], "name") == 0) {
         pc->pa_name = &conf_raw[q + sizeof("name")];
+        pc_init++;
       } else if (strcmp(&conf_raw[q], "prog") == 0) {
         pc->pa_prog = &conf_raw[q + sizeof("prog")];
+        pc_init++;
       } else if (strcmp(&conf_raw[q], "memory") == 0) {
         pc->pa_mem_req = atoi(&conf_raw[q + sizeof("memory")]);
         if (pc->pa_mem_req == 0) {
           goto error;
         }
+        pc_init++;
       } else if (strcmp(&conf_raw[q], "period") == 0) {
         pc->pa_period = atoi(&conf_raw[q + sizeof("period")]);
+        pc_init++;
       } else if (strcmp(&conf_raw[q], "duration") == 0) {
         pc->pa_duration = atoi(&conf_raw[q + sizeof("duration")]);
+        pc_init++;
       } else {
         goto error;
       }
