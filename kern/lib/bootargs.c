@@ -3,6 +3,7 @@
 #include <kern/lib/errors.h>
 #include <kern/mm/kalloc.h>
 #include <kern/multitask/partition.h>
+#include <kern/multitask/sched.h>
 #include <kern/tests.h>
 #include <lib/argparser.h>
 #include <lib/string.h>
@@ -12,10 +13,12 @@ static int args_debug_dt = 0;
 int args_debug_kalloc_used = 0;
 int args_debug_as_switch = 0;
 static const char *args_partitions_conf;
+static const char *args_scheduler_conf;
 
 static struct arg_opt args_collections[] = {
     arg_of_str('t', "test", &args_test),
     arg_of_str('p', "pa-conf", &args_partitions_conf),
+    arg_of_str('s', "sc-conf", &args_scheduler_conf),
     arg_of_bool(0, "debug-dt", &args_debug_dt),
     arg_of_bool(0, "debug-kalloc-used", &args_debug_kalloc_used),
     arg_of_bool(0, "debug-as-switch", &args_debug_as_switch),
@@ -101,6 +104,60 @@ error:
   return -KER_ARG_ER;
 }
 
+static long do_sched_create(const char *conf) {
+  size_t conf_len = strlen(conf);
+  char *conf_raw = kalloc((conf_len + 1) * sizeof(char));
+  strcpy(conf_raw, conf);
+  size_t conf_items_cnt = 1;
+  size_t conf_scheds_cnt = 1;
+  for (size_t i = 0; conf_raw[i] != '\0'; i++) {
+    if (conf_raw[i] == ';' || conf_raw[i] == ',' || conf_raw[i] == '=') {
+      conf_items_cnt++;
+      if (conf_raw[i] == ';') {
+        conf_scheds_cnt++;
+      }
+      conf_raw[i] = '\0';
+    }
+  }
+  struct sched_conf *sched_confs = kalloc(conf_scheds_cnt * sizeof(struct sched_conf));
+  size_t p = 0, q = 0;
+  do {
+    struct sched_conf *sc = &sched_confs[p++];
+    unsigned long sc_init = 0;
+    while (sc_init < 3) {
+      if (q > conf_len) {
+        goto error;
+      }
+      if (strcmp(&conf_raw[q], "part") == 0) {
+        sc->sc_pa_name = &conf_raw[q + sizeof("part")];
+        sc_init++;
+      } else if (strcmp(&conf_raw[q], "offset") == 0) {
+        sc->sc_offset = atoi(&conf_raw[q + sizeof("offset")]);
+        sc_init++;
+      } else if (strcmp(&conf_raw[q], "duration") == 0) {
+        sc->sc_duration = atoi(&conf_raw[q + sizeof("duration")]);
+        sc_init++;
+      } else {
+        goto error;
+      }
+      for (size_t j = 0; j < 2; j++) {
+        while (conf_raw[q++] != '\0') {
+        }
+      }
+    }
+  } while (p < conf_scheds_cnt);
+  for (size_t i = 0; i < conf_scheds_cnt; i++) {
+    catch_e(sched_module_add(&sched_confs[i]), { goto error; });
+  }
+  kfree(conf_raw);
+  kfree(sched_confs);
+  return KER_SUCCESS;
+error:
+  kfree(conf_raw);
+  kfree(sched_confs);
+  return -KER_ARG_ER;
+}
+
 long args_action(void) {
   if (args_test != NULL) {
     do_test(args_test);
@@ -113,6 +170,9 @@ long args_action(void) {
   }
   if (args_partitions_conf != NULL) {
     catch_e(do_partitions_create(args_partitions_conf));
+  }
+  if (args_scheduler_conf != NULL) {
+    catch_e(do_sched_create(args_scheduler_conf));
   }
   return KER_SUCCESS;
 }

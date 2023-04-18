@@ -24,6 +24,12 @@ def encode_conf(conf: dict) -> str:
         for part in conf['partitions']:
             parts_conf += [','.join(encode_item(k, v) for k, v in part.items())]
         res += [';'.join(parts_conf)]
+    if conf.get('scheduler'):
+        res += ['--sc-conf']
+        table_conf = []
+        for sched in conf['scheduler']:
+            table_conf += [','.join(encode_item(k, v) for k, v in sched.items())]
+        res += [';'.join(table_conf)]
     return ' '.join(res)
 
 

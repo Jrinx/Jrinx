@@ -46,7 +46,7 @@ void disable_int(void) {
 }
 
 extern void do_pagefault(struct context *context);
-extern void do_timer_int(struct context *context) __attribute__((noreturn));
+extern void do_timer_int(struct context *context);
 extern void do_syscall(struct context *context);
 
 void handle_trap(void) {

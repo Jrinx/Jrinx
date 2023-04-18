@@ -39,6 +39,7 @@ static void kernel_gen_init(void) {
   switch (hrt_get_id()) {
   case SYSCORE:
     panic_e(args_action());
+    panic_e(sched_launch());
   default:
     panic_e(lk_acquire(&spinlock_of(gen_init_state)));
     gen_init_state++;

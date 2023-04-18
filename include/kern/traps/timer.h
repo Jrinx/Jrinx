@@ -8,10 +8,10 @@
 #include <types.h>
 
 enum time_event_type {
-  TE_PROCESS_SUSPEND_TIMEOUT = 0b1,
-  TE_PROCESS_DELAYED_START = 0b10,
-  TE_BUFFER_BLOCK_TIMEOUT = 0b100,
-  TE_ANY = ~0U,
+  TE_PARTITION_ACTIVATE,
+  TE_PROCESS_SUSPEND_TIMEOUT,
+  TE_PROCESS_DELAYED_START,
+  TE_BUFFER_BLOCK_TIMEOUT,
 };
 
 struct time_event {
@@ -29,6 +29,6 @@ struct te_proc_buf {
 void time_event_init(void);
 void time_event_alloc(void *ctx, sys_time_t time, enum time_event_type type);
 void time_event_free(struct time_event *te);
-void time_event_action(void) __attribute__((noreturn));
+void time_event_action(void);
 
 #endif

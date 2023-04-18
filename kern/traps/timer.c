@@ -96,20 +96,31 @@ void time_event_free(struct time_event *te) {
 }
 
 void time_event_action(void) {
+  int resched_part = 0;
+  int resched_proc = 0;
   while (!list_empty(&cpus_time_event_queue[hrt_get_id()])) {
     struct time_event *te = CONTAINER_OF(cpus_time_event_queue[hrt_get_id()].l_first,
                                          struct time_event, te_queue_link);
     if (te->te_time <= boottime_get_now()) {
       switch (te->te_type) {
+      case TE_PARTITION_ACTIVATE:
+        resched_part = 1;
+        break;
       case TE_PROCESS_SUSPEND_TIMEOUT:
       case TE_PROCESS_DELAYED_START:
         struct proc *proc = te->te_ctx;
         proc->pr_state = READY;
+        if (proc->pr_part_id == sched_cur_part()->pa_id) {
+          resched_proc = 1;
+        }
         break;
       case TE_BUFFER_BLOCK_TIMEOUT:
         struct te_proc_buf *tepb = te->te_ctx;
         tepb->tepb_proc->pr_state = READY;
         buffer_del_waiting_proc(tepb->tepb_buf, tepb->tepb_proc);
+        if (tepb->tepb_proc->pr_part_id == sched_cur_part()->pa_id) {
+          resched_proc = 1;
+        }
         break;
       default:
         break;
@@ -119,5 +130,10 @@ void time_event_action(void) {
       break;
     }
   }
-  sched_proc();
+  if (resched_part) {
+    sched_global();
+  }
+  if (resched_proc) {
+    sched_proc();
+  }
 }
