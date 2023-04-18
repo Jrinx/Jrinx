@@ -55,9 +55,9 @@ void handle_trap(void) {
   if (!(context->ctx_scause & CAUSE_INT_OFFSET)) {
     enable_int();
   }
-  size_t kalloc_used = kalloc_get_used();
   extern int args_debug_kalloc_used;
   if (args_debug_kalloc_used) {
+    size_t kalloc_used = kalloc_get_used();
     info("kalloc used: %pB\n", &kalloc_used);
   }
   switch (context->ctx_scause) {
