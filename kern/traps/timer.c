@@ -59,7 +59,7 @@ succ:
     struct proc *proc = ctx;
     proc->pr_asso_timer = te;
     break;
-  case BUFFER_BLOCKED:
+  case TE_BUFFER_BLOCK_TIMEOUT:
     struct te_proc_buf *tepb = ctx;
     tepb->tepb_proc->pr_asso_timer = te;
     break;
@@ -85,7 +85,7 @@ void time_event_free(struct time_event *te) {
     struct proc *proc = te->te_ctx;
     proc->pr_asso_timer = NULL;
     break;
-  case BUFFER_BLOCKED:
+  case TE_BUFFER_BLOCK_TIMEOUT:
     struct te_proc_buf *tepb = te->te_ctx;
     tepb->tepb_proc->pr_asso_timer = NULL;
     break;
