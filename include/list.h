@@ -9,6 +9,8 @@ struct linked_node {
   struct linked_node **prev;
 };
 
+#define LINKED_NODE_NEXT(node, member) ((node)->member.next)
+
 #define LINKED_NODE_ITER(head_node, iter_var, member)                                          \
   for (struct linked_node *iter_var##_node = (head_node);                                      \
        iter_var = CONTAINER_OF(iter_var##_node, typeof(*iter_var), member),                    \
@@ -31,6 +33,15 @@ static inline void list_init(struct list_head *head) {
 
 static inline int list_empty(struct list_head *head) {
   return head->l_first == NULL;
+}
+
+static inline struct linked_node *list_first(struct list_head *head) {
+  return head->l_first;
+}
+
+static inline struct linked_node *list_last(struct list_head *head) {
+  return head->l_last == &head->l_first ? NULL
+                                        : CONTAINER_OF(head->l_last, struct linked_node, next);
 }
 
 static inline void list_insert_head(struct list_head *head, struct linked_node *node) {
