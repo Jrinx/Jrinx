@@ -166,7 +166,7 @@ long args_action(void) {
   if (args_debug_dt) {
     extern struct dev_tree boot_dt;
     dt_print_tree(&boot_dt);
-    halt("arg-dirven print boot device tree done, halt!\n");
+    halt("arg-driven print boot device tree done, halt!\n");
   }
   if (args_partitions_conf != NULL) {
     catch_e(do_partitions_create(args_partitions_conf));
