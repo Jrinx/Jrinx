@@ -2,6 +2,7 @@
 #define _KERN_COMM_BUFFER_H_
 
 #include <kern/comm/msg.h>
+#include <kern/lock/lock.h>
 #include <layouts.h>
 #include <list.h>
 #include <types.h>
@@ -20,6 +21,7 @@ struct buffer {
   long buf_off_b;
   long buf_off_e;
   msg_range_t buf_nb_msg;
+  struct lock buf_lock;
   struct list_head buf_waiting_procs;
   struct linked_node buf_id_link;
   struct linked_node buf_name_link;

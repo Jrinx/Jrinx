@@ -2,6 +2,7 @@
 #include <kern/drivers/serialport.h>
 #include <kern/lib/boottime.h>
 #include <kern/lib/debug.h>
+#include <kern/lib/errors.h>
 #include <kern/multitask/sched.h>
 #include <kern/traps/timer.h>
 #include <kern/traps/traps.h>
@@ -478,8 +479,10 @@ ret_code_t do_send_buffer(buf_id_t buffer_id, msg_addr_t message_addr, msg_size_
   if (length == 0) {
     return INVALID_PARAM;
   }
+  panic_e(lk_acquire(&buf->buf_lock));
   if (buffer_is_full(buf)) {
     if (time_out == 0) {
+      panic_e(lk_release(&buf->buf_lock));
       return NOT_AVAILABLE;
       // TODO: check if proc owns a mutex or is error handler
     } else {
@@ -493,11 +496,14 @@ ret_code_t do_send_buffer(buf_id_t buffer_id, msg_addr_t message_addr, msg_size_
       } else {
         proc->pr_waiting_reason = BUFFER_BLOCKED;
       }
+      panic_e(lk_release(&buf->buf_lock));
       sched_proc_give_up();
       if (time_out != SYSTEM_TIME_INFINITE_VAL && boottime_get_now() > wakeup_time) {
         return TIMED_OUT;
       }
     }
+  } else {
+    panic_e(lk_release(&buf->buf_lock));
   }
   buffer_send(buf, message_addr, length);
   struct proc *to_wakeup = buffer_wakeup_waiting_proc(buf);
@@ -518,8 +524,10 @@ ret_code_t do_receive_buffer(buf_id_t buffer_id, sys_time_t time_out, msg_addr_t
   if (buf == NULL || buf->buf_part_id != sched_cur_part()->pa_id) {
     return INVALID_PARAM;
   }
+  panic_e(lk_acquire(&buf->buf_lock));
   if (buffer_is_empty(buf)) {
     if (time_out == 0) {
+      panic_e(lk_release(&buf->buf_lock));
       *length = 0;
       return NOT_AVAILABLE;
       // TODO: check if proc owns a mutex or is error handler
@@ -534,12 +542,15 @@ ret_code_t do_receive_buffer(buf_id_t buffer_id, sys_time_t time_out, msg_addr_t
       } else {
         proc->pr_waiting_reason = BUFFER_BLOCKED;
       }
+      panic_e(lk_release(&buf->buf_lock));
       sched_proc_give_up();
       if (time_out != SYSTEM_TIME_INFINITE_VAL && boottime_get_now() > wakeup_time) {
         *length = 0;
         return TIMED_OUT;
       }
     }
+  } else {
+    panic_e(lk_release(&buf->buf_lock));
   }
   buffer_recv(buf, message_addr, length);
   struct proc *to_wakeup = buffer_wakeup_waiting_proc(buf);

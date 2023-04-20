@@ -66,6 +66,7 @@ long buffer_alloc(struct part *part, struct buffer **buf, buf_name_t name,
   tmp->buf_off_e = -(max_msg_size + sizeof(struct comm_msg));
   tmp->buf_nb_msg = 0;
   part_add_buf_name(part, tmp);
+  spinlock_init(&tmp->buf_lock);
   list_init(&tmp->buf_waiting_procs);
   *buf = tmp;
   panic_e(lk_acquire(&spinlock_of(buf_id_map)));
