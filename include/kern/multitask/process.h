@@ -47,7 +47,7 @@ struct proc *proc_from_id(proc_id_t pr_id);
 void proc_reset(struct proc *proc);
 long proc_alloc(struct part *part, struct proc **proc, const char *name, sys_time_t period,
                 sys_time_t time_cap, sys_addr_t entrypoint, stack_size_t stacksize,
-                priority_t base_pri, deadline_t deadline);
+                priority_t base_pri, deadline_t deadline) __attribute__((warn_unused_result));
 long proc_free(struct proc *proc);
 void proc_run(struct proc *proc) __attribute__((noreturn));
 

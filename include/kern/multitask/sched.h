@@ -22,9 +22,9 @@ extern struct part **cpus_cur_part;
 extern struct proc **cpus_cur_proc;
 
 void sched_init(void);
-long sched_module_add(struct sched_conf *conf);
+long sched_module_add(struct sched_conf *conf) __attribute__((warn_unused_result));
 void sched_add_part(struct part *part);
-long sched_launch(void);
+long sched_launch(void) __attribute__((warn_unused_result));
 void sched_global(void) __attribute__((noreturn));
 void sched_proc(void) __attribute__((noreturn));
 void sched_proc_give_up();
