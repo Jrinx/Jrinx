@@ -1,0 +1,13 @@
+sysconf: set-priority-check.yml
+expected:
+  type: ordered
+  vals:
+  - type: repeated
+    pat:
+      type: ordered
+      vals:
+      - set \d's priority to \d+
+      - reset 3's priority
+    count: 4
+  - done
+unexpected: fatal at

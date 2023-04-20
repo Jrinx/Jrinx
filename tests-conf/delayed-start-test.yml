@@ -1,0 +1,9 @@
+sysconf: delayed-start-check.yml
+expected:
+  type: ordered
+  vals:
+  - type: repeated
+    pat: \d+ started, stop self and delayed start \d+
+    count: 4
+  - done
+unexpected: fatal at

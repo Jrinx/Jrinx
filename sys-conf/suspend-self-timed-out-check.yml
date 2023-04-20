@@ -1,0 +1,6 @@
+partitions:
+- name: suspend-self-timed-out-check
+  prog: test_suspend_self_timed_out
+  memory: 8*1024*1024
+  period: 200000
+  duration: 100000

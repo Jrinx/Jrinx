@@ -1,0 +1,6 @@
+partitions:
+- name: suspend-and-resume-check
+  prog: test_suspend_and_resume
+  memory: 8*1024*1024
+  period: 200000
+  duration: 100000

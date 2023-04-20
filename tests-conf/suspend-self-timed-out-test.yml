@@ -1,0 +1,9 @@
+sysconf: suspend-self-timed-out-check.yml
+expected:
+  type: ordered
+  vals:
+  - type: repeated
+    pat: timed out
+    count: 3
+  - done
+unexpected: fatal at

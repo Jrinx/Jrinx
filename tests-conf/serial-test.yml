@@ -1,0 +1,5 @@
+bootargs: --test serial-test
+extends: default.yml
+interactive:
+- when: ' and press enter:'
+  send: "abcdefgh1234567890\r"

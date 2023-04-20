@@ -3,7 +3,6 @@
 from __future__ import annotations
 from abc import abstractmethod
 import argparse
-import json
 import os
 import pathlib
 import psutil
@@ -11,8 +10,15 @@ import re
 import signal
 import subprocess
 
+import yaml
+
 from utils import *
 from sysconf import encode_conf
+
+try:
+    from yaml import CLoader as Loader
+except ImportError:
+    from yaml import Loader
 
 CHILD_TIMEOUT = 60
 CHILD_FINAL_STUCK_TIMEOUT = 5
@@ -244,7 +250,7 @@ def main():
     if not os.path.isfile(args.rules_file):
         raise FileNotFoundError(args.rules_file)
     with open(args.rules_file, 'r', encoding='utf-8') as rf:
-        conf = json.load(rf)
+        conf = yaml.load(rf, Loader=Loader)
     extends_rules_file = conf.pop('extends', None)
     while extends_rules_file:
         extends_rules_path = os.path.join(os.path.dirname(
@@ -252,7 +258,7 @@ def main():
         if not os.path.isfile(extends_rules_path):
             raise FileNotFoundError(extends_rules_path)
         with open(extends_rules_path, 'r', encoding='utf-8') as erf:
-            extended_conf = json.load(erf)
+            extended_conf = yaml.load(erf, Loader=Loader)
         for key in extended_conf.keys():
             if key not in conf.keys():
                 conf[key] = extended_conf[key]
@@ -264,7 +270,7 @@ def main():
         if not os.path.isfile(sysconf_path):
             raise FileNotFoundError(sysconf_path)
         with open(sysconf_path, 'r', encoding='utf-8') as sf:
-            sysconf_conf = json.load(sf)
+            sysconf_conf = yaml.load(sf, Loader=Loader)
         os.environ['ARGS'] = os.environ.get('ARGS', '') + ' ' + encode_conf(sysconf_conf)
     bootargs = conf.get('bootargs')
     if bootargs:

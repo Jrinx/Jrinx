@@ -1,0 +1,25 @@
+sysconf: buffer-send-blocked-check.yml
+expected:
+  type: ordered
+  vals:
+  - send 0 \(len=4\) into buffer \d+
+  - send 1 \(len=4\) into buffer \d+
+  - send 2 \(len=4\) into buffer \d+
+  - send 3 \(len=4\) into buffer \d+
+  - send 4 \(len=4\) into buffer \d+
+  - send 5 \(len=4\) into buffer \d+
+  - send 6 \(len=4\) into buffer \d+
+  - recv 0 \(len=4\) from buffer \d+
+  - send 7 \(len=4\) into buffer \d+
+  - recv 1 \(len=4\) from buffer \d+
+  - send 8 \(len=4\) into buffer \d+
+  - recv 2 \(len=4\) from buffer \d+
+  - send 9 \(len=4\) into buffer \d+
+  - recv 3 \(len=4\) from buffer \d+
+  - send 10 \(len=4\) into buffer \d+
+  - recv 4 \(len=4\) from buffer \d+
+  - send 11 \(len=4\) into buffer \d+
+  - recv 5 \(len=4\) from buffer \d+
+  - 'buffer status: nb=5/5, max_msg_size=4, nb_waiting_proc=1'
+  - done
+unexpected: fatal at

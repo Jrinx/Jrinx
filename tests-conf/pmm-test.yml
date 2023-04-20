@@ -1,0 +1,2 @@
+bootargs: --test pmm-test
+extends: default.yml

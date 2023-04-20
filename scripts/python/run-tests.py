@@ -13,7 +13,7 @@ PARALLEL_POOL_SIZE = multiprocessing.cpu_count()
 
 def run_test(test):
     binfo(f'run    {test}')
-    cmd = ['scripts/judge', os.path.join('tests-conf', test + '.json')]
+    cmd = ['scripts/judge', os.path.join('tests-conf', test + '.yml')]
     if not verbose:
         cmd.append('-sn')
     try:
@@ -85,12 +85,12 @@ def main():
     binfo(f'Run tests in {compile_mode} mode on {board} board')
 
     if test:
-        if os.path.isfile(os.path.join('tests-conf', test + '.json')):
+        if os.path.isfile(os.path.join('tests-conf', test + '.yml')):
             testset = frozenset((test,))
         else:
             raise FileNotFoundError(f'No such test: {test}')
     else:
-        testset = frozenset(f for f in os.listdir('tests-conf') if f.endswith('-test.json'))
+        testset = frozenset(f for f in os.listdir('tests-conf') if f.endswith('-test.yml'))
     testset = tuple(sorted(os.path.splitext(f)[0] for f in testset))
 
     res = run_testset(testset)

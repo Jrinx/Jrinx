@@ -1,8 +1,14 @@
 #!/usr/bin/python3
 
 import argparse
-import json
 import os
+
+import yaml
+
+try:
+    from yaml import CLoader as Loader
+except ImportError:
+    from yaml import Loader
 
 
 ITEM_ENCODING_FUNC = {
@@ -41,7 +47,7 @@ def main():
     if not os.path.isfile(conf_path):
         raise FileNotFoundError(conf_path)
     with open(conf_path, 'r', encoding='utf-8') as conf_file:
-        conf_content = json.load(conf_file)
+        conf_content = yaml.load(conf_file, Loader=Loader)
     out_content = encode_conf(conf_content)
     print(out_content)
 

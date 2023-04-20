@@ -1,0 +1,9 @@
+sysconf: put-a-b.yml
+expected:
+  type: ordered
+  vals:
+  - type: unordered
+    vals:
+    - put 'A' to console
+    - put 'B' to console
+  - (AB){10}|(BA){10}

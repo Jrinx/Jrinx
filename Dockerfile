@@ -58,4 +58,5 @@ RUN apt-get -y install gawk \
                        shellcheck \
                        python3 \
                        python3-autopep8 \
-                       python3-psutil
+                       python3-psutil \
+                       python3-yaml

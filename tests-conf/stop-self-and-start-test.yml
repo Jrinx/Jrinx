@@ -1,0 +1,13 @@
+sysconf: stop-self-and-start-check.yml
+expected:
+  type: ordered
+  vals:
+  - type: repeated
+    pat:
+      type: ordered
+      vals:
+      - start \d+
+      - \d+ started, stop self
+    count: 3
+  - done
+unexpected: fatal at

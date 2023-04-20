@@ -1,0 +1,6 @@
+partitions:
+- name: set-priority-check
+  prog: test_set_priority
+  memory: 8*1024*1024
+  period: 200000
+  duration: 100000

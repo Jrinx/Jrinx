@@ -1,4 +1,0 @@
-{
-  "bootargs": "--test vmm-test",
-  "extends": "default.json"
-}
