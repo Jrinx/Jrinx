@@ -60,9 +60,6 @@ void part_add_proc_name(struct part *part, struct proc *proc);
 struct proc *part_get_proc_by_name(struct part *part, const char *name);
 void part_add_buf_name(struct part *part, struct buffer *buf);
 struct buffer *part_get_buf_by_name(struct part *part, const char *name);
-long part_alloc(struct part **part, const char *name, unsigned long memory_req,
-                sys_time_t period, sys_time_t duration) __attribute__((warn_unused_result));
-long part_free(struct part *part) __attribute__((warn_unused_result));
 long part_pt_alloc(struct part *part, vaddr_t vaddr, perm_t perm, void **pa);
 long part_create(struct part_conf *conf) __attribute__((warn_unused_result));
 

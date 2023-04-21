@@ -16,14 +16,9 @@ void do_pagefault(struct context *context) {
 re_lookup:
   panic_e(pt_lookup(part->pa_pgdir, va, &pte));
   if (pte == NULL) {
-    if (va.val >= COMM_BASE && va.val < COMM_LIMT && part->pa_mem_rem > PGSIZE) {
-      struct phy_frame *frame;
-      catch_e(phy_frame_alloc(&frame), { goto err; });
-      part->pa_mem_rem -= PGSIZE;
-      paddr_t pa;
-      panic_e(frame2pa(frame, &pa.val));
+    if (va.val >= COMM_BASE && va.val < COMM_LIMT) {
       perm_t perm = {.bits = {.r = 1, .w = 1}};
-      panic_e(pt_map(part->pa_pgdir, va, pa, perm));
+      catch_e(part_pt_alloc(part, va, perm, NULL), { goto err; });
     } else {
       goto err;
     }

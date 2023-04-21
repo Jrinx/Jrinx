@@ -111,8 +111,8 @@ struct buffer *part_get_buf_by_name(struct part *part, const char *name) {
   return buf;
 }
 
-long part_alloc(struct part **part, const char *name, unsigned long memory_req,
-                sys_time_t period, sys_time_t duration) {
+static long part_alloc(struct part **part, const char *name, unsigned long memory_req,
+                       sys_time_t period, sys_time_t duration) {
   struct phy_frame *frame;
   catch_e(phy_frame_alloc(&frame));
   unsigned long pa;
@@ -157,11 +157,6 @@ long part_alloc(struct part **part, const char *name, unsigned long memory_req,
   return KER_SUCCESS;
 }
 
-long part_free(struct part *part) {
-  // TODO
-  return KER_SUCCESS;
-}
-
 long part_pt_alloc(struct part *part, vaddr_t vaddr, perm_t perm, void **pa) {
   if (part->pa_mem_rem < PGSIZE) {
     return -KER_PART_ER;
@@ -170,7 +165,9 @@ long part_pt_alloc(struct part *part, vaddr_t vaddr, perm_t perm, void **pa) {
   catch_e(phy_frame_alloc(&frame));
   paddr_t paddr;
   catch_e(frame2pa(frame, &paddr.val));
-  *pa = (void *)paddr.val;
+  if (pa != NULL) {
+    *pa = (void *)paddr.val;
+  }
   catch_e(pt_map(part->pa_pgdir, vaddr, paddr, perm), {
     panic_e(phy_frame_ref_dec(frame));
     return err;
