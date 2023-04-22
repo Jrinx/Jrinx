@@ -109,11 +109,11 @@ void buffer_recv(struct buffer *buf, msg_addr_t msg_addr, msg_size_t *msg_len) {
 }
 
 void buffer_add_waiting_proc(struct buffer *buf, struct proc *proc) {
-  list_insert_tail(&buf->buf_waiting_procs, &proc->pr_wait_link);
+  list_insert_tail(&buf->buf_waiting_procs, &proc->pr_wait_comm_link);
 }
 
 void buffer_del_waiting_proc(struct buffer *buf, struct proc *proc) {
-  list_remove_node(&buf->buf_waiting_procs, &proc->pr_wait_link);
+  list_remove_node(&buf->buf_waiting_procs, &proc->pr_wait_comm_link);
 }
 
 struct proc *buffer_wakeup_waiting_proc(struct buffer *buf) {
@@ -123,17 +123,17 @@ struct proc *buffer_wakeup_waiting_proc(struct buffer *buf) {
   struct proc *proc;
   if (buf->buf_que_disc == FIFO) {
     struct linked_node *node = buf->buf_waiting_procs.l_first;
-    proc = CONTAINER_OF(node, struct proc, pr_wait_link);
+    proc = CONTAINER_OF(node, struct proc, pr_wait_comm_link);
     list_remove_node(&buf->buf_waiting_procs, node);
     return proc;
   } else {
     struct proc *max_pri_proc = NULL;
-    LINKED_NODE_ITER (buf->buf_waiting_procs.l_first, proc, pr_wait_link) {
+    LINKED_NODE_ITER (buf->buf_waiting_procs.l_first, proc, pr_wait_comm_link) {
       if (max_pri_proc == NULL || proc->pr_cur_pri > max_pri_proc->pr_cur_pri) {
         max_pri_proc = proc;
       }
     }
-    list_remove_node(&buf->buf_waiting_procs, &max_pri_proc->pr_wait_link);
+    list_remove_node(&buf->buf_waiting_procs, &max_pri_proc->pr_wait_comm_link);
     return max_pri_proc;
   }
 }
@@ -141,7 +141,7 @@ struct proc *buffer_wakeup_waiting_proc(struct buffer *buf) {
 wait_range_t buffer_get_waiting_proc_nb(struct buffer *buf) {
   wait_range_t nb = 0;
   struct proc *proc;
-  LINKED_NODE_ITER (buf->buf_waiting_procs.l_first, proc, pr_wait_link) {
+  LINKED_NODE_ITER (buf->buf_waiting_procs.l_first, proc, pr_wait_comm_link) {
     nb++;
   }
   return nb;

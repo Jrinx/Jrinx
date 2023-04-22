@@ -40,7 +40,7 @@ struct proc {
   struct linked_node pr_id_link;
   struct linked_node pr_sched_link;
   struct linked_node pr_name_link;
-  struct linked_node pr_wait_link;
+  struct linked_node pr_wait_comm_link;
 };
 
 struct proc *proc_from_id(proc_id_t pr_id);
