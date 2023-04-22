@@ -1,0 +1,14 @@
+sysconf: queuing-port-send-recv-clr-check.yml
+expected:
+  type: ordered
+  vals:
+  - 'queuing port status: nb=3/3, max_msg_size=4, nb_waiting_proc=1'
+  - clear port
+  - fibo\[3\] = 2
+  - fibo\[4\] = 3
+  - fibo\[5\] = 5
+  - fibo\[6\] = 8
+  - fibo\[7\] = 13
+  - fibo\[8\] = 21
+  - fibo\[9\] = 34
+  - done

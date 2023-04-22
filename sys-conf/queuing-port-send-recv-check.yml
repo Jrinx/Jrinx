@@ -1,0 +1,41 @@
+partitions:
+- name: queuing-port-send-check
+  prog: test_queuing_port_send
+  memory: 8*1024*1024
+  period: 2000000
+  duration: 1000000
+
+- name: queuing-port-recv-check
+  prog: test_queuing_port_recv
+  memory: 8*1024*1024
+  period: 2000000
+  duration: 1000000
+
+scheduler:
+- part: queuing-port-send-check
+  offset: 0
+  duration: 1000000
+
+- part: queuing-port-recv-check
+  offset: 1000000
+  duration: 1000000
+
+queuing-ports:
+- name: value_sq
+  part: queuing-port-send-check
+  direction: src
+  max-msg-size: 4
+  max-nb-msg: 3
+
+- name: value_dq
+  part: queuing-port-recv-check
+  direction: dst
+  max-msg-size: 4
+  max-nb-msg: 3
+
+channel:
+- media: memory
+  type: queuing
+  ports:
+  - value_sq
+  - value_dq
