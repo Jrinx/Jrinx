@@ -33,5 +33,6 @@ re_lookup:
   sfence_vma_va_asid(va.val, part->pa_cpus_asid[hrt_get_id()]);
   return;
 err:
-  info("pagefault from illegal va=%016lx, epc=%016lx\n", va.val, context->ctx_sepc);
+  fatal("pagefault from part#%lu illegal va=%016lx, epc=%016lx\n", part->pa_id, va.val,
+        context->ctx_sepc);
 }
