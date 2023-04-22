@@ -1,0 +1,6 @@
+partitions:
+- name: timed-wait-check
+  prog: test_timed_wait
+  memory: 8*1024*1024
+  period: 200000
+  duration: 100000

@@ -1,0 +1,19 @@
+sysconf: timed-wait-check.yml
+expected:
+  type: ordered
+  vals:
+  - this is 2's \(main's\) turn
+  - type: unordered
+    vals:
+    - type: repeated
+      pat:
+        type: ordered
+        vals:
+        - this is 3's turn
+        - this is 4's turn
+      count: 6
+    - type: repeated
+      pat: this is 2's \(main's\) turn
+      count: 5
+  - done
+unexpected: fatal at
