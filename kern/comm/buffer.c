@@ -1,5 +1,4 @@
 #include <kern/comm/buffer.h>
-#include <kern/comm/msg.h>
 #include <kern/lib/debug.h>
 #include <kern/lock/lock.h>
 #include <kern/lock/spinlock.h>

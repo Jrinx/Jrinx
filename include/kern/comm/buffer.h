@@ -1,7 +1,6 @@
 #ifndef _KERN_COMM_BUFFER_H_
 #define _KERN_COMM_BUFFER_H_
 
-#include <kern/comm/msg.h>
 #include <kern/lock/lock.h>
 #include <layouts.h>
 #include <list.h>

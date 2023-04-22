@@ -121,6 +121,11 @@ typedef char *MUTEX_NAME_TYPE, *mutex_name_t;
 typedef uintmax_t MUTEX_ID_TYPE, mutex_id_t;
 typedef uintmax_t LOCK_COUNT_TYPE, lock_count_t;
 
+struct comm_msg {
+  msg_size_t msg_size;
+  uint8_t msg_data[];
+};
+
 typedef struct {
   SYSTEM_TIME_TYPE PERIOD;
   SYSTEM_TIME_TYPE DURATION;
