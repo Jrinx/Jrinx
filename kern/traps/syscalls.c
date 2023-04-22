@@ -506,13 +506,17 @@ ret_code_t do_send_buffer(buf_id_t buffer_id, msg_addr_t message_addr, msg_size_
     panic_e(lk_release(&buf->buf_lock));
   }
   buffer_send(buf, message_addr, length);
+  panic_e(lk_acquire(&buf->buf_lock));
   struct proc *to_wakeup = buffer_wakeup_waiting_proc(buf);
   if (to_wakeup != NULL) {
     if (to_wakeup->pr_waiting_reason == BUFFER_BLOCKED_WITH_TIMEOUT) {
       time_event_free(to_wakeup->pr_asso_timer);
     }
     to_wakeup->pr_state = READY;
+    panic_e(lk_release(&buf->buf_lock));
     sched_proc_give_up();
+  } else {
+    panic_e(lk_release(&buf->buf_lock));
   }
   return NO_ERROR;
 }
@@ -553,13 +557,17 @@ ret_code_t do_receive_buffer(buf_id_t buffer_id, sys_time_t time_out, msg_addr_t
     panic_e(lk_release(&buf->buf_lock));
   }
   buffer_recv(buf, message_addr, length);
+  panic_e(lk_acquire(&buf->buf_lock));
   struct proc *to_wakeup = buffer_wakeup_waiting_proc(buf);
   if (to_wakeup != NULL) {
     if (to_wakeup->pr_waiting_reason == BUFFER_BLOCKED_WITH_TIMEOUT) {
       time_event_free(to_wakeup->pr_asso_timer);
     }
     to_wakeup->pr_state = READY;
+    panic_e(lk_release(&buf->buf_lock));
     sched_proc_give_up();
+  } else {
+    panic_e(lk_release(&buf->buf_lock));
   }
   return NO_ERROR;
 }
