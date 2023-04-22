@@ -7,8 +7,6 @@
 #include <list.h>
 #include <types.h>
 
-#define BUFFER_MAX_SIZE PGSIZE
-
 struct buffer {
   buf_name_t buf_name;
   buf_id_t buf_id;
