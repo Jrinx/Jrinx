@@ -28,7 +28,7 @@ Jrinx 是一个多分区、多核操作系统，其命名来源于 ARINC 653 与
   - [ ] `GET_MY_PROCESSOR_CORE_ID`
   - [x] `GET_MY_INDEX`
 - 时间管理：
-  - [ ] `TIMED_WAIT`
+  - [x] `TIMED_WAIT`
   - [ ] `PERIODIC_WAIT`
   - [x] `GET_TIME`
   - [ ] `REPLENISH`
@@ -38,12 +38,12 @@ Jrinx 是一个多分区、多核操作系统，其命名来源于 ARINC 653 与
   - [ ] `READ_SAMPLING_MESSAGE`
   - [ ] `GET_SAMPLING_PORT_ID`
   - [ ] `GET_SAMPLING_PORT_STATUS`
-  - [ ] `CREATE_QUEUING_PORT`
-  - [ ] `SEND_QUEUING_MESSAGE`
-  - [ ] `RECEIVE_QUEUING_MESSAGE`
-  - [ ] `GET_QUEUING_PORT_ID`
-  - [ ] `GET_QUEUING_PORT_STATUS`
-  - [ ] `CLEAR_QUEUING_PORT`
+  - [x] `CREATE_QUEUING_PORT`
+  - [x] `SEND_QUEUING_MESSAGE`
+  - [x] `RECEIVE_QUEUING_MESSAGE`
+  - [x] `GET_QUEUING_PORT_ID`
+  - [x] `GET_QUEUING_PORT_STATUS`
+  - [x] `CLEAR_QUEUING_PORT`
 - 分区内通信：
   - [x] `CREATE_BUFFER`
   - [x] `SEND_BUFFER`
