@@ -12,7 +12,9 @@ except ImportError:
 
 
 ITEM_ENCODING_FUNC = {
-    'memory': eval,
+    'memory': lambda n: eval(str(n)),
+    'max-msg-size': lambda n: eval(str(n)),
+    'ports': '&'.join,
 }
 
 
@@ -36,6 +38,18 @@ def encode_conf(conf: dict) -> str:
         for sched in conf['scheduler']:
             table_conf += [','.join(encode_item(k, v) for k, v in sched.items())]
         res += [';'.join(table_conf)]
+    if conf.get('queuing-ports'):
+        res += ['--qp-conf']
+        ports_conf = []
+        for port in conf['queuing-ports']:
+            ports_conf += [','.join(encode_item(k, v) for k, v in port.items())]
+        res += [';'.join(ports_conf)]
+    if conf.get('channel'):
+        res += ['--ch-conf']
+        chan_conf = []
+        for chan in conf['channel']:
+            chan_conf += [','.join(encode_item(k, v) for k, v in chan.items())]
+        res += [';'.join(chan_conf)]
     return ' '.join(res)
 
 

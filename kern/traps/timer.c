@@ -1,3 +1,4 @@
+#include <kern/chan/queuing.h>
 #include <kern/comm/buffer.h>
 #include <kern/drivers/cpus.h>
 #include <kern/lib/boottime.h>
@@ -63,6 +64,10 @@ succ:
     struct te_proc_buf *tepb = ctx;
     tepb->tepb_proc->pr_asso_timer = te;
     break;
+  case TE_QUEUING_PORT_BLOCK_TIMEOUT:
+    struct te_proc_queuing_port *tepqp = ctx;
+    tepqp->tepqp_proc->pr_asso_timer = te;
+    break;
   default:
     break;
   }
@@ -88,6 +93,10 @@ void time_event_free(struct time_event *te) {
   case TE_BUFFER_BLOCK_TIMEOUT:
     struct te_proc_buf *tepb = te->te_ctx;
     tepb->tepb_proc->pr_asso_timer = NULL;
+    break;
+  case TE_QUEUING_PORT_BLOCK_TIMEOUT:
+    struct te_proc_queuing_port *tepqp = te->te_ctx;
+    tepqp->tepqp_proc->pr_asso_timer = NULL;
     break;
   default:
     break;
@@ -119,6 +128,14 @@ void time_event_action(void) {
         tepb->tepb_proc->pr_state = READY;
         buffer_del_waiting_proc(tepb->tepb_buf, tepb->tepb_proc);
         if (tepb->tepb_proc->pr_part_id == sched_cur_part()->pa_id) {
+          resched_proc = 1;
+        }
+        break;
+      case TE_QUEUING_PORT_BLOCK_TIMEOUT:
+        struct te_proc_queuing_port *tepqp = te->te_ctx;
+        tepqp->tepqp_proc->pr_state = READY;
+        queuing_port_del_waiting_proc(tepqp->tepqp_port, tepqp->tepqp_proc);
+        if (tepqp->tepqp_proc->pr_part_id == sched_cur_part()->pa_id) {
           resched_proc = 1;
         }
         break;

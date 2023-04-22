@@ -1,3 +1,4 @@
+#include <kern/chan/channel.h>
 #include <kern/drivers/chosen.h>
 #include <kern/drivers/cpus.h>
 #include <kern/drivers/device.h>
@@ -39,6 +40,7 @@ static void kernel_gen_init(void) {
   switch (hrt_get_id()) {
   case SYSCORE:
     panic_e(args_action());
+    panic_e(channel_mem_setup());
     panic_e(sched_launch());
   default:
     panic_e(lk_acquire(&spinlock_of(gen_init_state)));

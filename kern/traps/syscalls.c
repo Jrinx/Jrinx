@@ -1,8 +1,10 @@
+#include <kern/chan/queuing.h>
 #include <kern/comm/buffer.h>
 #include <kern/drivers/serialport.h>
 #include <kern/lib/boottime.h>
 #include <kern/lib/debug.h>
 #include <kern/lib/errors.h>
+#include <kern/mm/kalloc.h>
 #include <kern/multitask/sched.h>
 #include <kern/traps/timer.h>
 #include <kern/traps/traps.h>
@@ -408,36 +410,188 @@ ret_code_t do_create_queuing_port(que_port_name_t queuing_port_name,
                                   msg_size_t max_message_size, msg_range_t max_nb_message,
                                   port_dir_t port_direction, que_disc_t queuing_discipline,
                                   que_port_id_t *queuing_port_id) {
-  // TODO
+  struct part *part = sched_cur_part();
+  if (!queuing_port_conf_validate(part, queuing_port_name, port_direction, max_message_size,
+                                  max_nb_message)) {
+    return INVALID_CONFIG;
+  }
+  if (queuing_port_from_name(queuing_port_name) != NULL) {
+    return NO_ACTION;
+  }
+  if (part->pa_op_mode == NORMAL) {
+    return INVALID_MODE;
+  }
+  struct queuing_port *port;
+  catch_e(queuing_port_alloc(part, &port, queuing_port_name, port_direction, max_message_size,
+                             max_nb_message, queuing_discipline),
+          { return INVALID_CONFIG; });
+  *queuing_port_id = port->qp_id;
   return NO_ERROR;
 }
 
 ret_code_t do_send_queuing_message(que_port_id_t queuing_port_id, msg_addr_t message_addr,
                                    msg_size_t length, sys_time_t time_out) {
-  // TODO
+  struct proc *proc = sched_cur_proc();
+  struct queuing_port *port = queuing_port_from_id(queuing_port_id);
+  if (port == NULL || port->qp_part_id != sched_cur_part()->pa_id) {
+    return INVALID_PARAM;
+  }
+  if (length > port->qp_channel->ch_view.queuing.ch_max_msg_size) {
+    return INVALID_CONFIG;
+  }
+  if (length == 0) {
+    return INVALID_PARAM;
+  }
+  if (port->qp_dir != SOURCE) {
+    return INVALID_MODE;
+  }
+  panic_e(lk_acquire(&port->qp_channel->ch_lock));
+  if (queuing_port_is_full(port)) {
+    if (time_out == 0) {
+      panic_e(lk_release(&port->qp_channel->ch_lock));
+      return NOT_AVAILABLE;
+      // TODO: check if proc owns a mutex or is error handler
+    } else {
+      proc->pr_state = WAITING;
+      queuing_port_add_waiting_proc(port, proc);
+      sys_time_t wakeup_time = boottime_get_now() + time_out;
+      struct te_proc_queuing_port *teqpp = NULL;
+      if (time_out != SYSTEM_TIME_INFINITE_VAL) {
+        proc->pr_waiting_reason = QUEUING_PORT_BLOCKED_WITH_TIMEOUT;
+        teqpp = kalloc(sizeof(struct te_proc_queuing_port));
+        teqpp->tepqp_proc = proc;
+        teqpp->tepqp_port = port;
+        time_event_alloc(teqpp, wakeup_time, TE_QUEUING_PORT_BLOCK_TIMEOUT);
+      } else {
+        proc->pr_waiting_reason = QUEUING_PORT_BLOCKED;
+      }
+      panic_e(lk_release(&port->qp_channel->ch_lock));
+      sched_proc_give_up();
+      if (time_out != SYSTEM_TIME_INFINITE_VAL) {
+        kfree(teqpp);
+        if (boottime_get_now() >= wakeup_time) {
+          return TIMED_OUT;
+        }
+      }
+    }
+  } else {
+    panic_e(lk_release(&port->qp_channel->ch_lock));
+  }
+  queuing_port_send(port, message_addr, length);
+  panic_e(lk_acquire(&port->qp_channel->ch_lock));
+  struct proc *to_wakeup = queuing_port_wakeup_waiting_proc(port);
+  if (to_wakeup != NULL) {
+    if (to_wakeup->pr_waiting_reason == QUEUING_PORT_BLOCKED_WITH_TIMEOUT) {
+      time_event_free(to_wakeup->pr_asso_timer);
+    }
+    to_wakeup->pr_state = READY;
+  }
+  panic_e(lk_release(&port->qp_channel->ch_lock));
   return NO_ERROR;
 }
 
 ret_code_t do_receive_queuing_message(que_port_id_t queuing_port_id, sys_time_t time_out,
                                       msg_addr_t message_addr, msg_size_t *length) {
-  // TODO
+  struct proc *proc = sched_cur_proc();
+  struct queuing_port *port = queuing_port_from_id(queuing_port_id);
+  if (port == NULL || port->qp_part_id != sched_cur_part()->pa_id) {
+    return INVALID_PARAM;
+  }
+  if (port->qp_dir != DESTINATION) {
+    return INVALID_MODE;
+  }
+  panic_e(lk_acquire(&port->qp_channel->ch_lock));
+  if (queuing_port_is_empty(port)) {
+    if (time_out == 0) {
+      panic_e(lk_release(&port->qp_channel->ch_lock));
+      return NOT_AVAILABLE;
+      // TODO: check if proc owns a mutex or is error handler
+    } else {
+      proc->pr_state = WAITING;
+      queuing_port_add_waiting_proc(port, proc);
+      sys_time_t wakeup_time = boottime_get_now() + time_out;
+      struct te_proc_queuing_port *teqpp = NULL;
+      if (time_out != SYSTEM_TIME_INFINITE_VAL) {
+        proc->pr_waiting_reason = QUEUING_PORT_BLOCKED_WITH_TIMEOUT;
+        teqpp = kalloc(sizeof(struct te_proc_queuing_port));
+        teqpp->tepqp_proc = proc;
+        teqpp->tepqp_port = port;
+        time_event_alloc(teqpp, wakeup_time, TE_QUEUING_PORT_BLOCK_TIMEOUT);
+      } else {
+        proc->pr_waiting_reason = QUEUING_PORT_BLOCKED;
+      }
+      panic_e(lk_release(&port->qp_channel->ch_lock));
+      sched_proc_give_up();
+      if (time_out != SYSTEM_TIME_INFINITE_VAL) {
+        kfree(teqpp);
+        if (boottime_get_now() >= wakeup_time) {
+          return TIMED_OUT;
+        }
+      }
+    }
+  } else {
+    panic_e(lk_release(&port->qp_channel->ch_lock));
+  }
+  queuing_port_recv(port, message_addr, length);
+  panic_e(lk_acquire(&port->qp_channel->ch_lock));
+  struct proc *to_wakeup = queuing_port_wakeup_waiting_proc(port);
+  if (to_wakeup != NULL) {
+    if (to_wakeup->pr_waiting_reason == QUEUING_PORT_BLOCKED_WITH_TIMEOUT) {
+      time_event_free(to_wakeup->pr_asso_timer);
+    }
+    to_wakeup->pr_state = READY;
+  }
+  panic_e(lk_release(&port->qp_channel->ch_lock));
   return NO_ERROR;
 }
 
 ret_code_t do_get_queuing_port_id(que_port_name_t queuing_port_name,
                                   que_port_id_t *queuing_port_id) {
-  // TODO
+  struct queuing_port *port = queuing_port_from_name(queuing_port_name);
+  if (port == NULL || port->qp_part_id != sched_cur_part()->pa_id) {
+    return INVALID_CONFIG;
+  }
+  *queuing_port_id = port->qp_id;
   return NO_ERROR;
 }
 
 ret_code_t do_get_queuing_port_status(que_port_id_t queuing_port_id,
                                       QUEUING_PORT_STATUS_TYPE *queuing_port_status) {
-  // TODO
+  struct queuing_port *port = queuing_port_from_id(queuing_port_id);
+  if (port == NULL || port->qp_part_id != sched_cur_part()->pa_id) {
+    return INVALID_PARAM;
+  }
+  queuing_port_status->MAX_MESSAGE_SIZE = port->qp_channel->ch_view.queuing.ch_max_msg_size;
+  queuing_port_status->MAX_NB_MESSAGE = port->qp_channel->ch_view.queuing.ch_max_nb_msg;
+  queuing_port_status->PORT_DIRECTION = port->qp_dir;
+  queuing_port_status->NB_MESSAGE = port->qp_channel->ch_view.queuing.ch_nb_msg;
+  queuing_port_status->WAITING_PROCESSES = queuing_port_get_wait_proc_nb(port);
   return NO_ERROR;
 }
 
 ret_code_t do_clear_queuing_port(que_port_id_t queuing_port_id) {
-  // TODO
+  struct queuing_port *port = queuing_port_from_id(queuing_port_id);
+  if (port == NULL || port->qp_part_id != sched_cur_part()->pa_id) {
+    return INVALID_PARAM;
+  }
+  if (port->qp_dir != DESTINATION) {
+    return INVALID_MODE;
+  }
+  panic_e(lk_acquire(&port->qp_channel->ch_lock));
+  if (queuing_port_is_full(port)) {
+    struct proc *to_wakeup = queuing_port_wakeup_waiting_proc(port);
+    if (to_wakeup != NULL) {
+      if (to_wakeup->pr_waiting_reason == QUEUING_PORT_BLOCKED_WITH_TIMEOUT) {
+        time_event_free(to_wakeup->pr_asso_timer);
+      }
+      to_wakeup->pr_state = READY;
+    }
+  }
+  port->qp_channel->ch_view.queuing.ch_nb_msg = 0;
+  port->qp_channel->ch_view.queuing.ch_off_b = 0;
+  port->qp_channel->ch_view.queuing.ch_off_e =
+      -(port->qp_channel->ch_view.queuing.ch_max_msg_size + sizeof(struct comm_msg));
+  panic_e(lk_release(&port->qp_channel->ch_lock));
   return NO_ERROR;
 }
 
