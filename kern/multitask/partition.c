@@ -283,3 +283,16 @@ long part_create(struct part_conf *conf) {
   sched_add_part(part);
   return KER_SUCCESS;
 }
+
+void part_pt_sync_kern_pgdir(void) {
+  struct part *part;
+  HASHMAP_ITER (&part_id_map, part, pa_id_link) {
+    for (size_t i = 0; i < PGSIZE / sizeof(pte_t); i++) {
+      pte_t *kern_pte = &kern_pgdir[i];
+      pte_t *part_pte = &part->pa_pgdir[i];
+      if (kern_pte->bits.v && !part_pte->bits.v) {
+        part_pte->val = kern_pte->val;
+      }
+    }
+  }
+}

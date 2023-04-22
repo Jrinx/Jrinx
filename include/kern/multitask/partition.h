@@ -62,6 +62,7 @@ void part_add_buf_name(struct part *part, struct buffer *buf);
 struct buffer *part_get_buf_by_name(struct part *part, const char *name);
 long part_pt_alloc(struct part *part, vaddr_t vaddr, perm_t perm, void **pa);
 long part_create(struct part_conf *conf) __attribute__((warn_unused_result));
+void part_pt_sync_kern_pgdir(void);
 
 static inline size_t part_get_proc_count(struct part *part) {
   return part->pa_proc_name_map.h_num;
