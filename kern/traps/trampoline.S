@@ -170,4 +170,5 @@ EXPORT(_sched_proc_give_up)
   ori t0, t2, (1 << 8)  # SPP
   sd t0, PT_SSTATUS(a0)
   sd tp, PT_HARTID(a0)
+  mv a0, a1
   call sched_proc

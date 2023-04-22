@@ -81,7 +81,7 @@ ret_code_t do_set_partition_mode(uintmax_t operating_mode) {
       }
     }
     sched_cur_proc()->pr_state = DORMANT;
-    sched_proc_give_up();
+    sched_proc_give_up(0);
     break;
   default:
     return INVALID_PARAM;
@@ -158,7 +158,7 @@ ret_code_t do_set_priority(proc_id_t process_id, priority_t priority) {
   }
   // TODO: check if proc owns mutex?
   proc->pr_cur_pri = priority;
-  sched_proc_give_up();
+  sched_proc_give_up(0);
   return NO_ERROR;
 }
 
@@ -176,13 +176,13 @@ ret_code_t do_suspend_self(sys_time_t time_out) {
     sys_time_t wakeup_time = boottime_get_now() + time_out;
     time_event_alloc(proc, wakeup_time, TE_PROCESS_SUSPEND_TIMEOUT);
     proc->pr_waiting_reason = SUSPENDED_WITH_TIMEOUT;
-    sched_proc_give_up();
+    sched_proc_give_up(0);
     if (boottime_get_now() >= wakeup_time) {
       return TIMED_OUT;
     }
   } else {
     proc->pr_waiting_reason = SUSPENDED;
-    sched_proc_give_up();
+    sched_proc_give_up(0);
   }
   return NO_ERROR;
 }
@@ -204,7 +204,7 @@ ret_code_t do_suspend(proc_id_t process_id) {
   }
   proc->pr_state = WAITING;
   proc->pr_waiting_reason = SUSPENDED;
-  sched_proc_give_up();
+  sched_proc_give_up(0);
   return NO_ERROR;
 }
 
@@ -230,7 +230,7 @@ ret_code_t do_resume(proc_id_t process_id) {
   // TODO: check if proc is waiting on a process queue or TIMED_WAIT time delay or DELAYED_START
   // time delay
   proc->pr_state = READY;
-  sched_proc_give_up();
+  sched_proc_give_up(0);
   return NO_ERROR;
 }
 
@@ -239,7 +239,7 @@ void do_stop_self(void) {
   // TODO: check if proc owns preemption lock mutex
   proc->pr_state = DORMANT;
   // TODO: prevent proc from causing a deadline overrun fault
-  sched_proc_give_up();
+  sched_proc_give_up(0);
 }
 
 ret_code_t do_stop(proc_id_t process_id) {
@@ -257,7 +257,7 @@ ret_code_t do_stop(proc_id_t process_id) {
     time_event_free(proc->pr_asso_timer);
   }
   // TODO: prevent the process from causing any deadline overrun faults
-  sched_proc_give_up();
+  sched_proc_give_up(0);
   return NO_ERROR;
 }
 
@@ -296,7 +296,7 @@ ret_code_t do_delayed_start(proc_id_t process_id, sys_time_t delay_time) {
         // TODO: detect deadline exceeding
         // TODO: init timer with duration delay_time
       }
-      sched_proc_give_up();
+      sched_proc_give_up(0);
     } else {
       proc->pr_state = WAITING;
       proc->pr_waiting_reason = PREVIOUS_STARTED;
@@ -355,7 +355,20 @@ ret_code_t do_get_my_index(proc_index_t *process_index) {
 }
 
 ret_code_t do_timed_wait(sys_time_t delay_time) {
-  // TODO
+  struct proc *proc = sched_cur_proc();
+  // TODO: check if proc owns a mutex or is a error handler process, return INVALID_MODE
+  if (delay_time == SYSTEM_TIME_INFINITE_VAL) {
+    return INVALID_PARAM;
+  }
+  if (delay_time == 0) {
+    sched_proc_give_up(1);
+  } else {
+    proc->pr_state = WAITING;
+    proc->pr_waiting_reason = TIMED_WAIT_TIMEOUT;
+    sys_time_t wakeup_time = boottime_get_now() + delay_time;
+    time_event_alloc(proc, wakeup_time, TE_PROCESS_TIMED_WAIT_TIMEOUT);
+    sched_proc_give_up(0);
+  }
   return NO_ERROR;
 }
 
@@ -466,7 +479,7 @@ ret_code_t do_send_queuing_message(que_port_id_t queuing_port_id, msg_addr_t mes
         proc->pr_waiting_reason = QUEUING_PORT_BLOCKED;
       }
       panic_e(lk_release(&port->qp_channel->ch_lock));
-      sched_proc_give_up();
+      sched_proc_give_up(0);
       if (time_out != SYSTEM_TIME_INFINITE_VAL) {
         kfree(teqpp);
         if (boottime_get_now() >= wakeup_time) {
@@ -521,7 +534,7 @@ ret_code_t do_receive_queuing_message(que_port_id_t queuing_port_id, sys_time_t 
         proc->pr_waiting_reason = QUEUING_PORT_BLOCKED;
       }
       panic_e(lk_release(&port->qp_channel->ch_lock));
-      sched_proc_give_up();
+      sched_proc_give_up(0);
       if (time_out != SYSTEM_TIME_INFINITE_VAL) {
         kfree(teqpp);
         if (boottime_get_now() >= wakeup_time) {
@@ -651,7 +664,7 @@ ret_code_t do_send_buffer(buf_id_t buffer_id, msg_addr_t message_addr, msg_size_
         proc->pr_waiting_reason = BUFFER_BLOCKED;
       }
       panic_e(lk_release(&buf->buf_lock));
-      sched_proc_give_up();
+      sched_proc_give_up(0);
       if (time_out != SYSTEM_TIME_INFINITE_VAL && boottime_get_now() > wakeup_time) {
         return TIMED_OUT;
       }
@@ -668,7 +681,7 @@ ret_code_t do_send_buffer(buf_id_t buffer_id, msg_addr_t message_addr, msg_size_
     }
     to_wakeup->pr_state = READY;
     panic_e(lk_release(&buf->buf_lock));
-    sched_proc_give_up();
+    sched_proc_give_up(0);
   } else {
     panic_e(lk_release(&buf->buf_lock));
   }
@@ -701,7 +714,7 @@ ret_code_t do_receive_buffer(buf_id_t buffer_id, sys_time_t time_out, msg_addr_t
         proc->pr_waiting_reason = BUFFER_BLOCKED;
       }
       panic_e(lk_release(&buf->buf_lock));
-      sched_proc_give_up();
+      sched_proc_give_up(0);
       if (time_out != SYSTEM_TIME_INFINITE_VAL && boottime_get_now() > wakeup_time) {
         *length = 0;
         return TIMED_OUT;
@@ -719,7 +732,7 @@ ret_code_t do_receive_buffer(buf_id_t buffer_id, sys_time_t time_out, msg_addr_t
     }
     to_wakeup->pr_state = READY;
     panic_e(lk_release(&buf->buf_lock));
-    sched_proc_give_up();
+    sched_proc_give_up(0);
   } else {
     panic_e(lk_release(&buf->buf_lock));
   }

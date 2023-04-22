@@ -26,8 +26,8 @@ long sched_module_add(struct sched_conf *conf) __attribute__((warn_unused_result
 void sched_add_part(struct part *part);
 long sched_launch(void) __attribute__((warn_unused_result));
 void sched_global(void) __attribute__((noreturn));
-void sched_proc(void) __attribute__((noreturn));
-void sched_proc_give_up();
+void sched_proc(int round_robin) __attribute__((noreturn));
+void sched_proc_give_up(int round_robin);
 
 static inline struct proc *sched_cur_proc(void) {
   return cpus_cur_proc[hrt_get_id()];

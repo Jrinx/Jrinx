@@ -57,6 +57,7 @@ succ:
   switch (type) {
   case TE_PROCESS_SUSPEND_TIMEOUT:
   case TE_PROCESS_DELAYED_START:
+  case TE_PROCESS_TIMED_WAIT_TIMEOUT:
     struct proc *proc = ctx;
     proc->pr_asso_timer = te;
     break;
@@ -87,6 +88,7 @@ void time_event_free(struct time_event *te) {
   switch (te->te_type) {
   case TE_PROCESS_SUSPEND_TIMEOUT:
   case TE_PROCESS_DELAYED_START:
+  case TE_PROCESS_TIMED_WAIT_TIMEOUT:
     struct proc *proc = te->te_ctx;
     proc->pr_asso_timer = NULL;
     break;
@@ -117,6 +119,7 @@ void time_event_action(void) {
         break;
       case TE_PROCESS_SUSPEND_TIMEOUT:
       case TE_PROCESS_DELAYED_START:
+      case TE_PROCESS_TIMED_WAIT_TIMEOUT:
         struct proc *proc = te->te_ctx;
         proc->pr_state = READY;
         if (proc->pr_part_id == sched_cur_part()->pa_id) {
@@ -151,6 +154,6 @@ void time_event_action(void) {
     sched_global();
   }
   if (resched_proc) {
-    sched_proc();
+    sched_proc(0);
   }
 }

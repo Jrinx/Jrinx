@@ -93,14 +93,35 @@ long sched_launch(void) {
   return KER_SUCCESS;
 }
 
-static struct proc *sched_elect_next_proc(void) {
+static struct proc *sched_elect_next_proc(int round_robin) {
   struct proc *next_proc = NULL;
   struct proc *proc;
   do {
-    LINKED_NODE_ITER (cpus_cur_part[hrt_get_id()]->pa_proc_list.l_first, proc, pr_sched_link) {
-      if ((proc->pr_state == READY || proc->pr_state == RUNNING) &&
-          (next_proc == NULL || proc->pr_cur_pri > next_proc->pr_cur_pri)) {
-        next_proc = proc;
+    if (round_robin) {
+      const priority_t cur_pri = cpus_cur_proc[hrt_get_id()]->pr_cur_pri;
+      LINKED_NODE_ITER (cpus_cur_proc[hrt_get_id()]->pr_sched_link.next, proc, pr_sched_link) {
+        if ((proc->pr_state == READY || proc->pr_state == RUNNING) &&
+            (next_proc == NULL || proc->pr_cur_pri >= cur_pri)) {
+          next_proc = proc;
+          goto rr_found;
+        }
+      }
+      LINKED_NODE_ITER (cpus_cur_part[hrt_get_id()]->pa_proc_list.l_first, proc,
+                        pr_sched_link) {
+        if ((proc->pr_state == READY || proc->pr_state == RUNNING) &&
+            (next_proc == NULL || proc->pr_cur_pri >= cur_pri)) {
+          next_proc = proc;
+          goto rr_found;
+        }
+      }
+    rr_found:
+    } else {
+      LINKED_NODE_ITER (cpus_cur_part[hrt_get_id()]->pa_proc_list.l_first, proc,
+                        pr_sched_link) {
+        if ((proc->pr_state == READY || proc->pr_state == RUNNING) &&
+            (next_proc == NULL || proc->pr_cur_pri > next_proc->pr_cur_pri)) {
+          next_proc = proc;
+        }
       }
     }
   } while (next_proc == NULL);
@@ -108,13 +129,13 @@ static struct proc *sched_elect_next_proc(void) {
 }
 
 // TODO: impl standard arinc 653 scheduler
-__attribute__((noreturn)) void sched_proc(void) {
+__attribute__((noreturn)) void sched_proc(int round_robin) {
   struct proc *cur_proc = cpus_cur_proc[hrt_get_id()];
   if (cur_proc != NULL && cur_proc->pr_state == RUNNING) {
     cur_proc->pr_state = READY;
   }
   enable_int();
-  struct proc *next_proc = sched_elect_next_proc();
+  struct proc *next_proc = sched_elect_next_proc(round_robin);
   disable_int();
   cpus_cur_proc[hrt_get_id()] = next_proc;
   next_proc->pr_state = RUNNING;
@@ -139,17 +160,17 @@ void sched_global(void) {
     sched_cur_mod->sm_prev_act_time += sched_major_frame;
   }
   cpus_cur_part[hrt_get_id()] = next_part;
-  sched_proc();
+  sched_proc(0);
 }
 
-void sched_proc_give_up() {
+void sched_proc_give_up(int round_robin) {
   struct proc *proc = cpus_cur_proc[hrt_get_id()];
-  struct proc *next_proc = sched_elect_next_proc();
+  struct proc *next_proc = sched_elect_next_proc(round_robin);
   if (proc != next_proc) {
     struct context *context = kalloc(sizeof(struct context));
     memset(context, 0, sizeof(struct context));
     hlist_insert_head(&proc->pr_trapframe.tf_ctx_list, &context->ctx_link);
-    extern void _sched_proc_give_up(struct context * context);
-    _sched_proc_give_up(context);
+    extern void _sched_proc_give_up(struct context * context, int round_robin);
+    _sched_proc_give_up(context, round_robin);
   }
 }

@@ -18,6 +18,7 @@ typedef enum {
   BUFFER_BLOCKED_WITH_TIMEOUT,
   QUEUING_PORT_BLOCKED,
   QUEUING_PORT_BLOCKED_WITH_TIMEOUT,
+  TIMED_WAIT_TIMEOUT,
 } proc_waiting_reason_t;
 
 struct proc {
