@@ -76,8 +76,7 @@ release-debug: release
 debug: CFLAGS		+= -O0 -g -ggdb
 debug: build
 
-build: clean
-	@$(MAKE) $(JRINX)
+build: | clean $(JRINX)
 
 $(JRINX): SHELL := $(shell which bash)
 $(JRINX): $(MODULES) $(USER_MODULES) $(LDSCRIPT) $(TARGET_DIR)
