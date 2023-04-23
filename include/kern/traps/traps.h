@@ -50,6 +50,8 @@
 #include <stddef.h>
 #include <types.h>
 
+#define NCTX_MAX 512
+
 struct context {
   union {
     struct {
@@ -110,6 +112,9 @@ void enable_int(void);
 void disable_int(void);
 void traps_init(void);
 void trap_init_vec(void);
+
+long ctx_alloc(struct context **ctx);
+void ctx_free(struct context *ctx);
 
 #endif
 #endif

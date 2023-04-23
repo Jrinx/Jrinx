@@ -86,6 +86,10 @@ static inline int hlist_empty(struct hlist_head *head) {
   return head->h_first == NULL;
 }
 
+static inline struct linked_node *hlist_first(struct hlist_head *head) {
+  return head->h_first;
+}
+
 static inline void hlist_insert_head(struct hlist_head *head, struct linked_node *node) {
   node->next = head->h_first;
   if (node->next != NULL) {

@@ -9,6 +9,7 @@ enum {
   KER_ELF_ER,
   KER_DEV_ER,
   KER_MEM_ER,
+  KER_CTX_ER,
   KER_INT_ER,
   KER_SRL_ER,
   KER_ASID_ER,

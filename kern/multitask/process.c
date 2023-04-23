@@ -92,9 +92,10 @@ void proc_reset(struct proc *proc) {
     struct linked_node *node = proc->pr_trapframe.tf_ctx_list.h_first;
     struct context *ctx = CONTAINER_OF(node, struct context, ctx_link);
     hlist_remove_node(node);
-    kfree(ctx);
+    ctx_free(ctx);
   }
-  struct context *proc_ctx = kalloc(sizeof(struct context));
+  struct context *proc_ctx;
+  panic_e(ctx_alloc(&proc_ctx));
   memset(proc_ctx, 0, sizeof(struct context));
   proc_ctx->ctx_sepc = proc->pr_entrypoint;
   proc_ctx->ctx_hartid = HARTID_MAX;
@@ -154,7 +155,7 @@ long proc_free(struct proc *proc) {
 void proc_run(struct proc *proc) {
   struct context *proc_top_ctx =
       CONTAINER_OF(proc->pr_trapframe.tf_ctx_list.h_first, struct context, ctx_link);
-  kfree(cpus_context[hrt_get_id()]);
+  ctx_free(cpus_context[hrt_get_id()]);
   cpus_context[hrt_get_id()] = proc_top_ctx;
   hlist_remove_node(&proc_top_ctx->ctx_link);
   proc_top_ctx->ctx_hartid = hrt_get_id();

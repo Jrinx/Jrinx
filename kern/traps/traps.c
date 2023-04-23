@@ -1,16 +1,47 @@
 #include <kern/drivers/cpus.h>
 #include <kern/lib/debug.h>
+#include <kern/lib/errors.h>
+#include <kern/lock/lock.h>
+#include <kern/lock/spinlock.h>
 #include <kern/mm/kalloc.h>
 #include <kern/multitask/sched.h>
 #include <kern/traps/traps.h>
 #include <lib/string.h>
+#include <list.h>
 
 struct context **cpus_context;
 
+static struct context traps_context[NCTX_MAX];
+static struct hlist_head traps_ctx_free_list;
+static with_spinlock(traps_ctx_free_list);
+
+long ctx_alloc(struct context **ctx) {
+  panic_e(lk_acquire(&spinlock_of(traps_ctx_free_list)));
+  if (hlist_empty(&traps_ctx_free_list)) {
+    panic_e(lk_release(&spinlock_of(traps_ctx_free_list)));
+    return -KER_CTX_ER;
+  }
+  struct linked_node *node = hlist_first(&traps_ctx_free_list);
+  struct context *p = CONTAINER_OF(node, struct context, ctx_link);
+  hlist_remove_node(node);
+  panic_e(lk_release(&spinlock_of(traps_ctx_free_list)));
+  *ctx = p;
+  return KER_SUCCESS;
+}
+
+void ctx_free(struct context *ctx) {
+  panic_e(lk_acquire(&spinlock_of(traps_ctx_free_list)));
+  hlist_insert_head(&traps_ctx_free_list, &ctx->ctx_link);
+  panic_e(lk_release(&spinlock_of(traps_ctx_free_list)));
+}
+
 void traps_init(void) {
+  for (size_t i = 0; i < NCTX_MAX; i++) {
+    hlist_insert_head(&traps_ctx_free_list, &traps_context[i].ctx_link);
+  }
   cpus_context = kalloc(sizeof(struct context *) * cpus_get_count());
   for (size_t i = 0; i < cpus_get_count(); i++) {
-    cpus_context[i] = kalloc(sizeof(struct context));
+    panic_e(ctx_alloc(&cpus_context[i]));
     memset(cpus_context[i], 0, sizeof(struct context));
     cpus_context[i]->ctx_hartid = i;
   }
@@ -27,8 +58,7 @@ static void prepare_nested_trap(void) {
   struct context *context = cpus_context[hrt_get_id()];
   struct proc *proc = sched_cur_proc();
   hlist_insert_head(&proc->pr_trapframe.tf_ctx_list, &context->ctx_link);
-  cpus_context[hrt_get_id()] = kalloc(sizeof(struct context));
-  memset(cpus_context[hrt_get_id()], 0, sizeof(struct context));
+  panic_e(ctx_alloc(&cpus_context[hrt_get_id()]));
   cpus_context[hrt_get_id()]->ctx_hartid = hrt_get_id();
   csrw_sscratch((unsigned long)cpus_context[hrt_get_id()]);
 }
@@ -79,7 +109,7 @@ void handle_trap(void) {
   if (!(context->ctx_scause & CAUSE_INT_OFFSET)) {
     disable_int();
   }
-  kfree(cpus_context[hrt_get_id()]);
+  ctx_free(cpus_context[hrt_get_id()]);
   hlist_remove_node(&context->ctx_link);
   cpus_context[hrt_get_id()] = context;
 
