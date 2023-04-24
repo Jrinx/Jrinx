@@ -24,6 +24,7 @@ long lk_acquire(struct lock *lock) __attribute__((warn_unused_result));
 long lk_release(struct lock *lock) __attribute__((warn_unused_result));
 
 #define lock_init(impl)                                                                        \
-  struct lock_impl_t *impl##_impl __attribute__((section(".ksec.lock_impl." #impl))) = &impl
+  struct lock_impl_t *impl##_impl __attribute__((section(".ksec.lock_impl." #impl), used)) =   \
+      &impl
 
 #endif

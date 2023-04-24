@@ -49,7 +49,7 @@ struct prog_def_t {
 };
 
 #define link_prog(name)                                                                        \
-  struct prog_def_t *name##_prog __attribute__((section(".ksec.prog_def." #name))) = &name
+  struct prog_def_t *name##_prog __attribute__((section(".ksec.prog_def." #name), used)) = &name
 
 struct proc;
 struct buffer;
