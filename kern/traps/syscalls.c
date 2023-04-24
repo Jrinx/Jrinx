@@ -13,25 +13,25 @@
 #include <sysno.h>
 #include <types.h>
 
-void do_cons_write_char(int ch) {
+static void do_cons_write_char(int ch) {
   serial_blocked_putc(ch);
 }
 
-int do_cons_read_char(void) {
+static int do_cons_read_char(void) {
   return serial_blocked_getc();
 }
 
-void do_cons_write_buf(const char *buf, size_t len) {
+static void do_cons_write_buf(const char *buf, size_t len) {
   for (size_t i = 0; i < len; i++) {
     serial_blocked_putc(buf[i]);
   }
 }
 
-void do_halt(void) {
+static void do_halt(void) {
   halt("shutdown from syscall\n");
 }
 
-ret_code_t do_get_partition_status(PARTITION_STATUS_TYPE *partition_status) {
+static ret_code_t do_get_partition_status(PARTITION_STATUS_TYPE *partition_status) {
   const struct part *part = sched_cur_part();
   partition_status->PERIOD = part->pa_period;
   partition_status->DURATION = part->pa_duration;
@@ -43,7 +43,7 @@ ret_code_t do_get_partition_status(PARTITION_STATUS_TYPE *partition_status) {
   return NO_ERROR;
 }
 
-ret_code_t do_set_partition_mode(uintmax_t operating_mode) {
+static ret_code_t do_set_partition_mode(uintmax_t operating_mode) {
   struct part *part = sched_cur_part();
   if (operating_mode == NORMAL && part->pa_op_mode == NORMAL) {
     return NO_ACTION;
@@ -90,7 +90,7 @@ ret_code_t do_set_partition_mode(uintmax_t operating_mode) {
   return NO_ERROR;
 }
 
-ret_code_t do_get_process_id(proc_name_t process_name, proc_id_t *process_id) {
+static ret_code_t do_get_process_id(proc_name_t process_name, proc_id_t *process_id) {
   struct proc *proc = part_get_proc_by_name(sched_cur_part(), process_name);
   if (proc == NULL) {
     return INVALID_CONFIG;
@@ -99,7 +99,8 @@ ret_code_t do_get_process_id(proc_name_t process_name, proc_id_t *process_id) {
   return NO_ERROR;
 }
 
-ret_code_t do_get_process_status(proc_id_t process_id, PROCESS_STATUS_TYPE *process_status) {
+static ret_code_t do_get_process_status(proc_id_t process_id,
+                                        PROCESS_STATUS_TYPE *process_status) {
   struct proc *proc = proc_from_id(process_id);
   if (proc == NULL || proc->pr_part_id != sched_cur_part()->pa_id) {
     return INVALID_PARAM;
@@ -120,7 +121,7 @@ ret_code_t do_get_process_status(proc_id_t process_id, PROCESS_STATUS_TYPE *proc
   return NO_ERROR;
 }
 
-ret_code_t do_create_process(PROCESS_ATTRIBUTE_TYPE *attributes, proc_id_t *process_id) {
+static ret_code_t do_create_process(PROCESS_ATTRIBUTE_TYPE *attributes, proc_id_t *process_id) {
   struct part *part = sched_cur_part();
   struct proc *proc = part_get_proc_by_name(sched_cur_part(), attributes->NAME);
   if (proc != NULL) {
@@ -148,7 +149,7 @@ ret_code_t do_create_process(PROCESS_ATTRIBUTE_TYPE *attributes, proc_id_t *proc
   return NO_ERROR;
 }
 
-ret_code_t do_set_priority(proc_id_t process_id, priority_t priority) {
+static ret_code_t do_set_priority(proc_id_t process_id, priority_t priority) {
   struct proc *proc = proc_from_id(process_id);
   if (proc == NULL || proc->pr_part_id != sched_cur_part()->pa_id) {
     return INVALID_PARAM;
@@ -162,7 +163,7 @@ ret_code_t do_set_priority(proc_id_t process_id, priority_t priority) {
   return NO_ERROR;
 }
 
-ret_code_t do_suspend_self(sys_time_t time_out) {
+static ret_code_t do_suspend_self(sys_time_t time_out) {
   struct proc *proc = sched_cur_proc();
   // TODO: check if proc owns mutex or is error handler process?
   if (proc_is_period(proc)) {
@@ -187,7 +188,7 @@ ret_code_t do_suspend_self(sys_time_t time_out) {
   return NO_ERROR;
 }
 
-ret_code_t do_suspend(proc_id_t process_id) {
+static ret_code_t do_suspend(proc_id_t process_id) {
   struct proc *proc = proc_from_id(process_id);
   if (proc == NULL || proc->pr_part_id != sched_cur_part()->pa_id) {
     return INVALID_PARAM;
@@ -208,7 +209,7 @@ ret_code_t do_suspend(proc_id_t process_id) {
   return NO_ERROR;
 }
 
-ret_code_t do_resume(proc_id_t process_id) {
+static ret_code_t do_resume(proc_id_t process_id) {
   struct proc *proc = proc_from_id(process_id);
   if (proc == NULL || proc->pr_part_id != sched_cur_part()->pa_id) {
     return INVALID_PARAM;
@@ -234,7 +235,7 @@ ret_code_t do_resume(proc_id_t process_id) {
   return NO_ERROR;
 }
 
-void do_stop_self(void) {
+static void do_stop_self(void) {
   struct proc *proc = sched_cur_proc();
   // TODO: check if proc owns preemption lock mutex
   proc->pr_state = DORMANT;
@@ -242,7 +243,7 @@ void do_stop_self(void) {
   sched_proc_give_up(0);
 }
 
-ret_code_t do_stop(proc_id_t process_id) {
+static ret_code_t do_stop(proc_id_t process_id) {
   struct proc *proc = proc_from_id(process_id);
   if (proc == NULL || proc->pr_part_id != sched_cur_part()->pa_id) {
     return INVALID_PARAM;
@@ -261,12 +262,12 @@ ret_code_t do_stop(proc_id_t process_id) {
   return NO_ERROR;
 }
 
-ret_code_t do_start(proc_id_t process_id) {
-  ret_code_t do_delayed_start(proc_id_t process_id, sys_time_t delay_time);
+static ret_code_t do_delayed_start(proc_id_t process_id, sys_time_t delay_time);
+static ret_code_t do_start(proc_id_t process_id) {
   return do_delayed_start(process_id, 0);
 }
 
-ret_code_t do_delayed_start(proc_id_t process_id, sys_time_t delay_time) {
+static ret_code_t do_delayed_start(proc_id_t process_id, sys_time_t delay_time) {
   struct proc *proc = proc_from_id(process_id);
   if (proc == NULL || proc->pr_part_id != sched_cur_part()->pa_id) {
     return INVALID_PARAM;
@@ -317,35 +318,35 @@ ret_code_t do_delayed_start(proc_id_t process_id, sys_time_t delay_time) {
   return NO_ERROR;
 }
 
-ret_code_t do_lock_preemption(lock_level_t *lock_level) {
+static ret_code_t do_lock_preemption(lock_level_t *lock_level) {
   // TODO
   return NO_ERROR;
 }
 
-ret_code_t do_unlock_preemption(lock_level_t *lock_level) {
+static ret_code_t do_unlock_preemption(lock_level_t *lock_level) {
   // TODO
   return NO_ERROR;
 }
 
-ret_code_t do_get_my_id(proc_id_t *process_id) {
+static ret_code_t do_get_my_id(proc_id_t *process_id) {
   struct proc *proc = sched_cur_proc();
   // TODO: check if proc has id, e.g. error handler process, return INVALID_MODE
   *process_id = proc->pr_id;
   return NO_ERROR;
 }
 
-ret_code_t do_initialize_process_core_affinity(proc_id_t process_id,
-                                               proc_core_id_t processor_core_id) {
+static ret_code_t do_initialize_process_core_affinity(proc_id_t process_id,
+                                                      proc_core_id_t processor_core_id) {
   // TODO
   return NO_ERROR;
 }
 
-ret_code_t do_get_my_processor_core_id(proc_core_id_t *processor_core_id) {
+static ret_code_t do_get_my_processor_core_id(proc_core_id_t *processor_core_id) {
   // TODO
   return NO_ERROR;
 }
 
-ret_code_t do_get_my_index(proc_index_t *process_index) {
+static ret_code_t do_get_my_index(proc_index_t *process_index) {
   struct proc *proc = sched_cur_proc();
   if (proc->pr_idx < 1) {
     return INVALID_MODE;
@@ -354,7 +355,7 @@ ret_code_t do_get_my_index(proc_index_t *process_index) {
   return NO_ERROR;
 }
 
-ret_code_t do_timed_wait(sys_time_t delay_time) {
+static ret_code_t do_timed_wait(sys_time_t delay_time) {
   struct proc *proc = sched_cur_proc();
   // TODO: check if proc owns a mutex or is a error handler process, return INVALID_MODE
   if (delay_time == SYSTEM_TIME_INFINITE_VAL) {
@@ -372,57 +373,59 @@ ret_code_t do_timed_wait(sys_time_t delay_time) {
   return NO_ERROR;
 }
 
-ret_code_t do_periodic_wait(void) {
+static ret_code_t do_periodic_wait(void) {
   // TODO
   return NO_ERROR;
 }
 
-ret_code_t do_get_time(sys_time_t *system_time) {
+static ret_code_t do_get_time(sys_time_t *system_time) {
   *system_time = boottime_get_now();
   return NO_ERROR;
 }
 
-ret_code_t do_replenish(sys_time_t budget_time) {
+static ret_code_t do_replenish(sys_time_t budget_time) {
   // TODO
   return NO_ERROR;
 }
 
-ret_code_t do_create_sampling_port(samp_port_name_t sampling_port_name,
-                                   msg_size_t max_message_size, port_dir_t port_direction,
-                                   sys_time_t refresh_period,
-                                   samp_port_id_t *sampling_port_id) {
+static ret_code_t do_create_sampling_port(samp_port_name_t sampling_port_name,
+                                          msg_size_t max_message_size,
+                                          port_dir_t port_direction, sys_time_t refresh_period,
+                                          samp_port_id_t *sampling_port_id) {
   // TODO
   return NO_ERROR;
 }
 
-ret_code_t do_write_sampling_message(samp_port_id_t sampling_port_id, msg_addr_t message_addr,
-                                     msg_size_t length) {
+static ret_code_t do_write_sampling_message(samp_port_id_t sampling_port_id,
+                                            msg_addr_t message_addr, msg_size_t length) {
   // TODO
   return NO_ERROR;
 }
 
-ret_code_t do_read_sampling_message(samp_port_id_t sampling_port_id, msg_addr_t message_addr,
-                                    msg_size_t *length, validity_t *validity) {
+static ret_code_t do_read_sampling_message(samp_port_id_t sampling_port_id,
+                                           msg_addr_t message_addr, msg_size_t *length,
+                                           validity_t *validity) {
   // TODO
   return NO_ERROR;
 }
 
-ret_code_t do_get_sampling_port_id(samp_port_name_t sampling_port_name,
-                                   samp_port_id_t *sampling_port_id) {
+static ret_code_t do_get_sampling_port_id(samp_port_name_t sampling_port_name,
+                                          samp_port_id_t *sampling_port_id) {
   // TODO
   return NO_ERROR;
 }
 
-ret_code_t do_get_sampling_port_status(samp_port_id_t sampling_port_id,
-                                       SAMPLING_PORT_STATUS_TYPE *sampling_port_status) {
+static ret_code_t do_get_sampling_port_status(samp_port_id_t sampling_port_id,
+                                              SAMPLING_PORT_STATUS_TYPE *sampling_port_status) {
   // TODO
   return NO_ERROR;
 }
 
-ret_code_t do_create_queuing_port(que_port_name_t queuing_port_name,
-                                  msg_size_t max_message_size, msg_range_t max_nb_message,
-                                  port_dir_t port_direction, que_disc_t queuing_discipline,
-                                  que_port_id_t *queuing_port_id) {
+static ret_code_t do_create_queuing_port(que_port_name_t queuing_port_name,
+                                         msg_size_t max_message_size,
+                                         msg_range_t max_nb_message, port_dir_t port_direction,
+                                         que_disc_t queuing_discipline,
+                                         que_port_id_t *queuing_port_id) {
   struct part *part = sched_cur_part();
   if (!queuing_port_conf_validate(part, queuing_port_name, port_direction, max_message_size,
                                   max_nb_message)) {
@@ -442,8 +445,9 @@ ret_code_t do_create_queuing_port(que_port_name_t queuing_port_name,
   return NO_ERROR;
 }
 
-ret_code_t do_send_queuing_message(que_port_id_t queuing_port_id, msg_addr_t message_addr,
-                                   msg_size_t length, sys_time_t time_out) {
+static ret_code_t do_send_queuing_message(que_port_id_t queuing_port_id,
+                                          msg_addr_t message_addr, msg_size_t length,
+                                          sys_time_t time_out) {
   struct proc *proc = sched_cur_proc();
   struct queuing_port *port = queuing_port_from_id(queuing_port_id);
   if (port == NULL || port->qp_part_id != sched_cur_part()->pa_id) {
@@ -503,8 +507,8 @@ ret_code_t do_send_queuing_message(que_port_id_t queuing_port_id, msg_addr_t mes
   return NO_ERROR;
 }
 
-ret_code_t do_receive_queuing_message(que_port_id_t queuing_port_id, sys_time_t time_out,
-                                      msg_addr_t message_addr, msg_size_t *length) {
+static ret_code_t do_receive_queuing_message(que_port_id_t queuing_port_id, sys_time_t time_out,
+                                             msg_addr_t message_addr, msg_size_t *length) {
   struct proc *proc = sched_cur_proc();
   struct queuing_port *port = queuing_port_from_id(queuing_port_id);
   if (port == NULL || port->qp_part_id != sched_cur_part()->pa_id) {
@@ -558,8 +562,8 @@ ret_code_t do_receive_queuing_message(que_port_id_t queuing_port_id, sys_time_t 
   return NO_ERROR;
 }
 
-ret_code_t do_get_queuing_port_id(que_port_name_t queuing_port_name,
-                                  que_port_id_t *queuing_port_id) {
+static ret_code_t do_get_queuing_port_id(que_port_name_t queuing_port_name,
+                                         que_port_id_t *queuing_port_id) {
   struct queuing_port *port = queuing_port_from_name(queuing_port_name);
   if (port == NULL || port->qp_part_id != sched_cur_part()->pa_id) {
     return INVALID_CONFIG;
@@ -568,8 +572,8 @@ ret_code_t do_get_queuing_port_id(que_port_name_t queuing_port_name,
   return NO_ERROR;
 }
 
-ret_code_t do_get_queuing_port_status(que_port_id_t queuing_port_id,
-                                      QUEUING_PORT_STATUS_TYPE *queuing_port_status) {
+static ret_code_t do_get_queuing_port_status(que_port_id_t queuing_port_id,
+                                             QUEUING_PORT_STATUS_TYPE *queuing_port_status) {
   struct queuing_port *port = queuing_port_from_id(queuing_port_id);
   if (port == NULL || port->qp_part_id != sched_cur_part()->pa_id) {
     return INVALID_PARAM;
@@ -582,7 +586,7 @@ ret_code_t do_get_queuing_port_status(que_port_id_t queuing_port_id,
   return NO_ERROR;
 }
 
-ret_code_t do_clear_queuing_port(que_port_id_t queuing_port_id) {
+static ret_code_t do_clear_queuing_port(que_port_id_t queuing_port_id) {
   struct queuing_port *port = queuing_port_from_id(queuing_port_id);
   if (port == NULL || port->qp_part_id != sched_cur_part()->pa_id) {
     return INVALID_PARAM;
@@ -608,9 +612,9 @@ ret_code_t do_clear_queuing_port(que_port_id_t queuing_port_id) {
   return NO_ERROR;
 }
 
-ret_code_t do_create_buffer(buf_name_t buffer_name, msg_size_t max_message_size,
-                            msg_range_t max_nb_message, que_disc_t queuing_discipline,
-                            buf_id_t *buffer_id) {
+static ret_code_t do_create_buffer(buf_name_t buffer_name, msg_size_t max_message_size,
+                                   msg_range_t max_nb_message, que_disc_t queuing_discipline,
+                                   buf_id_t *buffer_id) {
   struct part *part = sched_cur_part();
   struct buffer *buf = part_get_buf_by_name(part, buffer_name);
   if (buf != NULL) {
@@ -633,8 +637,8 @@ ret_code_t do_create_buffer(buf_name_t buffer_name, msg_size_t max_message_size,
   return NO_ERROR;
 }
 
-ret_code_t do_send_buffer(buf_id_t buffer_id, msg_addr_t message_addr, msg_size_t length,
-                          sys_time_t time_out) {
+static ret_code_t do_send_buffer(buf_id_t buffer_id, msg_addr_t message_addr, msg_size_t length,
+                                 sys_time_t time_out) {
   struct proc *proc = sched_cur_proc();
   struct buffer *buf = buffer_from_id(buffer_id);
   if (buf == NULL || buf->buf_part_id != sched_cur_part()->pa_id) {
@@ -688,8 +692,8 @@ ret_code_t do_send_buffer(buf_id_t buffer_id, msg_addr_t message_addr, msg_size_
   return NO_ERROR;
 }
 
-ret_code_t do_receive_buffer(buf_id_t buffer_id, sys_time_t time_out, msg_addr_t message_addr,
-                             msg_size_t *length) {
+static ret_code_t do_receive_buffer(buf_id_t buffer_id, sys_time_t time_out,
+                                    msg_addr_t message_addr, msg_size_t *length) {
   struct proc *proc = sched_cur_proc();
   struct buffer *buf = buffer_from_id(buffer_id);
   if (buf == NULL || buf->buf_part_id != sched_cur_part()->pa_id) {
@@ -739,7 +743,7 @@ ret_code_t do_receive_buffer(buf_id_t buffer_id, sys_time_t time_out, msg_addr_t
   return NO_ERROR;
 }
 
-ret_code_t do_get_buffer_id(buf_name_t buffer_name, buf_id_t *buffer_id) {
+static ret_code_t do_get_buffer_id(buf_name_t buffer_name, buf_id_t *buffer_id) {
   struct buffer *buf = part_get_buf_by_name(sched_cur_part(), buffer_name);
   if (buf == NULL) {
     return INVALID_CONFIG;
@@ -748,7 +752,7 @@ ret_code_t do_get_buffer_id(buf_name_t buffer_name, buf_id_t *buffer_id) {
   return NO_ERROR;
 }
 
-ret_code_t do_get_buffer_status(buf_id_t buffer_id, BUFFER_STATUS_TYPE *buffer_status) {
+static ret_code_t do_get_buffer_status(buf_id_t buffer_id, BUFFER_STATUS_TYPE *buffer_status) {
   struct buffer *buf = buffer_from_id(buffer_id);
   if (buf == NULL || buf->buf_part_id != sched_cur_part()->pa_id) {
     return INVALID_PARAM;
@@ -760,130 +764,130 @@ ret_code_t do_get_buffer_status(buf_id_t buffer_id, BUFFER_STATUS_TYPE *buffer_s
   return NO_ERROR;
 }
 
-ret_code_t do_create_blackboard(bb_name_t blackboard_name, msg_size_t max_message_size,
-                                bb_id_t *blackboard_id) {
+static ret_code_t do_create_blackboard(bb_name_t blackboard_name, msg_size_t max_message_size,
+                                       bb_id_t *blackboard_id) {
   // TODO
   return NO_ERROR;
 }
 
-ret_code_t do_display_blackboard(bb_id_t blackboard_id, msg_addr_t message_addr,
-                                 msg_size_t length) {
+static ret_code_t do_display_blackboard(bb_id_t blackboard_id, msg_addr_t message_addr,
+                                        msg_size_t length) {
   // TODO
   return NO_ERROR;
 }
 
-ret_code_t do_read_blackboard(bb_id_t blackboard_id, sys_time_t time_out,
-                              msg_addr_t message_addr, msg_size_t *length) {
+static ret_code_t do_read_blackboard(bb_id_t blackboard_id, sys_time_t time_out,
+                                     msg_addr_t message_addr, msg_size_t *length) {
   // TODO
   return NO_ERROR;
 }
 
-ret_code_t do_clear_blackboard(bb_id_t blackboard_id) {
+static ret_code_t do_clear_blackboard(bb_id_t blackboard_id) {
   // TODO
   return NO_ERROR;
 }
 
-ret_code_t do_get_blackboard_id(bb_name_t blackboard_name, bb_id_t *blackboard_id) {
+static ret_code_t do_get_blackboard_id(bb_name_t blackboard_name, bb_id_t *blackboard_id) {
   // TODO
   return NO_ERROR;
 }
 
-ret_code_t do_get_blackboard_status(bb_id_t blackboard_id,
-                                    BLACKBOARD_STATUS_TYPE *blackboard_status) {
+static ret_code_t do_get_blackboard_status(bb_id_t blackboard_id,
+                                           BLACKBOARD_STATUS_TYPE *blackboard_status) {
   // TODO
   return NO_ERROR;
 }
 
-ret_code_t do_create_semaphore(sem_name_t semaphore_name, sem_value_t current_value,
-                               sem_value_t maximum_value, que_disc_t queuing_discipline,
-                               sem_id_t *semaphore_id) {
+static ret_code_t do_create_semaphore(sem_name_t semaphore_name, sem_value_t current_value,
+                                      sem_value_t maximum_value, que_disc_t queuing_discipline,
+                                      sem_id_t *semaphore_id) {
   // TODO
   return NO_ERROR;
 }
 
-ret_code_t do_wait_semaphore(sem_id_t semaphore_id, sys_time_t time_out) {
+static ret_code_t do_wait_semaphore(sem_id_t semaphore_id, sys_time_t time_out) {
   // TODO
   return NO_ERROR;
 }
 
-ret_code_t do_signal_semaphore(sem_id_t semaphore_id) {
+static ret_code_t do_signal_semaphore(sem_id_t semaphore_id) {
   // TODO
   return NO_ERROR;
 }
 
-ret_code_t do_get_semaphore_id(sem_name_t semaphore_name, sem_id_t *semaphore_id) {
+static ret_code_t do_get_semaphore_id(sem_name_t semaphore_name, sem_id_t *semaphore_id) {
   // TODO
   return NO_ERROR;
 }
 
-ret_code_t do_get_semaphore_status(sem_id_t semaphore_id,
-                                   SEMAPHORE_STATUS_TYPE *semaphore_status) {
+static ret_code_t do_get_semaphore_status(sem_id_t semaphore_id,
+                                          SEMAPHORE_STATUS_TYPE *semaphore_status) {
   // TODO
   return NO_ERROR;
 }
 
-ret_code_t do_create_event(event_name_t event_name, event_id_t *event_id) {
+static ret_code_t do_create_event(event_name_t event_name, event_id_t *event_id) {
   // TODO
   return NO_ERROR;
 }
 
-ret_code_t do_set_event(event_id_t event_id) {
+static ret_code_t do_set_event(event_id_t event_id) {
   // TODO
   return NO_ERROR;
 }
 
-ret_code_t do_reset_event(event_id_t event_id) {
+static ret_code_t do_reset_event(event_id_t event_id) {
   // TODO
   return NO_ERROR;
 }
 
-ret_code_t do_wait_event(event_id_t event_id, sys_time_t time_out) {
+static ret_code_t do_wait_event(event_id_t event_id, sys_time_t time_out) {
   // TODO
   return NO_ERROR;
 }
 
-ret_code_t do_get_event_id(event_name_t event_name, event_id_t *event_id) {
+static ret_code_t do_get_event_id(event_name_t event_name, event_id_t *event_id) {
   // TODO
   return NO_ERROR;
 }
 
-ret_code_t do_get_event_status(event_id_t event_id, EVENT_STATUS_TYPE *event_status) {
+static ret_code_t do_get_event_status(event_id_t event_id, EVENT_STATUS_TYPE *event_status) {
   // TODO
   return NO_ERROR;
 }
 
-ret_code_t do_create_mutex(mutex_name_t mutex_name, priority_t mutex_priority,
-                           que_disc_t queuing_discipline, mutex_id_t *mutex_id) {
+static ret_code_t do_create_mutex(mutex_name_t mutex_name, priority_t mutex_priority,
+                                  que_disc_t queuing_discipline, mutex_id_t *mutex_id) {
   // TODO
   return NO_ERROR;
 }
 
-ret_code_t do_acquire_mutex(mutex_id_t mutex_id, sys_time_t time_out) {
+static ret_code_t do_acquire_mutex(mutex_id_t mutex_id, sys_time_t time_out) {
   // TODO
   return NO_ERROR;
 }
 
-ret_code_t do_release_mutex(mutex_id_t mutex_id) {
+static ret_code_t do_release_mutex(mutex_id_t mutex_id) {
   // TODO
   return NO_ERROR;
 }
 
-ret_code_t do_reset_mutex(mutex_id_t mutex_id, proc_id_t process_id) {
+static ret_code_t do_reset_mutex(mutex_id_t mutex_id, proc_id_t process_id) {
   // TODO
   return NO_ERROR;
 }
 
-ret_code_t do_get_mutex_id(mutex_name_t mutex_name, mutex_id_t *mutex_id) {
+static ret_code_t do_get_mutex_id(mutex_name_t mutex_name, mutex_id_t *mutex_id) {
   // TODO
   return NO_ERROR;
 }
 
-ret_code_t do_get_mutex_status(mutex_id_t mutex_id, MUTEX_STATUS_TYPE *mutex_status) {
+static ret_code_t do_get_mutex_status(mutex_id_t mutex_id, MUTEX_STATUS_TYPE *mutex_status) {
   // TODO
   return NO_ERROR;
 }
 
-ret_code_t do_get_process_mutex_state(proc_id_t process_id, mutex_id_t *mutex_id) {
+static ret_code_t do_get_process_mutex_state(proc_id_t process_id, mutex_id_t *mutex_id) {
   // TODO
   return NO_ERROR;
 }
