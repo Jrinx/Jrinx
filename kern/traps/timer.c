@@ -5,8 +5,6 @@
 #include <kern/lib/debug.h>
 #include <kern/lib/errors.h>
 #include <kern/lib/sbi.h>
-#include <kern/lock/lock.h>
-#include <kern/lock/spinlock.h>
 #include <kern/mm/kalloc.h>
 #include <kern/multitask/process.h>
 #include <kern/multitask/sched.h>
@@ -16,7 +14,6 @@
 #include <types.h>
 
 static struct list_head *cpus_time_event_queue;
-static with_spinlock(cpus_time_event_queue);
 
 void time_event_init(void) {
   cpus_time_event_queue = kalloc(sizeof(struct list_head) * cpus_get_count());
@@ -43,7 +40,7 @@ void time_event_alloc(void *ctx, sys_time_t time, enum time_event_type type) {
   te->te_time = time;
   te->te_type = type;
   struct time_event *i;
-  panic_e(lk_acquire(&spinlock_of(cpus_time_event_queue)));
+  intp_push();
   LINKED_NODE_ITER (cpus_time_event_queue[hrt_get_id()].l_first, i, te_queue_link) {
     if (i->te_time > te->te_time) {
       list_insert_before(&i->te_queue_link, &te->te_queue_link);
@@ -52,7 +49,7 @@ void time_event_alloc(void *ctx, sys_time_t time, enum time_event_type type) {
   }
   list_insert_tail(&cpus_time_event_queue[hrt_get_id()], &te->te_queue_link);
 succ:
-  panic_e(lk_release(&spinlock_of(cpus_time_event_queue)));
+  intp_pop();
   time_event_set_head();
   switch (type) {
   case TE_PROCESS_SUSPEND_TIMEOUT:
@@ -76,14 +73,14 @@ succ:
 
 void time_event_free(struct time_event *te) {
   struct time_event *i;
-  panic_e(lk_acquire(&spinlock_of(cpus_time_event_queue)));
+  intp_push();
   LINKED_NODE_ITER (cpus_time_event_queue[hrt_get_id()].l_first, i, te_queue_link) {
     if (i == te) {
       list_remove_node(&cpus_time_event_queue[hrt_get_id()], &te->te_queue_link);
       break;
     }
   }
-  panic_e(lk_release(&spinlock_of(cpus_time_event_queue)));
+  intp_pop();
   time_event_set_head();
   switch (te->te_type) {
   case TE_PROCESS_SUSPEND_TIMEOUT:

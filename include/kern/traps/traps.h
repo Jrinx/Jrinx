@@ -108,8 +108,10 @@ struct trapframe {
 
 extern struct context **cpus_context;
 
-void enable_int(void);
-void disable_int(void);
+void intp_enable(void);
+void intp_disable(void);
+void intp_push(void);
+void intp_pop(void);
 void traps_init(void);
 void trap_init_vec(void);
 

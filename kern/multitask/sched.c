@@ -134,9 +134,9 @@ __attribute__((noreturn)) void sched_proc(int round_robin) {
   if (cur_proc != NULL && cur_proc->pr_state == RUNNING) {
     cur_proc->pr_state = READY;
   }
-  enable_int();
+  intp_enable();
   struct proc *next_proc = sched_elect_next_proc(round_robin);
-  disable_int();
+  intp_disable();
   cpus_cur_proc[hrt_get_id()] = next_proc;
   next_proc->pr_state = RUNNING;
   proc_run(next_proc);

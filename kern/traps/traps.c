@@ -63,16 +63,36 @@ static void prepare_nested_trap(void) {
   csrw_sscratch((unsigned long)cpus_context[hrt_get_id()]);
 }
 
-void enable_int(void) {
+void intp_enable(void) {
   rv64_sstatus sstatus = {.val = csrr_sstatus()};
   sstatus.bits.sie = 1;
   csrw_sstatus(sstatus.val);
 }
 
-void disable_int(void) {
+void intp_disable(void) {
   rv64_sstatus sstatus = {.val = csrr_sstatus()};
   sstatus.bits.sie = 0;
   csrw_sstatus(sstatus.val);
+}
+
+void intp_pop(void) {
+  if (likely(cpus_intp_layer != NULL)) {
+    cpus_intp_layer[hrt_get_id()]--;
+    if (cpus_intp_layer[hrt_get_id()] == 0 && cpus_retained_intp[hrt_get_id()]) {
+      intp_enable();
+    }
+  }
+}
+
+void intp_push(void) {
+  if (likely(cpus_intp_layer != NULL)) {
+    rv64_sstatus sstatus = {.val = csrr_sstatus()};
+    if (cpus_intp_layer[hrt_get_id()] == 0) {
+      cpus_retained_intp[hrt_get_id()] = sstatus.bits.sie;
+    }
+    cpus_intp_layer[hrt_get_id()]++;
+    intp_disable();
+  }
 }
 
 extern void do_pagefault(struct context *context);
@@ -83,7 +103,7 @@ void handle_trap(void) {
   struct context *context = cpus_context[hrt_get_id()];
   prepare_nested_trap();
   if (!(context->ctx_scause & CAUSE_INT_OFFSET)) {
-    enable_int();
+    intp_enable();
   }
   extern int args_debug_kalloc_used;
   if (args_debug_kalloc_used) {
@@ -107,7 +127,7 @@ void handle_trap(void) {
     break;
   }
   if (!(context->ctx_scause & CAUSE_INT_OFFSET)) {
-    disable_int();
+    intp_disable();
   }
   ctx_free(cpus_context[hrt_get_id()]);
   hlist_remove_node(&context->ctx_link);
