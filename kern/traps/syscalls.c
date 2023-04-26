@@ -1,4 +1,5 @@
 #include <kern/chan/queuing.h>
+#include <kern/comm/blackboard.h>
 #include <kern/comm/buffer.h>
 #include <kern/drivers/serialport.h>
 #include <kern/lib/boottime.h>
@@ -758,35 +759,116 @@ static ret_code_t do_get_buffer_status(buf_id_t buffer_id, BUFFER_STATUS_TYPE *b
 
 static ret_code_t do_create_blackboard(bb_name_t blackboard_name, msg_size_t max_message_size,
                                        bb_id_t *blackboard_id) {
-  // TODO
+  struct part *part = sched_cur_part();
+  struct blackboard *bb = part_get_bb_by_name(part, blackboard_name);
+  if (bb != NULL) {
+    return NO_ACTION;
+  }
+  if (max_message_size == 0) {
+    return INVALID_PARAM;
+  }
+  if (part->pa_op_mode == NORMAL) {
+    return INVALID_MODE;
+  }
+  catch_e(blackboard_alloc(part, &bb, blackboard_name, max_message_size),
+          { return INVALID_CONFIG; });
   return NO_ERROR;
 }
 
 static ret_code_t do_display_blackboard(bb_id_t blackboard_id, msg_addr_t message_addr,
                                         msg_size_t length) {
-  // TODO
+  struct blackboard *bb = blackboard_from_id(blackboard_id);
+  if (bb == NULL || bb->bb_part_id != sched_cur_part()->pa_id) {
+    return INVALID_PARAM;
+  }
+  if (length > bb->bb_max_msg_size) {
+    return INVALID_PARAM;
+  }
+  if (length == 0) {
+    return INVALID_PARAM;
+  }
+  panic_e(lk_acquire(&bb->bb_lock));
+  blackboard_display(bb, message_addr, length);
+  struct proc *to_wakeup;
+  while ((to_wakeup = blackboard_wakeup_waiting_proc(bb)) != NULL) {
+    if (to_wakeup->pr_waiting_reason == BLACKBOARD_BLOCKED_WITH_TIMEOUT) {
+      time_event_free(to_wakeup->pr_asso_timer);
+    }
+    to_wakeup->pr_state = READY;
+  }
+  panic_e(lk_release(&bb->bb_lock));
+  sched_proc_give_up(0);
   return NO_ERROR;
 }
 
 static ret_code_t do_read_blackboard(bb_id_t blackboard_id, sys_time_t time_out,
                                      msg_addr_t message_addr, msg_size_t *length) {
-  // TODO
+  struct proc *proc = sched_cur_proc();
+  struct blackboard *bb = blackboard_from_id(blackboard_id);
+  if (bb == NULL || bb->bb_part_id != sched_cur_part()->pa_id) {
+    return INVALID_PARAM;
+  }
+  panic_e(lk_acquire(&bb->bb_lock));
+  while (blackboard_is_empty(bb)) {
+    if (time_out == 0) {
+      panic_e(lk_release(&bb->bb_lock));
+      *length = 0;
+      return NOT_AVAILABLE;
+      // TODO: check if proc owns a mutex or is error handler
+    } else {
+      proc->pr_state = WAITING;
+      blackboard_add_waiting_proc(bb, proc);
+      sys_time_t wakeup_time = boottime_get_now() + time_out;
+      if (time_out != SYSTEM_TIME_INFINITE_VAL) {
+        proc->pr_waiting_reason = BLACKBOARD_BLOCKED_WITH_TIMEOUT;
+        struct te_proc_bb tepbb = {.tepbb_proc = proc, .tepbb_bb = bb};
+        time_event_alloc(&tepbb, wakeup_time, TE_BLACKBOARD_BLOCK_TIMEOUT);
+      } else {
+        proc->pr_waiting_reason = BLACKBOARD_BLOCKED;
+      }
+      panic_e(lk_release(&bb->bb_lock));
+      sched_proc_give_up(0);
+      if (time_out != SYSTEM_TIME_INFINITE_VAL && boottime_get_now() > wakeup_time) {
+        return TIMED_OUT;
+      }
+      panic_e(lk_acquire(&bb->bb_lock));
+    }
+  }
+  blackboard_read(bb, message_addr, length);
+  panic_e(lk_release(&bb->bb_lock));
   return NO_ERROR;
 }
 
 static ret_code_t do_clear_blackboard(bb_id_t blackboard_id) {
-  // TODO
+  struct blackboard *bb = blackboard_from_id(blackboard_id);
+  if (bb == NULL || bb->bb_part_id != sched_cur_part()->pa_id) {
+    return INVALID_PARAM;
+  }
+  panic_e(lk_acquire(&bb->bb_lock));
+  blackboard_clear(bb);
+  panic_e(lk_release(&bb->bb_lock));
   return NO_ERROR;
 }
 
 static ret_code_t do_get_blackboard_id(bb_name_t blackboard_name, bb_id_t *blackboard_id) {
-  // TODO
+  struct part *part = sched_cur_part();
+  struct blackboard *bb = part_get_bb_by_name(part, blackboard_name);
+  if (bb == NULL) {
+    return INVALID_CONFIG;
+  }
+  *blackboard_id = bb->bb_id;
   return NO_ERROR;
 }
 
 static ret_code_t do_get_blackboard_status(bb_id_t blackboard_id,
                                            BLACKBOARD_STATUS_TYPE *blackboard_status) {
-  // TODO
+  struct blackboard *bb = blackboard_from_id(blackboard_id);
+  if (bb == NULL || bb->bb_part_id != sched_cur_part()->pa_id) {
+    return INVALID_PARAM;
+  }
+  blackboard_status->EMPTY_INDICATOR = bb->bb_empty_ind;
+  blackboard_status->MAX_MESSAGE_SIZE = bb->bb_max_msg_size;
+  blackboard_status->WAITING_PROCESSES = blackboard_get_waiting_proc_nb(bb);
   return NO_ERROR;
 }
 

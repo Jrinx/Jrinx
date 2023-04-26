@@ -31,6 +31,7 @@ struct part {
   struct lock pa_comm_base_lock;
   struct hashmap pa_proc_name_map;
   struct hashmap pa_buf_name_map;
+  struct hashmap pa_bb_name_map;
   struct list_head pa_proc_list;
   struct linked_node pa_id_link;
   struct linked_node pa_name_link;
@@ -56,6 +57,7 @@ struct prog_def_t {
 
 struct proc;
 struct buffer;
+struct blackboard;
 
 struct part *part_from_id(part_id_t id);
 struct part *part_from_name(const char *name);
@@ -63,6 +65,8 @@ void part_add_proc_name(struct part *part, struct proc *proc);
 struct proc *part_get_proc_by_name(struct part *part, const char *name);
 void part_add_buf_name(struct part *part, struct buffer *buf);
 struct buffer *part_get_buf_by_name(struct part *part, const char *name);
+void part_add_bb_name(struct part *part, struct blackboard *bb);
+struct blackboard *part_get_bb_by_name(struct part *part, const char *name);
 long part_comm_alloc(struct part *part, size_t size, void **out);
 long part_pt_alloc(struct part *part, vaddr_t vaddr, perm_t perm, void **pa);
 long part_create(struct part_conf *conf) __attribute__((warn_unused_result));

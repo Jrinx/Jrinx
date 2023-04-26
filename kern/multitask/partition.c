@@ -1,3 +1,4 @@
+#include <kern/comm/blackboard.h>
 #include <kern/comm/buffer.h>
 #include <kern/drivers/cpus.h>
 #include <kern/lib/debug.h>
@@ -32,6 +33,11 @@ static const void *part_proc_name_key_of(const struct linked_node *node) {
 static const void *part_buf_name_key_of(const struct linked_node *node) {
   const struct buffer *buf = CONTAINER_OF(node, struct buffer, buf_name_link);
   return buf->buf_name;
+}
+
+static const void *part_bb_name_key_of(const struct linked_node *node) {
+  const struct blackboard *bb = CONTAINER_OF(node, struct blackboard, bb_name_link);
+  return bb->bb_name;
 }
 
 static struct hlist_head part_id_map_array[128];
@@ -111,6 +117,19 @@ struct buffer *part_get_buf_by_name(struct part *part, const char *name) {
   return buf;
 }
 
+void part_add_bb_name(struct part *part, struct blackboard *bb) {
+  hashmap_put(&part->pa_bb_name_map, &bb->bb_name_link);
+}
+
+struct blackboard *part_get_bb_by_name(struct part *part, const char *name) {
+  struct linked_node *node = hashmap_get(&part->pa_bb_name_map, name);
+  if (node == NULL) {
+    return NULL;
+  }
+  struct blackboard *bb = CONTAINER_OF(node, struct blackboard, bb_name_link);
+  return bb;
+}
+
 static long part_alloc(struct part **part, const char *name, unsigned long memory_req,
                        sys_time_t period, sys_time_t duration) {
   struct phy_frame *frame;
@@ -142,6 +161,9 @@ static long part_alloc(struct part **part, const char *name, unsigned long memor
   struct hlist_head *buf_name_map_array = kalloc(sizeof(struct hlist_head) * 64);
   memset(buf_name_map_array, 0, sizeof(struct hlist_head) * 64);
   HASHMAP_ALLOC(&tmp->pa_buf_name_map, buf_name_map_array, 64, str, part_buf_name_key_of);
+  struct hlist_head *bb_name_map_array = kalloc(sizeof(struct hlist_head) * 64);
+  memset(bb_name_map_array, 0, sizeof(struct hlist_head) * 64);
+  HASHMAP_ALLOC(&tmp->pa_bb_name_map, bb_name_map_array, 64, str, part_bb_name_key_of);
   list_init(&tmp->pa_proc_list);
   tmp->pa_cpus_asid = kalloc(sizeof(unsigned long) * cpus_get_count());
   tmp->pa_cpus_asid_generation = kalloc(sizeof(unsigned long) * cpus_get_count());

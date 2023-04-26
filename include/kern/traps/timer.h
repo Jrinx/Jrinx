@@ -2,6 +2,7 @@
 #define _KERN_TRAPS_TIMER_H_
 
 #include <kern/chan/queuing.h>
+#include <kern/comm/blackboard.h>
 #include <kern/comm/buffer.h>
 #include <kern/multitask/partition.h>
 #include <kern/multitask/process.h>
@@ -13,6 +14,7 @@ enum time_event_type {
   TE_PROCESS_SUSPEND_TIMEOUT,
   TE_PROCESS_DELAYED_START,
   TE_BUFFER_BLOCK_TIMEOUT,
+  TE_BLACKBOARD_BLOCK_TIMEOUT,
   TE_QUEUING_PORT_BLOCK_TIMEOUT,
   TE_PROCESS_TIMED_WAIT_TIMEOUT,
 };
@@ -27,6 +29,11 @@ struct time_event {
 struct te_proc_buf {
   struct proc *tepb_proc;
   struct buffer *tepb_buf;
+};
+
+struct te_proc_bb {
+  struct proc *tepbb_proc;
+  struct blackboard *tepbb_bb;
 };
 
 struct te_proc_queuing_port {
