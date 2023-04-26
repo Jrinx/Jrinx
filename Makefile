@@ -60,7 +60,7 @@ MAKEFLAGS	:= -j$(shell nproc) -s $(MAKEFLAGS)
 .ONESHELL:
 .PHONY: all debug release release-debug build sbi-fw clean clean-dt clean-opensbi clean-all \
 	run dbg gdb gdb-sbi \
-	preprocess objdump objcopy mkimage dumpdts \
+	preprocess objdump strip objcopy mkimage dumpdts \
 	$(JRINX) $(MODULES) $(USER_MODULES) $(LIB_MODULES) \
 	check-style fix-style register-git-hooks cloc
 
@@ -126,10 +126,13 @@ objdump:
 	@find -- * \( -path $(JRINX) -o -name '*.b' \) -exec \
 		sh -c '$(OBJDUMP) {} -aldS > {}.objdump && echo {}.objdump' ';'
 
+strip:
+	@$(STRIP) $(JRINX)
+
 objcopy:
 	@$(OBJCOPY) -O binary $(JRINX) $(JRINX).bin
 
-mkimage: objcopy
+mkimage: | strip objcopy
 	mkimage -A riscv -O linux -C none -a 0x80200000 -e 0x80200000 \
 		-n Jrinx -d $(JRINX).bin $(JRINX).uImage
 
