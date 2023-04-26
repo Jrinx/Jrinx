@@ -148,6 +148,8 @@ static long part_alloc(struct part **part, const char *name, unsigned long memor
   memset(tmp->pa_cpus_asid_generation, 0, sizeof(unsigned long) * cpus_get_count());
   tmp->pa_pgdir = (pte_t *)pa;
   *part = tmp;
+  spinlock_init(&tmp->pa_mem_rem_lock);
+  spinlock_init(&tmp->pa_comm_base_lock);
   panic_e(lk_acquire(&spinlock_of(part_id_map)));
   hashmap_put(&part_id_map, &tmp->pa_id_link);
   panic_e(lk_release(&spinlock_of(part_id_map)));
@@ -157,22 +159,46 @@ static long part_alloc(struct part **part, const char *name, unsigned long memor
   return KER_SUCCESS;
 }
 
-long part_pt_alloc(struct part *part, vaddr_t vaddr, perm_t perm, void **pa) {
-  if (part->pa_mem_rem < PGSIZE) {
+long part_comm_alloc(struct part *part, size_t size, void **out) {
+  panic_e(lk_acquire(&part->pa_comm_base_lock));
+  if (part->pa_comm_base + size >= COMM_LIMT) {
+    panic_e(lk_release(&part->pa_comm_base_lock));
     return -KER_PART_ER;
   }
+  void *ret = (void *)part->pa_comm_base;
+  part->pa_comm_base += size;
+  panic_e(lk_release(&part->pa_comm_base_lock));
+  *out = ret;
+  return KER_SUCCESS;
+}
+
+long part_pt_alloc(struct part *part, vaddr_t vaddr, perm_t perm, void **pa) {
+  panic_e(lk_acquire(&part->pa_mem_rem_lock));
+  if (part->pa_mem_rem < PGSIZE) {
+    panic_e(lk_release(&part->pa_mem_rem_lock));
+    return -KER_PART_ER;
+  }
+  part->pa_mem_rem -= PGSIZE;
+  panic_e(lk_release(&part->pa_mem_rem_lock));
   struct phy_frame *frame;
-  catch_e(phy_frame_alloc(&frame));
+  catch_e(phy_frame_alloc(&frame), {
+    panic_e(lk_acquire(&part->pa_mem_rem_lock));
+    part->pa_mem_rem += PGSIZE;
+    panic_e(lk_release(&part->pa_mem_rem_lock));
+    return err;
+  });
   paddr_t paddr;
-  catch_e(frame2pa(frame, &paddr.val));
+  panic_e(frame2pa(frame, &paddr.val));
   if (pa != NULL) {
     *pa = (void *)paddr.val;
   }
   catch_e(pt_map(part->pa_pgdir, vaddr, paddr, perm), {
     panic_e(phy_frame_ref_dec(frame));
+    panic_e(lk_acquire(&part->pa_mem_rem_lock));
+    part->pa_mem_rem += PGSIZE;
+    panic_e(lk_release(&part->pa_mem_rem_lock));
     return err;
   });
-  part->pa_mem_rem -= PGSIZE;
   return KER_SUCCESS;
 }
 

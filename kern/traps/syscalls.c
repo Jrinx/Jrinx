@@ -623,10 +623,6 @@ static ret_code_t do_create_buffer(buf_name_t buffer_name, msg_size_t max_messag
   if (max_message_size == 0) {
     return INVALID_PARAM;
   }
-  if (part->pa_comm_base + (max_message_size + sizeof(struct comm_msg)) * max_nb_message >=
-      COMM_LIMT) {
-    return INVALID_PARAM;
-  }
   if (part->pa_op_mode == NORMAL) {
     return INVALID_MODE;
   }

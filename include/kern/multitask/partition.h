@@ -1,6 +1,7 @@
 #ifndef _KERN_MULTITASK_PARTITION_H_
 #define _KERN_MULTITASK_PARTITION_H_
 
+#include <kern/lock/lock.h>
 #include <kern/mm/vmm.h>
 #include <lib/hashmap.h>
 #include <list.h>
@@ -26,6 +27,8 @@ struct part {
   op_mode_t pa_op_mode;
   start_cond_t pa_start_cond;
   num_cores_t pa_num_cores;
+  struct lock pa_mem_rem_lock;
+  struct lock pa_comm_base_lock;
   struct hashmap pa_proc_name_map;
   struct hashmap pa_buf_name_map;
   struct list_head pa_proc_list;
@@ -60,6 +63,7 @@ void part_add_proc_name(struct part *part, struct proc *proc);
 struct proc *part_get_proc_by_name(struct part *part, const char *name);
 void part_add_buf_name(struct part *part, struct buffer *buf);
 struct buffer *part_get_buf_by_name(struct part *part, const char *name);
+long part_comm_alloc(struct part *part, size_t size, void **out);
 long part_pt_alloc(struct part *part, vaddr_t vaddr, perm_t perm, void **pa);
 long part_create(struct part_conf *conf) __attribute__((warn_unused_result));
 void part_pt_sync_kern_pgdir(void);

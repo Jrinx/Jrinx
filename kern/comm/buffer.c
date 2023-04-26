@@ -60,8 +60,11 @@ long buffer_alloc(struct part *part, struct buffer **buf, buf_name_t name,
   tmp->buf_max_msg_size = max_msg_size;
   tmp->buf_max_nb_msg = max_nb_msg;
   tmp->buf_cap = (max_msg_size + sizeof(struct comm_msg)) * max_nb_msg;
-  tmp->buf_data = (void *)part->pa_comm_base;
-  part->pa_comm_base += tmp->buf_cap;
+  catch_e(part_comm_alloc(part, tmp->buf_cap, &tmp->buf_data), {
+    kfree(tmp->buf_name);
+    kfree(tmp);
+    return err;
+  });
   tmp->buf_off_b = 0;
   tmp->buf_off_e = -(max_msg_size + sizeof(struct comm_msg));
   tmp->buf_nb_msg = 0;
