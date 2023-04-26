@@ -14,7 +14,9 @@
 #include <types.h>
 
 static void do_cons_write_char(int ch) {
+  conslock_acquire();
   serial_blocked_putc(ch);
+  conslock_release();
 }
 
 static int do_cons_read_char(void) {
@@ -22,9 +24,11 @@ static int do_cons_read_char(void) {
 }
 
 static void do_cons_write_buf(const char *buf, size_t len) {
+  conslock_acquire();
   for (size_t i = 0; i < len; i++) {
     serial_blocked_putc(buf[i]);
   }
+  conslock_release();
 }
 
 static void do_halt(void) {

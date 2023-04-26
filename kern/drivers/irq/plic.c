@@ -53,8 +53,8 @@ static uint32_t plic_claim(struct plic *plic, uint32_t context_id) {
   return *((volatile uint32_t *)(plic->pl_addr + 0x200004 + 0x1000 * context_id));
 }
 
-static void plic_complete(struct plic *plic, uint32_t context_id) {
-  *((volatile uint32_t *)(plic->pl_addr + 0x200004 + 0x1000 * context_id)) = 0;
+static void plic_complete(struct plic *plic, uint32_t context_id, uint32_t int_num) {
+  *((volatile uint32_t *)(plic->pl_addr + 0x200004 + 0x1000 * context_id)) = int_num;
 }
 
 static long plic_handle_int(void *ctx, unsigned long trap_num) {
@@ -75,7 +75,7 @@ static long plic_handle_int(void *ctx, unsigned long trap_num) {
     return err;
   });
 
-  plic_complete(plic, external_int_ctx);
+  plic_complete(plic, external_int_ctx, int_num);
 
   panic_e(lk_release(&plic->spinlock_of(pl)));
   return KER_SUCCESS;

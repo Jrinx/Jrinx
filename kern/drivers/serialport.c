@@ -11,6 +11,7 @@ struct serial_dev {
   char *sr_name;
   putc_callback_t sr_putc_callback;
   getc_callback_t sr_getc_callback;
+  flush_callback_t sr_flush_callback;
   struct linked_node sr_link;
 };
 
@@ -32,12 +33,13 @@ static struct hashmap serial_map = {
     .h_key = serial_key_of,
 };
 
-void serial_register_dev(char *name, putc_callback_t putc_callback,
-                         getc_callback_t getc_callback) {
+void serial_register_dev(char *name, flush_callback_t flush_callback,
+                         putc_callback_t putc_callback, getc_callback_t getc_callback) {
   struct serial_dev *dev = kalloc(sizeof(struct serial_dev));
   dev->sr_name = name;
   dev->sr_putc_callback = putc_callback;
   dev->sr_getc_callback = getc_callback;
+  dev->sr_flush_callback = flush_callback;
   hashmap_put(&serial_map, &dev->sr_link);
   if (selected_input_dev == NULL) {
     selected_input_dev = dev;
@@ -93,4 +95,8 @@ uint8_t serial_blocked_getc(void) {
 void serial_blocked_putc(uint8_t c) {
   while (!serial_putc(c)) {
   }
+}
+
+void serial_flush(void) {
+  cb_invoke(selected_output_dev->sr_flush_callback)();
 }

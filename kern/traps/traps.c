@@ -96,8 +96,9 @@ void intp_push(void) {
 }
 
 extern void do_pagefault(struct context *context);
-extern void do_timer_int(struct context *context);
 extern void do_syscall(struct context *context);
+extern void do_timer_int(struct context *context);
+extern void do_external_int(struct context *context);
 
 void handle_trap(void) {
   struct context *context = cpus_context[hrt_get_id()];
@@ -121,6 +122,9 @@ void handle_trap(void) {
     break;
   case CAUSE_INT_OFFSET | CAUSE_INT_S_TIMER:
     do_timer_int(context);
+    break;
+  case CAUSE_INT_OFFSET | CAUSE_INT_S_EXTERNAL:
+    do_external_int(context);
     break;
   default:
     fatal("failed to handle trap, cause=%016lx\n", context->ctx_scause);

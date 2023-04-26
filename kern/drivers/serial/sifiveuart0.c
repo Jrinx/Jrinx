@@ -1,4 +1,5 @@
 #include "sifiveuart0.h"
+#include "serial.h"
 #include <endian.h>
 #include <kern/drivers/device.h>
 #include <kern/drivers/intc.h>
@@ -13,6 +14,12 @@ struct sifiveuart0 {
   char *su_name;
   uintptr_t su_addr;
   uintmax_t su_size;
+  struct {
+    uint8_t *buf_data;
+    size_t buf_off_b;
+    size_t buf_off_e;
+    size_t buf_size;
+  } su_rd_buf, su_wr_buf;
 };
 
 static inline void sifiveuart0_write(struct sifiveuart0 *uart, unsigned long addr,
@@ -28,13 +35,21 @@ static inline uint32_t sifiveuart0_read(struct sifiveuart0 *uart, unsigned long 
 }
 
 static void sifiveuart0_init(struct sifiveuart0 *uart) {
-  sifiveuart0_write(uart, COM_TXCTRL, COM_TXCTRL_TXEN); // enable tx
-  sifiveuart0_write(uart, COM_RXCTRL, COM_RXCTRL_RXEN); // enable rx
-  sifiveuart0_write(uart, COM_IE, COM_IPE_RXWM);        // enable receive data interrupt
+  sifiveuart0_write(uart, COM_TXCTRL,
+                    COM_TXCTRL_TXEN | (7 << COM_TXCTRL_TXCNT_SHIFT)); // enable tx
+  sifiveuart0_write(uart, COM_RXCTRL, COM_RXCTRL_RXEN);               // enable rx
+  sifiveuart0_write(uart, COM_IE, COM_IPE_RXWM); // enable receive data interrupt
 }
 
 static int sifiveuart0_getc(void *ctx, uint8_t *c) {
   struct sifiveuart0 *uart = ctx;
+  if (uart->su_rd_buf.buf_size > 0) {
+    uint8_t data = uart->su_rd_buf.buf_data[uart->su_rd_buf.buf_off_b];
+    *c = data == 0xffU ? 0 : data;
+    uart->su_rd_buf.buf_off_b = (uart->su_rd_buf.buf_off_b + 1) % SERIAL_BUFFER_SIZE;
+    uart->su_rd_buf.buf_size--;
+    return 1;
+  }
   uint32_t rxdata = sifiveuart0_read(uart, COM_RXDATA);
   if ((rxdata & COM_RXDATA_EMPTY) != 0) {
     return 0;
@@ -47,14 +62,59 @@ static int sifiveuart0_getc(void *ctx, uint8_t *c) {
 static int sifiveuart0_putc(void *ctx, uint8_t c) {
   struct sifiveuart0 *uart = ctx;
   if ((sifiveuart0_read(uart, COM_TXDATA) & COM_TXDATA_FULL) != 0) {
+    if (uart->su_wr_buf.buf_size < SERIAL_BUFFER_SIZE) {
+      uart->su_wr_buf.buf_off_e = (uart->su_wr_buf.buf_off_e + 1) % SERIAL_BUFFER_SIZE;
+      uart->su_wr_buf.buf_data[uart->su_wr_buf.buf_off_e] = c;
+      uart->su_wr_buf.buf_size++;
+      sifiveuart0_write(uart, COM_IE, COM_IPE_RXWM | COM_IPE_TXWM);
+      return 1;
+    }
     return 0;
   }
   sifiveuart0_write(uart, COM_TXDATA, c);
   return 1;
 }
 
+static void sifiveuart0_flush(void *ctx) {
+  struct sifiveuart0 *uart = ctx;
+  while (uart->su_wr_buf.buf_size > 0) {
+    while ((sifiveuart0_read(uart, COM_TXDATA) & COM_TXDATA_FULL) != 0) {
+    }
+    sifiveuart0_write(uart, COM_TXDATA, uart->su_wr_buf.buf_data[uart->su_wr_buf.buf_off_b]);
+    uart->su_wr_buf.buf_off_b = (uart->su_wr_buf.buf_off_b + 1) % SERIAL_BUFFER_SIZE;
+    uart->su_wr_buf.buf_size--;
+  }
+}
+
 static long sifiveuart0_handle_int(void *ctx, unsigned long trap_num) {
-  // TODO: notify those processes waiting uart input
+  struct sifiveuart0 *uart = ctx;
+  uint8_t ip = sifiveuart0_read(uart, COM_IP);
+  if (ip & COM_IPE_RXWM) {
+    uint32_t data;
+    while (((data = sifiveuart0_read(uart, COM_RXDATA)) & COM_RXDATA_EMPTY) != 0) {
+      if (uart->su_rd_buf.buf_size == SERIAL_BUFFER_SIZE) {
+        break;
+      }
+      uart->su_rd_buf.buf_off_e = (uart->su_rd_buf.buf_off_e + 1) % SERIAL_BUFFER_SIZE;
+      uart->su_rd_buf.buf_data[uart->su_rd_buf.buf_off_e] = data & 0xffU;
+      uart->su_rd_buf.buf_size++;
+    }
+  }
+  if (ip & COM_IPE_TXWM) {
+    while ((sifiveuart0_read(uart, COM_TXDATA) & COM_TXDATA_FULL) == 0) {
+      if (uart->su_wr_buf.buf_size == 0) {
+        break;
+      }
+      sifiveuart0_write(uart, COM_TXDATA, uart->su_wr_buf.buf_data[uart->su_wr_buf.buf_off_b]);
+      uart->su_wr_buf.buf_off_b = (uart->su_wr_buf.buf_off_b + 1) % SERIAL_BUFFER_SIZE;
+      uart->su_wr_buf.buf_size--;
+    }
+    if (uart->su_wr_buf.buf_size == 0) {
+      sifiveuart0_write(uart, COM_IE, COM_IPE_RXWM);
+    } else {
+      sifiveuart0_write(uart, COM_IE, COM_IPE_RXWM | COM_IPE_TXWM);
+    }
+  }
   return KER_SUCCESS;
 }
 
@@ -96,6 +156,14 @@ static long sifiveuart0_probe(const struct dev_node *node) {
   uart->su_name = node->nd_name;
   uart->su_addr = addr;
   uart->su_size = size;
+  uart->su_rd_buf.buf_data = kalloc(SERIAL_BUFFER_SIZE);
+  uart->su_rd_buf.buf_off_b = 0;
+  uart->su_rd_buf.buf_off_e = -1;
+  uart->su_rd_buf.buf_size = 0;
+  uart->su_wr_buf.buf_data = kalloc(SERIAL_BUFFER_SIZE);
+  uart->su_wr_buf.buf_off_b = 0;
+  uart->su_wr_buf.buf_off_e = -1;
+  uart->su_wr_buf.buf_size = 0;
 
   info("%s probed, interrupt %08x registered to intc %u\n", node->nd_name, int_num, intc);
   struct fmt_mem_range mem_range = {.addr = addr, .size = size};
@@ -104,9 +172,10 @@ static long sifiveuart0_probe(const struct dev_node *node) {
   catch_e(cb_invoke(irq_register_callback)(int_num, trap_callback));
 
   sifiveuart0_init(uart);
+  cb_decl(flush_callback_t, flush_callback, sifiveuart0_flush, uart);
   cb_decl(putc_callback_t, putc_callback, sifiveuart0_putc, uart);
   cb_decl(getc_callback_t, getc_callback, sifiveuart0_getc, uart);
-  serial_register_dev(node->nd_name, putc_callback, getc_callback);
+  serial_register_dev(node->nd_name, flush_callback, putc_callback, getc_callback);
   vmm_register_mmio(uart->su_name, &uart->su_addr, uart->su_size);
 
   return KER_SUCCESS;

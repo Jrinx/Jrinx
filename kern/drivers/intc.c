@@ -8,7 +8,7 @@
 #include <stdint.h>
 
 struct exc_st {
-  uint32_t exc_trap_num;
+  uint64_t exc_trap_num;
   trap_callback_t exc_callback;
   struct linked_node exc_link;
 };
@@ -23,8 +23,8 @@ static struct hashmap exc_map = {
     .h_array = exc_map_array,
     .h_num = 0,
     .h_cap = 64,
-    .h_code = hash_code_uint32,
-    .h_equals = hash_eq_uint32,
+    .h_code = hash_code_uint64,
+    .h_equals = hash_eq_uint64,
     .h_key = exc_key_of,
 };
 
@@ -48,6 +48,16 @@ static struct hashmap irq_reg_map = {
     .h_equals = hash_eq_uint32,
     .h_key = irq_reg_key_of,
 };
+
+void intc_get_handler(unsigned long trap_num, trap_callback_t *callback) {
+  struct linked_node *node = hashmap_get(&exc_map, &trap_num);
+  if (node == NULL) {
+    memset(callback, 0, sizeof(trap_callback_t));
+    return;
+  }
+  struct exc_st *exc = CONTAINER_OF(node, struct exc_st, exc_link);
+  memcpy(callback, &exc->exc_callback, sizeof(trap_callback_t));
+}
 
 long intc_register_handler(void *_, unsigned long trap_num, trap_callback_t callback) {
   struct exc_st *exc = kalloc(sizeof(struct exc_st));

@@ -1,4 +1,5 @@
 #include "uart16550a.h"
+#include "serial.h"
 #include <endian.h>
 #include <kern/drivers/device.h>
 #include <kern/drivers/intc.h>
@@ -15,6 +16,12 @@ struct uart16550a {
   uintptr_t ur_addr;
   uintmax_t ur_size;
   uint32_t ur_shift;
+  struct {
+    uint8_t *buf_data;
+    size_t buf_off_b;
+    size_t buf_off_e;
+    size_t buf_size;
+  } ur_rd_buf, ur_wr_buf;
 };
 
 static inline void uart16550a_write(struct uart16550a *uart, unsigned long addr, uint8_t data) {
@@ -37,6 +44,13 @@ static void uart16550a_init(struct uart16550a *uart) {
 
 static int uart16550a_getc(void *ctx, uint8_t *c) {
   struct uart16550a *uart = ctx;
+  if (uart->ur_rd_buf.buf_size > 0) {
+    uint8_t r = uart->ur_rd_buf.buf_data[uart->ur_rd_buf.buf_off_b];
+    *c = r == 0xffU ? 0 : r;
+    uart->ur_rd_buf.buf_off_b = (uart->ur_rd_buf.buf_off_b + 1) % uart->ur_rd_buf.buf_size;
+    uart->ur_rd_buf.buf_size--;
+    return 1;
+  }
   if ((uart16550a_read(uart, COM_LSR) & COM_LSR_DATA_AVAIL) == 0) {
     return 0;
   }
@@ -48,14 +62,63 @@ static int uart16550a_getc(void *ctx, uint8_t *c) {
 static int uart16550a_putc(void *ctx, uint8_t c) {
   struct uart16550a *uart = ctx;
   if ((uart16550a_read(uart, COM_LSR) & COM_LSR_THR_EMPTY) == 0) {
+    if (uart->ur_wr_buf.buf_size < SERIAL_BUFFER_SIZE) {
+      uart->ur_wr_buf.buf_off_e = (uart->ur_wr_buf.buf_off_e + 1) % SERIAL_BUFFER_SIZE;
+      uart->ur_wr_buf.buf_data[uart->ur_wr_buf.buf_off_e] = c;
+      uart->ur_wr_buf.buf_size++;
+      uart16550a_write(uart, COM_IER, COM_IER_RCV_DATA_AVAIL | COM_IER_TRANS_HOLD_REG_EMPTY);
+      return 1;
+    }
     return 0;
   }
   uart16550a_write(uart, COM_THR, c);
   return 1;
 }
 
+static void uart16550a_flush(void *ctx) {
+  struct uart16550a *uart = ctx;
+  while (uart->ur_wr_buf.buf_size > 0) {
+    while ((uart16550a_read(uart, COM_LSR) & COM_LSR_THR_EMPTY) == 0) {
+    }
+    uart16550a_write(uart, COM_THR, uart->ur_wr_buf.buf_data[uart->ur_wr_buf.buf_off_b]);
+    uart->ur_wr_buf.buf_off_b = (uart->ur_wr_buf.buf_off_b + 1) % SERIAL_BUFFER_SIZE;
+    uart->ur_wr_buf.buf_size--;
+  }
+}
+
 static long uart16550a_handle_int(void *ctx, unsigned long trap_num) {
-  // TODO: notify those processes waiting uart input
+  struct uart16550a *uart = ctx;
+  uint8_t iir = uart16550a_read(uart, COM_IIR);
+  switch (iir & COM_IIR_CAUSE) {
+  case 0b0100:
+  case 0b1100:
+    while ((uart16550a_read(uart, COM_LSR) & COM_LSR_DATA_AVAIL) != 0) {
+      if (uart->ur_rd_buf.buf_size == SERIAL_BUFFER_SIZE) {
+        break;
+      }
+      uart->ur_rd_buf.buf_off_e = (uart->ur_rd_buf.buf_off_e + 1) % SERIAL_BUFFER_SIZE;
+      uart->ur_rd_buf.buf_data[uart->ur_rd_buf.buf_off_e] = uart16550a_read(uart, COM_RBR);
+      uart->ur_rd_buf.buf_size++;
+    }
+    break;
+  case 0b0010:
+    while ((uart16550a_read(uart, COM_LSR) & COM_LSR_THR_EMPTY) != 0) {
+      if (uart->ur_wr_buf.buf_size == 0) {
+        break;
+      }
+      uart16550a_write(uart, COM_THR, uart->ur_wr_buf.buf_data[uart->ur_wr_buf.buf_off_b]);
+      uart->ur_wr_buf.buf_off_b = (uart->ur_wr_buf.buf_off_b + 1) % SERIAL_BUFFER_SIZE;
+      uart->ur_wr_buf.buf_size--;
+    }
+    if (uart->ur_wr_buf.buf_size == 0) {
+      uart16550a_write(uart, COM_IER, COM_IER_RCV_DATA_AVAIL);
+    } else {
+      uart16550a_write(uart, COM_IER, COM_IER_RCV_DATA_AVAIL | COM_IER_TRANS_HOLD_REG_EMPTY);
+    }
+    break;
+  default:
+    fatal("unexpected interrupt cause %u\n", iir & COM_IIR_CAUSE);
+  }
   return KER_SUCCESS;
 }
 
@@ -104,6 +167,14 @@ static long uart16550a_probe(const struct dev_node *node) {
   uart->ur_addr = addr;
   uart->ur_size = size;
   uart->ur_shift = shift;
+  uart->ur_rd_buf.buf_data = kalloc(SERIAL_BUFFER_SIZE);
+  uart->ur_rd_buf.buf_off_b = 0;
+  uart->ur_rd_buf.buf_off_e = -1;
+  uart->ur_rd_buf.buf_size = 0;
+  uart->ur_wr_buf.buf_data = kalloc(SERIAL_BUFFER_SIZE);
+  uart->ur_wr_buf.buf_off_b = 0;
+  uart->ur_wr_buf.buf_off_e = -1;
+  uart->ur_wr_buf.buf_size = 0;
 
   info("%s probed (shift: %u), interrupt %08x registered to intc %u\n", node->nd_name, shift,
        int_num, intc);
@@ -113,9 +184,10 @@ static long uart16550a_probe(const struct dev_node *node) {
   catch_e(cb_invoke(irq_register_callback)(int_num, trap_callback));
 
   uart16550a_init(uart);
+  cb_decl(flush_callback_t, flush_callback, uart16550a_flush, uart);
   cb_decl(putc_callback_t, putc_callback, uart16550a_putc, uart);
   cb_decl(getc_callback_t, getc_callback, uart16550a_getc, uart);
-  serial_register_dev(node->nd_name, putc_callback, getc_callback);
+  serial_register_dev(node->nd_name, flush_callback, putc_callback, getc_callback);
   vmm_register_mmio(uart->ur_name, &uart->ur_addr, uart->ur_size);
 
   return KER_SUCCESS;

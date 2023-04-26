@@ -2,6 +2,7 @@
 #define _KERN_LIB_DEBUG_H_
 
 #include <brpred.h>
+#include <kern/lib/errors.h>
 #include <kern/lib/logger.h>
 #include <magicros.h>
 
