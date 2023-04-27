@@ -467,7 +467,7 @@ static ret_code_t do_send_queuing_message(que_port_id_t queuing_port_id,
     return INVALID_MODE;
   }
   panic_e(lk_acquire(&port->qp_channel->ch_lock));
-  if (queuing_port_is_full(port)) {
+  while (queuing_port_is_full(port)) {
     if (time_out == 0) {
       panic_e(lk_release(&port->qp_channel->ch_lock));
       return NOT_AVAILABLE;
@@ -494,12 +494,10 @@ static ret_code_t do_send_queuing_message(que_port_id_t queuing_port_id,
           return TIMED_OUT;
         }
       }
+      panic_e(lk_acquire(&port->qp_channel->ch_lock));
     }
-  } else {
-    panic_e(lk_release(&port->qp_channel->ch_lock));
   }
   queuing_port_send(port, message_addr, length);
-  panic_e(lk_acquire(&port->qp_channel->ch_lock));
   struct proc *to_wakeup = queuing_port_wakeup_waiting_proc(port);
   if (to_wakeup != NULL) {
     if (to_wakeup->pr_waiting_reason == QUEUING_PORT_BLOCKED_WITH_TIMEOUT) {
@@ -522,7 +520,7 @@ static ret_code_t do_receive_queuing_message(que_port_id_t queuing_port_id, sys_
     return INVALID_MODE;
   }
   panic_e(lk_acquire(&port->qp_channel->ch_lock));
-  if (queuing_port_is_empty(port)) {
+  while (queuing_port_is_empty(port)) {
     if (time_out == 0) {
       panic_e(lk_release(&port->qp_channel->ch_lock));
       return NOT_AVAILABLE;
@@ -549,12 +547,10 @@ static ret_code_t do_receive_queuing_message(que_port_id_t queuing_port_id, sys_
           return TIMED_OUT;
         }
       }
+      panic_e(lk_acquire(&port->qp_channel->ch_lock));
     }
-  } else {
-    panic_e(lk_release(&port->qp_channel->ch_lock));
   }
   queuing_port_recv(port, message_addr, length);
-  panic_e(lk_acquire(&port->qp_channel->ch_lock));
   struct proc *to_wakeup = queuing_port_wakeup_waiting_proc(port);
   if (to_wakeup != NULL) {
     if (to_wakeup->pr_waiting_reason == QUEUING_PORT_BLOCKED_WITH_TIMEOUT) {
@@ -651,7 +647,7 @@ static ret_code_t do_send_buffer(buf_id_t buffer_id, msg_addr_t message_addr, ms
     return INVALID_PARAM;
   }
   panic_e(lk_acquire(&buf->buf_lock));
-  if (buffer_is_full(buf)) {
+  while (buffer_is_full(buf)) {
     if (time_out == 0) {
       panic_e(lk_release(&buf->buf_lock));
       return NOT_AVAILABLE;
@@ -672,12 +668,10 @@ static ret_code_t do_send_buffer(buf_id_t buffer_id, msg_addr_t message_addr, ms
       if (time_out != SYSTEM_TIME_INFINITE_VAL && boottime_get_now() > wakeup_time) {
         return TIMED_OUT;
       }
+      panic_e(lk_acquire(&buf->buf_lock));
     }
-  } else {
-    panic_e(lk_release(&buf->buf_lock));
   }
   buffer_send(buf, message_addr, length);
-  panic_e(lk_acquire(&buf->buf_lock));
   struct proc *to_wakeup = buffer_wakeup_waiting_proc(buf);
   if (to_wakeup != NULL) {
     if (to_wakeup->pr_waiting_reason == BUFFER_BLOCKED_WITH_TIMEOUT) {
@@ -700,7 +694,7 @@ static ret_code_t do_receive_buffer(buf_id_t buffer_id, sys_time_t time_out,
     return INVALID_PARAM;
   }
   panic_e(lk_acquire(&buf->buf_lock));
-  if (buffer_is_empty(buf)) {
+  while (buffer_is_empty(buf)) {
     if (time_out == 0) {
       panic_e(lk_release(&buf->buf_lock));
       *length = 0;
@@ -723,12 +717,10 @@ static ret_code_t do_receive_buffer(buf_id_t buffer_id, sys_time_t time_out,
         *length = 0;
         return TIMED_OUT;
       }
+      panic_e(lk_acquire(&buf->buf_lock));
     }
-  } else {
-    panic_e(lk_release(&buf->buf_lock));
   }
   buffer_recv(buf, message_addr, length);
-  panic_e(lk_acquire(&buf->buf_lock));
   struct proc *to_wakeup = buffer_wakeup_waiting_proc(buf);
   if (to_wakeup != NULL) {
     if (to_wakeup->pr_waiting_reason == BUFFER_BLOCKED_WITH_TIMEOUT) {
