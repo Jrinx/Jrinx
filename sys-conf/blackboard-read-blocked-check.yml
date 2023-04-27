@@ -1,0 +1,6 @@
+partitions:
+- name: blackboard-read-blocked-check
+  prog: test_blackboard_read_blocked
+  memory: 8*1024*1024
+  period: 200000
+  duration: 100000

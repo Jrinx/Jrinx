@@ -1,0 +1,34 @@
+sysconf: blackboard-read-blocked-check.yml
+expected:
+  type: ordered
+  vals:
+  - display 0 on blackboard 2
+  - read 0 \(len=4\) from blackboard 2
+  - clear blackboard 2
+  - display 0 on blackboard 1
+  - read 0 \(len=4\) from blackboard 1
+  - clear blackboard 1
+  - display 1 on blackboard 2
+  - read 1 \(len=4\) from blackboard 2
+  - clear blackboard 2
+  - display 1 on blackboard 1
+  - read 1 \(len=4\) from blackboard 1
+  - clear blackboard 1
+  - display 2 on blackboard 2
+  - read 2 \(len=4\) from blackboard 2
+  - clear blackboard 2
+  - display 2 on blackboard 1
+  - read 2 \(len=4\) from blackboard 1
+  - clear blackboard 1
+  - display 3 on blackboard 2
+  - read 3 \(len=4\) from blackboard 2
+  - clear blackboard 2
+  - display 3 on blackboard 1
+  - read 3 \(len=4\) from blackboard 1
+  - clear blackboard 1
+  - display 4 on blackboard 2
+  - read from blackboard 1 timed out
+  - 'blackboard 1 status: empty-ind=empty,max_msg_size:4,nb_waiting_proc=0'
+  - 'blackboard 2 status: empty-ind=occupied,max_msg_size:4,nb_waiting_proc=0'
+  - done
+unexpected: fatal at
