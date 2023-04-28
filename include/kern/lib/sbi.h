@@ -253,6 +253,7 @@ void sbi_shutdown(void) __attribute__((noreturn));
 struct sbiret sbi_hart_start(unsigned long hartid, unsigned long start_addr,
                              unsigned long opaque);
 struct sbiret sbi_hart_stop(void);
+struct sbiret sbi_hart_get_status(unsigned long hartid);
 struct sbiret sbi_system_reset(uint32_t reset_type, uint32_t reset_reason);
 
 #endif
