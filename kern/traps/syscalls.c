@@ -15,21 +15,50 @@
 #include <types.h>
 
 static void do_cons_write_char(int ch) {
-  conslock_acquire();
-  serial_blocked_putc(ch);
-  conslock_release();
+  int success;
+  do {
+    serial_out_dev_lock_acquire();
+    success = serial_putc(ch);
+    serial_out_dev_lock_release();
+  } while (!success);
+  if (ch == '\n') {
+    do_cons_write_char('\r');
+  }
 }
 
 static int do_cons_read_char(void) {
-  return serial_blocked_getc();
+  int success;
+  uint8_t ch;
+  do {
+    serial_in_dev_lock_acquire();
+    success = serial_getc(&ch);
+    serial_out_dev_lock_release();
+  } while (!success);
+  return ch;
 }
 
 static void do_cons_write_buf(const char *buf, size_t len) {
-  conslock_acquire();
+  int success;
+  serial_out_dev_lock_acquire();
   for (size_t i = 0; i < len; i++) {
-    serial_blocked_putc(buf[i]);
+  retry1:
+    success = serial_putc(buf[i]);
+    if (!success) {
+      serial_out_dev_lock_release();
+      serial_out_dev_lock_acquire();
+      goto retry1;
+    }
+    if (buf[i] == '\n') {
+    retry2:
+      success = serial_putc('\r');
+      if (!success) {
+        serial_out_dev_lock_release();
+        serial_out_dev_lock_acquire();
+        goto retry2;
+      }
+    }
   }
-  conslock_release();
+  serial_out_dev_lock_release();
 }
 
 static void do_halt(void) {

@@ -7,9 +7,6 @@
 #include <lib/printfmt.h>
 #include <stdarg.h>
 
-void log_localize_output(void);
-void conslock_acquire(void);
-void conslock_release(void);
 void printk(const char *restrict fmt, ...) __attribute__((format(printf, 1, 2)));
 
 void infok(const char *restrict file, unsigned long lineno, const char *restrict func,

@@ -74,10 +74,10 @@ void fatalk(const char *restrict file, unsigned long lineno, const char *restric
 
 void haltk(const char *restrict file, unsigned long lineno, const char *restrict func,
            const char *restrict fmt, ...) {
-  print_timestamp(ANSI_FG_YELLOW);
   conslock_acquire();
   serial_flush();
   conslock_release();
+  print_timestamp(ANSI_FG_YELLOW);
   struct sbiret ret =
       sbi_system_reset(SBI_SRST_RESET_TYPE_WARM_REBOOT, SBI_SRST_RESET_REASON_NONE);
   info("shutdown failed: (%ld, %ld)\n", ret.error, ret.value);

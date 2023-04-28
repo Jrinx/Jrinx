@@ -36,7 +36,7 @@ static inline uint32_t sifiveuart0_read(struct sifiveuart0 *uart, unsigned long 
 
 static void sifiveuart0_init(struct sifiveuart0 *uart) {
   sifiveuart0_write(uart, COM_TXCTRL,
-                    COM_TXCTRL_TXEN | (7 << COM_TXCTRL_TXCNT_SHIFT)); // enable tx
+                    COM_TXCTRL_TXEN | (1 << COM_TXCTRL_TXCNT_SHIFT)); // enable tx
   sifiveuart0_write(uart, COM_RXCTRL, COM_RXCTRL_RXEN);               // enable rx
   sifiveuart0_write(uart, COM_IE, COM_IPE_RXWM); // enable receive data interrupt
 }
@@ -61,18 +61,14 @@ static int sifiveuart0_getc(void *ctx, uint8_t *c) {
 
 static int sifiveuart0_putc(void *ctx, uint8_t c) {
   struct sifiveuart0 *uart = ctx;
-  if ((sifiveuart0_read(uart, COM_TXDATA) & COM_TXDATA_FULL) != 0) {
-    if (uart->su_wr_buf.buf_size < SERIAL_BUFFER_SIZE) {
-      uart->su_wr_buf.buf_off_e = (uart->su_wr_buf.buf_off_e + 1) % SERIAL_BUFFER_SIZE;
-      uart->su_wr_buf.buf_data[uart->su_wr_buf.buf_off_e] = c;
-      uart->su_wr_buf.buf_size++;
-      sifiveuart0_write(uart, COM_IE, COM_IPE_RXWM | COM_IPE_TXWM);
-      return 1;
-    }
-    return 0;
+  if (uart->su_wr_buf.buf_size < SERIAL_BUFFER_SIZE) {
+    uart->su_wr_buf.buf_off_e = (uart->su_wr_buf.buf_off_e + 1) % SERIAL_BUFFER_SIZE;
+    uart->su_wr_buf.buf_data[uart->su_wr_buf.buf_off_e] = c;
+    uart->su_wr_buf.buf_size++;
+    sifiveuart0_write(uart, COM_IE, COM_IPE_RXWM | COM_IPE_TXWM);
+    return 1;
   }
-  sifiveuart0_write(uart, COM_TXDATA, c);
-  return 1;
+  return 0;
 }
 
 static void sifiveuart0_flush(void *ctx) {

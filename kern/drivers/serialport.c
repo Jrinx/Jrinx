@@ -1,5 +1,7 @@
 #include <kern/drivers/serialport.h>
 #include <kern/lib/debug.h>
+#include <kern/lock/lock.h>
+#include <kern/lock/spinlock.h>
 #include <kern/mm/kalloc.h>
 #include <kern/mm/vmm.h>
 #include <lib/hashmap.h>
@@ -16,7 +18,9 @@ struct serial_dev {
 };
 
 static struct serial_dev *selected_output_dev;
+static with_spinlock(serial_output_dev);
 static struct serial_dev *selected_input_dev;
+static with_spinlock(serial_input_dev);
 
 static const void *serial_key_of(const struct linked_node *node) {
   const struct serial_dev *dev = CONTAINER_OF(node, struct serial_dev, sr_link);
@@ -71,18 +75,28 @@ int serial_select_in_dev(const char *name) {
   return 1;
 }
 
+void serial_in_dev_lock_acquire(void) {
+  panic_e(lk_acquire(&spinlock_of(serial_input_dev)));
+}
+
+void serial_in_dev_lock_release(void) {
+  panic_e(lk_release(&spinlock_of(serial_input_dev)));
+}
+
+void serial_out_dev_lock_acquire(void) {
+  panic_e(lk_acquire(&spinlock_of(serial_output_dev)));
+}
+
+void serial_out_dev_lock_release(void) {
+  panic_e(lk_release(&spinlock_of(serial_output_dev)));
+}
+
 int serial_getc(uint8_t *c) {
   return cb_invoke(selected_input_dev->sr_getc_callback)(c);
 }
 
 int serial_putc(uint8_t c) {
-  if (!cb_invoke(selected_output_dev->sr_putc_callback)(c)) {
-    return 0;
-  }
-  if (c == '\n') {
-    serial_blocked_putc('\r');
-  }
-  return 1;
+  return cb_invoke(selected_output_dev->sr_putc_callback)(c);
 }
 
 uint8_t serial_blocked_getc(void) {

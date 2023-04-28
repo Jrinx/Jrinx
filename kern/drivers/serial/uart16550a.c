@@ -61,18 +61,14 @@ static int uart16550a_getc(void *ctx, uint8_t *c) {
 
 static int uart16550a_putc(void *ctx, uint8_t c) {
   struct uart16550a *uart = ctx;
-  if ((uart16550a_read(uart, COM_LSR) & COM_LSR_THR_EMPTY) == 0) {
-    if (uart->ur_wr_buf.buf_size < SERIAL_BUFFER_SIZE) {
-      uart->ur_wr_buf.buf_off_e = (uart->ur_wr_buf.buf_off_e + 1) % SERIAL_BUFFER_SIZE;
-      uart->ur_wr_buf.buf_data[uart->ur_wr_buf.buf_off_e] = c;
-      uart->ur_wr_buf.buf_size++;
-      uart16550a_write(uart, COM_IER, COM_IER_RCV_DATA_AVAIL | COM_IER_TRANS_HOLD_REG_EMPTY);
-      return 1;
-    }
-    return 0;
+  if (uart->ur_wr_buf.buf_size < SERIAL_BUFFER_SIZE) {
+    uart->ur_wr_buf.buf_off_e = (uart->ur_wr_buf.buf_off_e + 1) % SERIAL_BUFFER_SIZE;
+    uart->ur_wr_buf.buf_data[uart->ur_wr_buf.buf_off_e] = c;
+    uart->ur_wr_buf.buf_size++;
+    uart16550a_write(uart, COM_IER, COM_IER_RCV_DATA_AVAIL | COM_IER_TRANS_HOLD_REG_EMPTY);
+    return 1;
   }
-  uart16550a_write(uart, COM_THR, c);
-  return 1;
+  return 0;
 }
 
 static void uart16550a_flush(void *ctx) {

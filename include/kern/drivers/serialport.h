@@ -15,6 +15,10 @@ void serial_register_dev(char *name, flush_callback_t flush_callback,
                          putc_callback_t putc_callback, getc_callback_t getc_callback);
 int serial_select_out_dev(const char *name);
 int serial_select_in_dev(const char *name);
+void serial_in_dev_lock_acquire(void);
+void serial_in_dev_lock_release(void);
+void serial_out_dev_lock_acquire(void);
+void serial_out_dev_lock_release(void);
 int serial_getc(uint8_t *c);
 int serial_putc(uint8_t c);
 uint8_t serial_blocked_getc(void);
