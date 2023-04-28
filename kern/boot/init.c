@@ -93,7 +93,6 @@ void __attribute__((noreturn)) kernel_init(unsigned long hartid, void *dtb_addr)
     vmm_start();
     vmm_summary();
 
-    log_localize_output();
     time_event_init();
     traps_init();
     sched_init();

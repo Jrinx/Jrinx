@@ -16,24 +16,13 @@ static void sbi_output(void *data, const char *buf, size_t len) {
   }
 }
 
-static void serial_output(void *data, const char *buf, size_t len) {
-  for (int i = 0; i < len; i++) {
-    serial_blocked_putc(buf[i]);
-  }
-}
+static const cb_decl(fmt_callback_t, output_cb, sbi_output, NULL);
 
-static cb_decl(fmt_callback_t, output_cb, sbi_output, NULL);
-
-void log_localize_output(void) {
-  output_cb.cb_func = serial_output;
-  info("switch to local serial output\n");
-}
-
-void conslock_acquire(void) {
+static void conslock_acquire(void) {
   panic_e(lk_acquire(&spinlock_of(print)));
 }
 
-void conslock_release(void) {
+static void conslock_release(void) {
   panic_e(lk_release(&spinlock_of(print)));
 }
 
