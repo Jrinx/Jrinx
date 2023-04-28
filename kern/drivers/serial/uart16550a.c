@@ -8,6 +8,7 @@
 #include <kern/lib/errors.h>
 #include <kern/lib/sync.h>
 #include <kern/mm/kalloc.h>
+#include <kern/mm/pmm.h>
 #include <kern/mm/vmm.h>
 #include <lib/string.h>
 
@@ -163,11 +164,11 @@ static long uart16550a_probe(const struct dev_node *node) {
   uart->ur_addr = addr;
   uart->ur_size = size;
   uart->ur_shift = shift;
-  uart->ur_rd_buf.buf_data = kalloc(SERIAL_BUFFER_SIZE);
+  uart->ur_rd_buf.buf_data = palloc(SERIAL_BUFFER_SIZE, PGSIZE);
   uart->ur_rd_buf.buf_off_b = 0;
   uart->ur_rd_buf.buf_off_e = -1;
   uart->ur_rd_buf.buf_size = 0;
-  uart->ur_wr_buf.buf_data = kalloc(SERIAL_BUFFER_SIZE);
+  uart->ur_wr_buf.buf_data = palloc(SERIAL_BUFFER_SIZE, PGSIZE);
   uart->ur_wr_buf.buf_off_b = 0;
   uart->ur_wr_buf.buf_off_e = -1;
   uart->ur_wr_buf.buf_size = 0;

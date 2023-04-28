@@ -8,6 +8,7 @@
 #include <kern/lib/errors.h>
 #include <kern/lib/sync.h>
 #include <kern/mm/kalloc.h>
+#include <kern/mm/pmm.h>
 #include <kern/mm/vmm.h>
 
 struct sifiveuart0 {
@@ -152,11 +153,11 @@ static long sifiveuart0_probe(const struct dev_node *node) {
   uart->su_name = node->nd_name;
   uart->su_addr = addr;
   uart->su_size = size;
-  uart->su_rd_buf.buf_data = kalloc(SERIAL_BUFFER_SIZE);
+  uart->su_rd_buf.buf_data = palloc(SERIAL_BUFFER_SIZE, PGSIZE);
   uart->su_rd_buf.buf_off_b = 0;
   uart->su_rd_buf.buf_off_e = -1;
   uart->su_rd_buf.buf_size = 0;
-  uart->su_wr_buf.buf_data = kalloc(SERIAL_BUFFER_SIZE);
+  uart->su_wr_buf.buf_data = palloc(SERIAL_BUFFER_SIZE, PGSIZE);
   uart->su_wr_buf.buf_off_b = 0;
   uart->su_wr_buf.buf_off_e = -1;
   uart->su_wr_buf.buf_size = 0;
