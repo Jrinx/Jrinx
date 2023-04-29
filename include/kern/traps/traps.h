@@ -35,7 +35,41 @@
 #define PT_REG29 (PT_REG28 + RV_XLEN)
 #define PT_REG30 (PT_REG29 + RV_XLEN)
 #define PT_REG31 (PT_REG30 + RV_XLEN)
-#define PT_SSTATUS (PT_REG31 + RV_XLEN)
+
+#define PT_FREG0 (PT_REG31 + RV_XLEN)
+#define PT_FREG1 (PT_FREG0 + RV_XLEN)
+#define PT_FREG2 (PT_FREG1 + RV_XLEN)
+#define PT_FREG3 (PT_FREG2 + RV_XLEN)
+#define PT_FREG4 (PT_FREG3 + RV_XLEN)
+#define PT_FREG5 (PT_FREG4 + RV_XLEN)
+#define PT_FREG6 (PT_FREG5 + RV_XLEN)
+#define PT_FREG7 (PT_FREG6 + RV_XLEN)
+#define PT_FREG8 (PT_FREG7 + RV_XLEN)
+#define PT_FREG9 (PT_FREG8 + RV_XLEN)
+#define PT_FREG10 (PT_FREG9 + RV_XLEN)
+#define PT_FREG11 (PT_FREG10 + RV_XLEN)
+#define PT_FREG12 (PT_FREG11 + RV_XLEN)
+#define PT_FREG13 (PT_FREG12 + RV_XLEN)
+#define PT_FREG14 (PT_FREG13 + RV_XLEN)
+#define PT_FREG15 (PT_FREG14 + RV_XLEN)
+#define PT_FREG16 (PT_FREG15 + RV_XLEN)
+#define PT_FREG17 (PT_FREG16 + RV_XLEN)
+#define PT_FREG18 (PT_FREG17 + RV_XLEN)
+#define PT_FREG19 (PT_FREG18 + RV_XLEN)
+#define PT_FREG20 (PT_FREG19 + RV_XLEN)
+#define PT_FREG21 (PT_FREG20 + RV_XLEN)
+#define PT_FREG22 (PT_FREG21 + RV_XLEN)
+#define PT_FREG23 (PT_FREG22 + RV_XLEN)
+#define PT_FREG24 (PT_FREG23 + RV_XLEN)
+#define PT_FREG25 (PT_FREG24 + RV_XLEN)
+#define PT_FREG26 (PT_FREG25 + RV_XLEN)
+#define PT_FREG27 (PT_FREG26 + RV_XLEN)
+#define PT_FREG28 (PT_FREG27 + RV_XLEN)
+#define PT_FREG29 (PT_FREG28 + RV_XLEN)
+#define PT_FREG30 (PT_FREG29 + RV_XLEN)
+#define PT_FREG31 (PT_FREG30 + RV_XLEN)
+
+#define PT_SSTATUS (PT_FREG31 + RV_XLEN)
 #define PT_SCAUSE (PT_SSTATUS + RV_XLEN)
 #define PT_SIE (PT_SCAUSE + RV_XLEN)
 #define PT_STVAL (PT_SIE + RV_XLEN)
@@ -92,6 +126,7 @@ struct context {
       unsigned long t6;
     } __attribute__((packed)) names;
   } ctx_regs;
+  unsigned long ctx_fregs[32];
   unsigned long ctx_sstatus;
   unsigned long ctx_scause;
   unsigned long ctx_sie;

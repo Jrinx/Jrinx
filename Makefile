@@ -16,7 +16,7 @@ GDB_EVAL_CMD	:= -ex 'target remote :1234'
 
 CFLAGS		+= --std=gnu99 -nostdlib \
 		-Wall -Werror -Wa,--fatal-warnings \
-		-mabi=lp64 -march=rv64g -m$(TARGET_ENDIAN)-endian -mcmodel=medany -mno-relax \
+		-mabi=lp64d -march=rv64imafd -m$(TARGET_ENDIAN)-endian -mcmodel=medany -mno-relax \
 		-fno-omit-frame-pointer -ffreestanding -fno-common -fno-stack-protector -fno-builtin \
 		-DCONFIG_ENDIAN=$(shell echo $(TARGET_ENDIAN) | tr '[:lower:]' '[:upper:]')_ENDIAN \
 		-DCONFIG_COLOR=$(shell [ "$(COLOR)" = "y" ] && echo 1 || echo 0) \
@@ -169,4 +169,4 @@ register-git-hooks:
 	@ln -s ../../scripts/pre-commit .git/hooks/pre-commit
 
 cloc:
-	@cloc --exclude-dir=$(OPENSBI_ROOT) .
+	@cloc --exclude-dir=$(OPENSBI_ROOT),third-party .

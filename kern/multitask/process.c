@@ -104,6 +104,7 @@ void proc_reset(struct proc *proc) {
   proc_ctx_sie->bits.ssi = 1;
   proc_ctx_sie->bits.sti = 1;
   rv64_sstatus *proc_ctx_sstatus = (rv64_sstatus *)&proc_ctx->ctx_sstatus;
+  proc_ctx_sstatus->bits.fs = 1;
   proc_ctx_sstatus->bits.spie = 1;
   proc_ctx_sstatus->bits.spp = RISCV_U_MODE;
   proc_ctx_sstatus->bits.sum = 1;
