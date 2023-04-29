@@ -54,9 +54,11 @@ RUN file=$(wget -qO - ${EC_REPO} | grep -om 1 'editorconfig-checker-[^"<]*' | he
     rm /tmp/"$file"
 
 # Extra Toolchains
+ARG PIP_INDEX=https://pypi.tuna.tsinghua.edu.cn/simple
 RUN apt-get -y install gawk \
                        shellcheck \
                        python3 \
                        python3-autopep8 \
                        python3-psutil \
-                       python3-yaml
+                       python3-yaml && \
+    pip3 install -i ${PIP_INDEX} pathos
