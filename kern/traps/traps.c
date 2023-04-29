@@ -87,11 +87,11 @@ void intp_pop(void) {
 void intp_push(void) {
   if (likely(cpus_intp_layer != NULL)) {
     rv64_sstatus sstatus = {.val = csrr_sstatus()};
+    intp_disable();
     if (cpus_intp_layer[hrt_get_id()] == 0) {
       cpus_retained_intp[hrt_get_id()] = sstatus.bits.sie;
     }
     cpus_intp_layer[hrt_get_id()]++;
-    intp_disable();
   }
 }
 

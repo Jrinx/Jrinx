@@ -110,6 +110,7 @@ void proc_reset(struct proc *proc) {
   proc_ctx_sstatus->bits.sum = 1;
   proc_ctx->ctx_regs.names.sp = proc->pr_ustacktop;
   hlist_insert_head(&proc->pr_trapframe.tf_ctx_list, &proc_ctx->ctx_link);
+  spinlock_init(&proc->pr_state_lock);
 }
 
 long proc_alloc(struct part *part, struct proc **proc, const char *name, sys_time_t period,

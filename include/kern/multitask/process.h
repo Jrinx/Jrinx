@@ -2,6 +2,7 @@
 #define _KERN_MULTITASK_PROCESS_H_
 
 #include <kern/lib/regs.h>
+#include <kern/lock/lock.h>
 #include <kern/multitask/partition.h>
 #include <kern/traps/timer.h>
 #include <kern/traps/traps.h>
@@ -42,6 +43,7 @@ struct proc {
   proc_waiting_reason_t pr_waiting_reason;
   proc_core_id_t pr_core_id;
   struct time_event *pr_asso_timer;
+  struct lock pr_state_lock;
   struct linked_node pr_id_link;
   struct linked_node pr_sched_link;
   struct linked_node pr_name_link;

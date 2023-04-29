@@ -206,17 +206,20 @@ static ret_code_t do_suspend_self(sys_time_t time_out) {
   if (time_out == 0) {
     return NO_ERROR;
   }
+  panic_e(lk_acquire(&proc->pr_state_lock));
   proc->pr_state = WAITING;
   if (time_out < SYSTEM_TIME_INFINITE_VAL) {
     sys_time_t wakeup_time = boottime_get_now() + time_out;
-    time_event_alloc(proc, wakeup_time, TE_PROCESS_SUSPEND_TIMEOUT);
     proc->pr_waiting_reason = SUSPENDED_WITH_TIMEOUT;
+    time_event_alloc(proc, wakeup_time, TE_PROCESS_SUSPEND_TIMEOUT);
+    panic_e(lk_release(&proc->pr_state_lock));
     sched_proc_give_up(0);
     if (boottime_get_now() >= wakeup_time) {
       return TIMED_OUT;
     }
   } else {
     proc->pr_waiting_reason = SUSPENDED;
+    panic_e(lk_release(&proc->pr_state_lock));
     sched_proc_give_up(0);
   }
   return NO_ERROR;
@@ -254,9 +257,11 @@ static ret_code_t do_resume(proc_id_t process_id) {
   if (proc_is_period(proc) && proc->pr_state != FAULTED) {
     return INVALID_MODE;
   }
+  panic_e(lk_acquire(&proc->pr_state_lock));
   if (!(proc->pr_state == WAITING && (proc->pr_waiting_reason == SUSPENDED ||
                                       proc->pr_waiting_reason == SUSPENDED_WITH_TIMEOUT)) &&
       proc->pr_state != FAULTED) {
+    panic_e(lk_release(&proc->pr_state_lock));
     return NO_ACTION;
   }
   if (proc->pr_state == WAITING && proc->pr_waiting_reason == SUSPENDED_WITH_TIMEOUT) {
@@ -265,6 +270,7 @@ static ret_code_t do_resume(proc_id_t process_id) {
   // TODO: check if proc is waiting on a process queue or TIMED_WAIT time delay or DELAYED_START
   // time delay
   proc->pr_state = READY;
+  panic_e(lk_release(&proc->pr_state_lock));
   sched_proc_give_up(0);
   return NO_ERROR;
 }
@@ -286,12 +292,14 @@ static ret_code_t do_stop(proc_id_t process_id) {
     return NO_ACTION;
   }
   // TODO: check if proc owns preemption lock mutex, release...
+  panic_e(lk_acquire(&proc->pr_state_lock));
   proc->pr_state = DORMANT;
   // TODO: check if proc is waiting on a process queue, remove it from queue
   if (proc->pr_asso_timer != NULL) {
     time_event_free(proc->pr_asso_timer);
   }
   // TODO: prevent the process from causing any deadline overrun faults
+  panic_e(lk_release(&proc->pr_state_lock));
   sched_proc_give_up(0);
   return NO_ERROR;
 }
@@ -324,29 +332,37 @@ static ret_code_t do_delayed_start(proc_id_t process_id, sys_time_t delay_time) 
         proc->pr_deadline_time = boottime_get_now() + proc->pr_time_cap;
         // TODO: detect deadline exceeding
       } else {
+        panic_e(lk_acquire(&proc->pr_state_lock));
         proc->pr_state = WAITING;
         proc->pr_waiting_reason = DELAYED_STARTED;
         time_event_alloc(proc, boottime_get_now() + delay_time, TE_PROCESS_DELAYED_START);
+        panic_e(lk_release(&proc->pr_state_lock));
         proc->pr_deadline_time = boottime_get_now() + proc->pr_time_cap + delay_time;
         // TODO: detect deadline exceeding
         // TODO: init timer with duration delay_time
       }
       sched_proc_give_up(0);
     } else {
+      panic_e(lk_acquire(&proc->pr_state_lock));
       proc->pr_state = WAITING;
       proc->pr_waiting_reason = PREVIOUS_STARTED;
+      panic_e(lk_release(&proc->pr_state_lock));
     }
   } else {
     proc->pr_cur_pri = proc->pr_base_pri;
     proc_reset(proc);
     if (sched_cur_part()->pa_op_mode == NORMAL) {
+      panic_e(lk_acquire(&proc->pr_state_lock));
       proc->pr_state = WAITING;
       proc->pr_waiting_reason = DELAYED_STARTED;
+      panic_e(lk_release(&proc->pr_state_lock));
       // TODO: set the first release point of proc including delay_time
       // TODO: set DEADLINE_TIME to first release point + proc->pr_time_cap
     } else {
+      panic_e(lk_acquire(&proc->pr_state_lock));
       proc->pr_state = WAITING;
       proc->pr_waiting_reason = PREVIOUS_STARTED;
+      panic_e(lk_release(&proc->pr_state_lock));
     }
   }
   return NO_ERROR;
@@ -398,10 +414,12 @@ static ret_code_t do_timed_wait(sys_time_t delay_time) {
   if (delay_time == 0) {
     sched_proc_give_up(1);
   } else {
+    sys_time_t wakeup_time = boottime_get_now() + delay_time;
+    panic_e(lk_acquire(&proc->pr_state_lock));
     proc->pr_state = WAITING;
     proc->pr_waiting_reason = TIMED_WAIT_TIMEOUT;
-    sys_time_t wakeup_time = boottime_get_now() + delay_time;
     time_event_alloc(proc, wakeup_time, TE_PROCESS_TIMED_WAIT_TIMEOUT);
+    panic_e(lk_release(&proc->pr_state_lock));
     sched_proc_give_up(0);
   }
   return NO_ERROR;
