@@ -58,10 +58,10 @@ void infok(const char *restrict file, unsigned long lineno, const char *restrict
 
 void fatalk(const char *restrict file, unsigned long lineno, const char *restrict func,
             const char *restrict fmt, ...) {
-  print_timestamp(ANSI_FG_RED);
   conslock_acquire();
   serial_flush();
   conslock_release();
+  print_timestamp(ANSI_FG_RED);
   struct sbiret ret =
       sbi_system_reset(SBI_SRST_RESET_TYPE_WARM_REBOOT, SBI_SRST_RESET_REASON_SYSFAIL);
   info("shutdown failed: (%ld, %ld)\n", ret.error, ret.value);
