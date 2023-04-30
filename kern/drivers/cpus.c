@@ -67,9 +67,11 @@ static long cpus_probe(const struct dev_node *node) {
     }
   }
 
+  int skip_cpu0 = 0;
   extern const char *boot_dt_model;
   if (strcmp(boot_dt_model, "SiFive HiFive Unleashed A00") == 0 ||
       strcmp(boot_dt_model, "SiFive HiFive Unmatched A00") == 0) {
+    skip_cpu0 = 1;
     cpus_valid_count = cpus_count - 1;
   } else {
     cpus_valid_count = cpus_count;
@@ -100,6 +102,9 @@ static long cpus_probe(const struct dev_node *node) {
       break;
     default:
       return -KER_DTB_ER;
+    }
+    if (id == 0 && skip_cpu0) {
+      continue;
     }
     if (id != hrt_get_id()) {
       unsigned long stack_top = (unsigned long)palloc(KSTKSIZE, PGSIZE) + KSTKSIZE;
