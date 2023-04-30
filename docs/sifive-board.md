@@ -154,28 +154,28 @@ tftp> get jrinx.uImage
 设置 `bootargs` 环境变量：
 
 ```console
-=> setenv bootargs '--pa-conf name=put-a-b,prog=app_put_a_b,memory=8388608,period=200,duration=100'
+=> setenv bootargs '--pa-conf name=ping-pong,prog=app_ping_pong,memory=8388608,period=200000,duration=100000'
 ```
 
 随后用：
 
 ```console
-=> tftp ${kernel_addr_r} jrinx.uImage; bootm ${kernel_addr_r} - ${fdtcontroladdr}
+=> run bootcmd
 ```
 
 启动内核。以下是完整的输出：
 
 ```plaintext
-U-Boot SPL 2022.01-00566-g4e81f3be34-dirty (Apr 15 2022 - 14:24:34 +0800)
-Trying to boot from SPI
+U-Boot SPL 2023.04-rc4-g318af476 (Apr 30 2023 - 14:50:15 +0800)
+Trying to boot from MMC1
 
 
-U-Boot 2022.01-00566-g4e81f3be34-dirty (Apr 15 2022 - 14:24:34 +0800)
+U-Boot 2023.04-rc4-g318af476 (Apr 30 2023 - 14:50:15 +0800)
 
 CPU:   rv64imafdc
 Model: SiFive HiFive Unmatched A00
 DRAM:  16 GiB
-Core:  21 devices, 16 uclasses, devicetree: separate
+Core:  34 devices, 21 uclasses, devicetree: separate
 MMC:   spi@10050000:mmc@0: 0
 Loading Environment from SPIFlash... SF: Detected is25wp256 with page size 256 Bytes, erase size 4 KiB, total 32 MiB
 OK
@@ -192,37 +192,41 @@ Out:   serial@10010000
 Err:   serial@10010000
 Model: SiFive HiFive Unmatched A00
 Net:   eth0: ethernet@10090000
+Working FDT set to ff72f830
 Hit any key to stop autoboot:  0
-=> setenv bootargs '--pa-conf name=put-a-b,prog=app_put_a_b,memory=8388608,period=200,duration=100'
-=> tftp ${kernel_addr_r} jrinx.uImage; bootm ${kernel_addr_r} - ${fdtcontroladdr}
+=> setenv bootargs '--pa-conf name=ping-pong,prog=app_ping_pong,memory=8388608,period=200000,duration=100000'
+=> run bootcmd
 ethernet@10090000: PHY present at 0
 ethernet@10090000: Starting autonegotiation...
 ethernet@10090000: Autonegotiation complete
-ethernet@10090000: link up, 1000Mbps full-duplex (lpa: 0x6800)
+ethernet@10090000: link up, 1000Mbps full-duplex (lpa: 0x2800)
 Using ethernet@10090000 device
 TFTP from server 10.0.0.5; our IP address is 10.0.0.6
 Filename 'jrinx.uImage'.
 Load address: 0x80200000
-Loading: #########################################################
-         140.6 KiB/s
+Loading: #################################################################
+         ##########################################
+         236.3 KiB/s
 done
-Bytes transferred = 831552 (cb040 hex)
+Bytes transferred = 1556544 (17c040 hex)
 ## Booting kernel from Legacy Image at 80200000 ...
    Image Name:   Jrinx
    Image Type:   RISC-V Linux Kernel Image (uncompressed)
-   Data Size:    831488 Bytes = 812 KiB
+   Data Size:    1556480 Bytes = 1.5 MiB
    Load Address: 80200000
    Entry Point:  80200000
    Verifying Checksum ... OK
-## Flattened Device Tree blob at ff7394d0
-   Booting using the fdt blob at 0xff7394d0
+## Flattened Device Tree blob at ff72f830
+   Booting using the fdt blob at 0xff72f830
+Working FDT set to ff72f830
    Loading Kernel Image
-   Loading Device Tree to 00000000ff72d000, end 00000000ff737937 ... OK
+   Loading Device Tree to 00000000fe720000, end 00000000fe72a5a7 ... OK
+Working FDT set to fe720000
 
 Starting kernel ...
 
 
-Jrinx OS (revision: 068ef15)
+Jrinx OS (revision: 2d88976)
 
       .                           .
   .x88888x.                      @88>
@@ -240,64 +244,89 @@ Jrinx OS (revision: 068ef15)
    "8888     8%
     `"888x:-"
 
-[ ?.??? hart#1 ] init.c:77 <kernel_init> Hello Jrinx, I am master hart!
-[ 0.043 hart#1 ] cpus.c:97 <cpus_probe> cpu@1 (master) probed (stack top: 00000000802cb000)
-[ 0.051 hart#1 ] cpus.c:93 <cpus_probe> cpu@2 (slave)  probed (stack top: 00000000802dc000)
-[ 0.060 hart#1 ] cpus.c:93 <cpus_probe> cpu@3 (slave)  probed (stack top: 00000000802ed000)
-[ 0.069 hart#1 ] cpus.c:93 <cpus_probe> cpu@4 (slave)  probed (stack top: 00000000802fe000)
-[ 0.078 hart#1 ] mems.c:36 <mem_probe> memory@80000000 probed (consists of 1 memory):
-[ 0.086 hart#1 ] mems.c:40 <mem_probe>  memory[0] locates at [80000000, 480000000) (size: 16 GiB)
-[ 0.095 hart#1 ] plic.c:156 <plic_probe> interrupt-controller@c000000 probed (phandle: 10) to handle user external int
-[ 0.106 hart#1 ] plic.c:158 <plic_probe>        locates at [c000000, 10000000) (size: 64 MiB)
-[ 0.115 hart#1 ] plic.c:98 <plic_init> set all interrupt sources priority to MIN
-[ 0.123 hart#1 ] plic.c:105 <plic_init> disable all interrupt sources for all context (0 - 15871)
-[ 0.132 hart#1 ] plic.c:106 <plic_init> set all context priority threshold to MAX
-[ 0.147 hart#1 ] plic.c:112 <plic_init> all interrupt sources shall be handled by context 2
-[ 0.155 hart#1 ] sifiveuart0.c:100 <sifiveuart0_probe> serial@10010000 probed, interrupt 00000027 registered to intc 10
-[ 0.166 hart#1 ] sifiveuart0.c:102 <sifiveuart0_probe>  locates at [10010000, 10011000) (size: 4 KiB)
-[ 0.176 hart#1 ] sifiveuart0.c:100 <sifiveuart0_probe> serial@10011000 probed, interrupt 00000028 registered to intc 10
-[ 0.187 hart#1 ] sifiveuart0.c:102 <sifiveuart0_probe>  locates at [10011000, 10012000) (size: 4 KiB)
-[ 0.197 hart#1 ] aliases.c:43 <aliases_probe> aliases probed, props listed:
-[ 0.204 hart#1 ] aliases.c:49 <aliases_probe>   spi0: /soc/spi@10050000
-[ 0.211 hart#1 ] aliases.c:49 <aliases_probe>   serial1: /soc/serial@10011000
-[ 0.219 hart#1 ] aliases.c:49 <aliases_probe>   ethernet0: /soc/ethernet@10090000
-[ 0.227 hart#1 ] aliases.c:49 <aliases_probe>   serial0: /soc/serial@10010000
-[ 0.234 hart#1 ] chosen.c:18 <chosen_probe> chosen probed, props listed:
-[ 0.242 hart#1 ] chosen.c:24 <chosen_probe>     bootargs: --pa-conf name=put-a-b,prog=app_put_a_b,memory=8388608,period=200,duration=100
-[ 0.254 hart#1 ] chosen.c:30 <chosen_probe>     stdout-path: serial0
-[ 0.261 hart#1 ] serialport.c:56 <serial_select_out_dev> select serial@10010000 as serial output device
-[ 0.271 hart#1 ] serialport.c:67 <serial_select_in_dev> select serial@10010000 as serial input device
-[ 0.281 hart#1 ] vmm.c:164 <vmm_setup_mmio> set up serial@10011000 mmio at [ffffffc010011000, ffffffc010012000) (size: 4 KiB)
-[ 0.292 hart#1 ] vmm.c:164 <vmm_setup_mmio> set up serial@10010000 mmio at [ffffffc010010000, ffffffc010011000) (size: 4 KiB)
-[ 0.304 hart#1 ] vmm.c:164 <vmm_setup_mmio> set up interrupt-controller@c000000 mmio at [ffffffc00c000000, ffffffc010000000) (size: 64 MiB)
-[ 0.323 hart#1 ] vmm.c:181 <vmm_setup_kern> set up kernel vmm at 0000000080200000
-[ 1.797 hart#1 ] vmm.c:206 <vmm_setup_kern> init physical memory management
-[ 2.473 hart#1 ] vmm.c:209 <vmm_setup_kern> switch to physical frame allocator
-[ 2.480 hart#1 ] vmm.c:220 <vmm_start> enable virtual memory (satp: 80000000000802b9)
-[ 2.488 hart#1 ] asid.c:34 <asid_init> asid in cpu@1 impl probed [0, 0]
-[ 2.496 hart#1 ] vmm.c:228 <vmm_summary> os kernel reserves memory [80200000, 8a363000) (size: 161 MiB + 396 KiB)
-[ 2.506 hart#1 ] logger.c:27 <log_localize_output> switch to local serial output
-[ 2.514 hart#2 ] vmm.c:220 <vmm_start> enable virtual memory (satp: 80000000000802b9)
-[ 2.522 hart#3 ] vmm.c:220 <vmm_start> enable virtual memory (satp: 80000000000802b9)
-[ 2.531 hart#4 ] vmm.c:220 <vmm_start> enable virtual memory (satp: 80000000000802b9)
-[ 2.539 hart#2 ] asid.c:34 <asid_init> asid in cpu@2 impl probed [0, 0]
-[ 2.546 hart#4 ] asid.c:34 <asid_init> asid in cpu@4 impl probed [0, 0]
-[ 2.553 hart#3 ] asid.c:34 <asid_init> asid in cpu@3 impl probed [0, 0]
-[ 2.560 hart#2 ] init.c:99 <kernel_init> Hello Jrinx, I am slave hart!
-[ 2.567 hart#3 ] init.c:99 <kernel_init> Hello Jrinx, I am slave hart!
-[ 2.574 hart#4 ] init.c:99 <kernel_init> Hello Jrinx, I am slave hart!
-[ 2.582 hart#1 ] partition.c:201 <part_create> create partition: name='put-a-b',prog='app_put_a_b',memory=8 MiB,period=200ms,duration=100ms
-[ 2.594 hart#1 ] partition.c:209 <part_create> program 'app_put_a_b' found at [80217cc0, 80229f08) (size: 72 KiB + 584 B)
-[ 2.607 hart#1 ] partition.c:215 <part_create> create main process for partition 'put-a-b': name='main',entrypoint=00000000004004e8,stacksize=4 KiB
-[ 2.621 hart#1 ] partition.c:221 <part_create> remaining memory of partition 'put-a-b': 7 MiB + 920 KiB
-[ 2.630 hart#1 ] sched.c:24 <sched_add_part> add partition 1 to scheduler
-[ part#1 proc#1 ] osmain.c:12 <_osmain> partition 1 init with status:
-[ part#1 proc#1 ] osmain.c:13 <_osmain> - period: 200ms
-[ part#1 proc#1 ] osmain.c:14 <_osmain> - duration: 100ms
-[ part#1 proc#1 ] osmain.c:15 <_osmain> - lock level: 0
-[ part#1 proc#1 ] osmain.c:16 <_osmain> - start cond: 0
-[ part#1 proc#1 ] osmain.c:17 <_osmain> - assigned cores: 1
-[ part#1 proc#2 index=1 ] put_a_b.c:23 <put_a> put 'A' to console
-[ part#1 proc#3 index=2 ] put_a_b.c:34 <put_b> put 'B' to console
-ABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABA
+[ ?.?????? hart#4 ] init.c:81 <kernel_init> Hello Jrinx, I am master hart!
+[ 38.205505 hart#4 ] cpus.c:112 <cpus_probe> cpu@1 (slave)  probed (stack top: 000000008038d000)
+[ 38.214028 hart#4 ] cpus.c:112 <cpus_probe> cpu@2 (slave)  probed (stack top: 000000008039d000)
+[ 38.223316 hart#4 ] cpus.c:112 <cpus_probe> cpu@3 (slave)  probed (stack top: 00000000803ad000)
+[ 38.232610 hart#4 ] cpus.c:116 <cpus_probe> cpu@4 (master) probed (stack top: 000000008037c000)
+[ 38.242030 hart#4 ] mems.c:36 <mem_probe> memory@80000000 probed (consists of 1 memory):
+[ 38.250586 hart#4 ] mems.c:40 <mem_probe>      memory[0] locates at [80000000, 480000000) (size: 16 GiB)
+[ 38.260400 hart#4 ] plic.c:156 <plic_probe> interrupt-controller@c000000 probed (phandle: 10) to handle user external int
+[ 38.271866 hart#4 ] plic.c:158 <plic_probe>    locates at [c000000, 10000000) (size: 64 MiB)
+[ 38.280796 hart#4 ] plic.c:98 <plic_init> set all interrupt sources priority to MIN
+[ 38.288980 hart#4 ] plic.c:105 <plic_init> disable all interrupt sources for all context (0 - 15871)
+[ 38.298705 hart#4 ] plic.c:106 <plic_init> set all context priority threshold to MAX
+[ 38.309157 hart#4 ] plic.c:112 <plic_init> all interrupt sources shall be handled by context 2
+[ 38.317796 hart#4 ] sifiveuart0.c:165 <sifiveuart0_probe> serial@10010000 probed, interrupt 00000027 registered to intc 10
+[ 38.329223 hart#4 ] sifiveuart0.c:167 <sifiveuart0_probe>      locates at [10010000, 10011000) (size: 4 KiB)
+[ 38.339407 hart#4 ] sifiveuart0.c:165 <sifiveuart0_probe> serial@10011000 probed, interrupt 00000028 registered to intc 10
+[ 38.350937 hart#4 ] sifiveuart0.c:167 <sifiveuart0_probe>      locates at [10011000, 10012000) (size: 4 KiB)
+[ 38.361197 hart#4 ] aliases.c:43 <aliases_probe> aliases probed, props listed:
+[ 38.368865 hart#4 ] aliases.c:49 <aliases_probe>       spi0: /soc/spi@10050000
+[ 38.376248 hart#4 ] aliases.c:49 <aliases_probe>       serial1: /soc/serial@10011000
+[ 38.384152 hart#4 ] aliases.c:49 <aliases_probe>       ethernet0: /soc/ethernet@10090000
+[ 38.392403 hart#4 ] aliases.c:49 <aliases_probe>       serial0: /soc/serial@10010000
+[ 38.400281 hart#4 ] chosen.c:18 <chosen_probe> chosen probed, props listed:
+[ 38.407830 hart#4 ] chosen.c:24 <chosen_probe>         bootargs: --pa-conf name=ping-pong,prog=app_ping_pong,memory=8388608,period=200000,duration=100000
+[ 38.421553 hart#4 ] chosen.c:30 <chosen_probe>         stdout-path: serial0
+[ 38.428508 hart#4 ] serialport.c:62 <serial_select_out_dev> select serial@10010000 as serial output device
+[ 38.438751 hart#4 ] serialport.c:73 <serial_select_in_dev> select serial@10010000 as serial input device
+[ 38.449032 hart#4 ] vmm.c:164 <vmm_setup_mmio> set up serial@10011000 mmio at [ffffffc010011000, ffffffc010012000) (size: 4 KiB)
+[ 38.461016 hart#4 ] vmm.c:164 <vmm_setup_mmio> set up serial@10010000 mmio at [ffffffc010010000, ffffffc010011000) (size: 4 KiB)
+[ 38.473146 hart#4 ] vmm.c:164 <vmm_setup_mmio> set up interrupt-controller@c000000 mmio at [ffffffc00c000000, ffffffc010000000) (size: 64 MiB)
+[ 38.489612 hart#4 ] vmm.c:181 <vmm_setup_kern> set up kernel vmm at 0000000080200000
+[ 39.316549 hart#4 ] vmm.c:206 <vmm_setup_kern> init physical memory management
+[ 39.708231 hart#4 ] vmm.c:209 <vmm_setup_kern> switch to physical frame allocator
+[ 39.715537 hart#4 ] vmm.c:220 <vmm_start> enable virtual memory (satp: 8000000000080322)
+[ 39.724221 hart#4 ] asid.c:32 <asid_init> asid in cpu@4 impl probed [0, 0]
+[ 39.732035 hart#4 ] vmm.c:228 <vmm_summary> os kernel reserves memory [80200000, 883e2000) (size: 129 MiB + 904 KiB)
+[ 39.743217 hart#3 ] vmm.c:220 <vmm_start> enable virtual memory (satp: 8000000000080322)
+[ 39.751497 hart#2 ] vmm.c:220 <vmm_start> enable virtual memory (satp: 8000000000080322)
+[ 39.760183 hart#1 ] vmm.c:220 <vmm_start> enable virtual memory (satp: 8000000000080322)
+[ 39.768865 hart#3 ] asid.c:32 <asid_init> asid in cpu@3 impl probed [0, 0]
+[ 39.776334 hart#2 ] asid.c:32 <asid_init> asid in cpu@2 impl probed [0, 0]
+[ 39.783804 hart#3 ] init.c:103 <kernel_init> Hello Jrinx, I am slave hart!
+[ 39.791274 hart#2 ] init.c:103 <kernel_init> Hello Jrinx, I am slave hart!
+[ 39.798744 hart#1 ] asid.c:32 <asid_init> asid in cpu@1 impl probed [0, 0]
+[ 39.806252 hart#1 ] init.c:103 <kernel_init> Hello Jrinx, I am slave hart!
+[ 39.813762 hart#1 ] partition.c:310 <part_create> create partition: name='ping-pong',prog='app_ping_pong',memory=8 MiB,period=200000 us,duration=100000 us
+[ 39.828102 hart#1 ] partition.c:318 <part_create> program 'app_ping_pong' found at [802191c0, 80220268) (size: 28 KiB + 168 B)
+[ 39.840636 hart#1 ] partition.c:324 <part_create> create main process for partition 'ping-pong': name='main',entrypoint=0000000000400994,stacksize=4 KiB
+[ 39.854787 hart#1 ] partition.c:330 <part_create> remaining memory of partition 'ping-pong': 7 MiB + 932 KiB
+[ 39.864759 hart#1 ] channel.c:55 <channel_mem_setup> channel memory setup: [3500000000, 3500000000) (size: 0)
+[ 39.875273 hart#1 ] sched.c:71 <sched_launch> sched major frame: 200000 us
+[ 39.882760 part#1 proc#1 ] runtime.c:12 <_runtime> partition 1 init with status:
+[ 39.882785 part#1 proc#1 ] runtime.c:13 <_runtime> - period: 200000 us
+[ 39.882800 part#1 proc#1 ] runtime.c:14 <_runtime> - duration: 100000 us
+[ 39.882814 part#1 proc#1 ] runtime.c:15 <_runtime> - lock level: 0
+[ 39.882828 part#1 proc#1 ] runtime.c:16 <_runtime> - start cond: 0
+[ 39.882842 part#1 proc#1 ] runtime.c:17 <_runtime> - assigned cores: 1
+[ 39.883850 part#1 proc#2(1) ] ping_pong.c:8 <player1> I am player 1, and let me serve
+[ 39.883872 part#1 proc#2(1) ] ping_pong.c:15 <player1> (round=1) send ball 0
+[ 39.883947 part#1 proc#2(1) ] ping_pong.c:17 <player1> (round=1) wait ball with timeout 2 s...
+[ 39.884018 part#1 proc#3(2) ] ping_pong.c:39 <player2> I am player 2
+[ 39.884038 part#1 proc#3(2) ] ping_pong.c:49 <player2> (round=1) wait ball ...
+[ 39.884058 part#1 proc#3(2) ] ping_pong.c:51 <player2> (round=1) got ball 0
+[ 39.884073 part#1 proc#3(2) ] ping_pong.c:53 <player2> (round=1) send ball 1
+[ 39.884102 part#1 proc#2(1) ] ping_pong.c:22 <player1> (round=1) got ball 1
+[ 39.884119 part#1 proc#2(1) ] ping_pong.c:15 <player1> (round=2) send ball 2
+[ 39.884140 part#1 proc#2(1) ] ping_pong.c:17 <player1> (round=2) wait ball with timeout 2 s...
+[ 39.884200 part#1 proc#3(2) ] ping_pong.c:58 <player2> (round=2) wait ball ...
+[ 39.884219 part#1 proc#3(2) ] ping_pong.c:60 <player2> (round=2) got ball 2
+[ 39.884234 part#1 proc#3(2) ] ping_pong.c:61 <player2> (round=2) oh, ball lost
+[ 41.884165 part#1 proc#2(1) ] ping_pong.c:29 <player1> (round=2) suspend timed out
+[ 41.884185 part#1 proc#2(1) ] ping_pong.c:15 <player1> (round=3) send ball 3
+[ 41.884203 part#1 proc#2(1) ] ping_pong.c:17 <player1> (round=3) wait ball with timeout 2 s...
+[ 41.884265 part#1 proc#3(2) ] ping_pong.c:68 <player2> (round=3) wait ball ...
+[ 41.884283 part#1 proc#3(2) ] ping_pong.c:70 <player2> (round=3) got ball 3
+[ 41.884298 part#1 proc#3(2) ] ping_pong.c:71 <player2> (round=3) oh, ball sent but out of table
+[ 41.884364 part#1 proc#3(2) ] ping_pong.c:75 <player2> (round=4) wait ball with timeout 4 s...
+[ 43.884327 part#1 proc#2(1) ] ping_pong.c:24 <player1> (round=3) recv timed out
+[ 43.884347 part#1 proc#2(1) ] ping_pong.c:15 <player1> (round=4) send ball 4
+[ 43.884366 part#1 proc#2(1) ] ping_pong.c:17 <player1> (round=4) wait ball with timeout 2 s...
+[ 43.884427 part#1 proc#3(2) ] ping_pong.c:77 <player2> (round=4) got ball 4
+[ 43.884444 part#1 proc#3(2) ] ping_pong.c:79 <player2> (round=4) send ball 5
+[ 43.884468 part#1 proc#2(1) ] ping_pong.c:22 <player1> (round=4) got ball 5
+[ 43.884484 part#1 proc#2(1) ] halt at ping_pong.c:35 <player1> game over
+[ 43.932894 hart#1 ] syscalls.c:65 <do_halt> shutdown from syscall
 ```
