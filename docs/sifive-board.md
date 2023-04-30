@@ -110,8 +110,7 @@ $ sudo systemctl restart tftpd-hpa
 配置网线接口的 IP 地址为 `10.0.0.5`，并将操作系统镜像文件 `jrinx.uImage` 放入 `/srv/tftp` 目录下。随后可用如下命令测试 tftp 服务器：
 
 ```console
-$ tftp
-tftp> connect
+$ tftp localhost
 tftp> get jrinx.uImage
 ```
 
@@ -152,8 +151,7 @@ $ ./scripts/sysconf ./sys-conf/ping-pong.yml
 
 ```console
 $ ./scripts/sysconf ./sys-conf/ping-pong.yml | ./scripts/u-bootargs -o /srv/tftp/uEnv.txt
-tftp ${env_addr_r} uEnv.txt
-env import -t ${env_addr_r} 98
+tftp ${env_addr_r} uEnv.txt; env import -t ${env_addr_r} 98
 ```
 
 ### u-boot 启动命令
