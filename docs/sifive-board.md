@@ -88,6 +88,7 @@ $ make mkimage
 => setenv ipaddr 10.0.0.6
 => setenv netmask 255.255.255.0
 => setenv kernel_addr_r 0x80200000
+=> setenv env_addr_r 0x83000000
 => saveenv
 ```
 
@@ -139,6 +140,21 @@ tftp> get jrinx.uImage
 ```
 
 即可让内核打印出设备树信息。
+
+另外，也可通过 [sysconf](../scripts/sysconf) 脚本来生成 [sys-conf](../sys-conf/) 目录下系统配置文件对应的启动参数。如：
+
+```console
+$ ./scripts/sysconf ./sys-conf/ping-pong.yml
+--pa-conf name=ping-pong,prog=app_ping_pong,memory=8388608,period=200000,duration=100000
+```
+
+参数过长时，可能将无法通过命令行将其传入 u-boot，此时可借助 [u-bootargs](../scripts/u-bootargs) 脚本来生成 `uEnv.txt` 文件，并根据其提示来输入 u-boot 命令。如：
+
+```console
+$ ./scripts/sysconf ./sys-conf/ping-pong.yml | ./scripts/u-bootargs -o /srv/tftp/uEnv.txt
+tftp ${env_addr_r} uEnv.txt
+env import -t ${env_addr_r} 98
+```
 
 ### u-boot 启动命令
 
