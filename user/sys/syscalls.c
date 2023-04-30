@@ -251,8 +251,8 @@ RETURN_CODE_TYPE sys_get_buffer_status(BUFFER_ID_TYPE buffer_id,
 RETURN_CODE_TYPE sys_create_blackboard(BLACKBOARD_NAME_TYPE blackboard_name,
                                        MESSAGE_SIZE_TYPE max_message_size,
                                        BLACKBOARD_ID_TYPE *blackboard_id) {
-  return syscall(SYS_CREATE_BLACKBOARD, (unsigned long)blackboard_name, max_message_size, 0, 0,
-                 0, 0, 0);
+  return syscall(SYS_CREATE_BLACKBOARD, (unsigned long)blackboard_name, max_message_size,
+                 (unsigned long)blackboard_id, 0, 0, 0, 0);
 }
 
 RETURN_CODE_TYPE sys_display_blackboard(BLACKBOARD_ID_TYPE blackboard_id,

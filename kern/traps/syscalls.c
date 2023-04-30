@@ -819,6 +819,7 @@ static ret_code_t do_create_blackboard(bb_name_t blackboard_name, msg_size_t max
   }
   catch_e(blackboard_alloc(part, &bb, blackboard_name, max_message_size),
           { return INVALID_CONFIG; });
+  *blackboard_id = bb->bb_id;
   return NO_ERROR;
 }
 
