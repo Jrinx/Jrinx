@@ -9,6 +9,8 @@ SYSCONF		?=
 BOARD		?= virt
 CROSS_COMPILE	?= riscv64-unknown-linux-gnu-
 
+BUILD_3RD_PARTY	?= n
+
 JRINX_LOGO	:= jrinx.logo
 
 GDB		:= gdb-multiarch
@@ -53,6 +55,7 @@ DTC		:= dtc
 export CROSS_COMPILE CFLAGS LDFLAGS
 export LIB_MODULES
 export CHECK_PREPROC ?= n
+export BUILD_3RD_PARTY
 export BUILD_ROOT_DIR ?= $(abspath ./)
 
 MAKEFLAGS	:= -j$(shell nproc) -s $(MAKEFLAGS)

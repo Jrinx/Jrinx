@@ -1,5 +1,9 @@
-USER_LIBS	:= os sys lib
-USER_APPS	:= app test
+USER_LIBS		:= os sys lib
+USER_APPS		:= app test
+
+ifeq ($(BUILD_3RD_PARTY), y)
+	USER_APPS	+= third-party
+endif
 
 .PHONY: all $(USER_APPS) $(USER_LIBS)
 
