@@ -2,6 +2,7 @@
 #include <kern/chan/queuing.h>
 #include <kern/lib/debug.h>
 #include <kern/lib/errors.h>
+#include <kern/lib/sync.h>
 #include <kern/lock/spinlock.h>
 #include <kern/mm/kalloc.h>
 #include <kern/mm/pmm.h>
@@ -62,6 +63,7 @@ long channel_mem_setup(void) {
     paddr_t paddr = {.val = pa};
     panic_e(pt_map(kern_pgdir, vaddr, paddr, perm));
   }
+  sfence_vma;
   part_pt_sync_kern_pgdir();
   return KER_SUCCESS;
 }
