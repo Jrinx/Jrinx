@@ -14,7 +14,6 @@
 
 static const char *args_test;
 static int args_debug_dt = 0;
-int args_debug_kalloc_used = 0;
 int args_debug_as_switch = 0;
 int args_debug_tick_interval = 0;
 int args_debug_tick_num = 0;
@@ -32,7 +31,6 @@ static struct arg_opt args_collections[] = {
     arg_of_str('q', "qp-conf", &args_queuing_ports_conf),
     arg_of_str('c', "ch-conf", &args_channel_conf),
     arg_of_bool(0, "debug-dt", &args_debug_dt),
-    arg_of_bool(0, "debug-kalloc-used", &args_debug_kalloc_used),
     arg_of_bool(0, "debug-as-switch", &args_debug_as_switch),
     arg_of_int(0, "debug-tick-interval", &args_debug_tick_interval),
     arg_of_int(0, "debug-tick-num", &args_debug_tick_num),

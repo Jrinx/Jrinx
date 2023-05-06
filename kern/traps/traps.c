@@ -103,11 +103,6 @@ void handle_trap(void) {
   if (!(context->ctx_scause & CAUSE_INT_OFFSET)) {
     intp_enable();
   }
-  extern int args_debug_kalloc_used;
-  if (args_debug_kalloc_used) {
-    size_t kalloc_used = kalloc_get_used();
-    info("kalloc used: %pB\n", &kalloc_used);
-  }
   switch (context->ctx_scause) {
   case CAUSE_EXC_IF_PAGE_FAULT:
   case CAUSE_EXC_LD_PAGE_FAULT:
