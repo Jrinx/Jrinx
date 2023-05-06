@@ -49,7 +49,7 @@ void traps_init(void) {
 
 void trap_init_vec(void) {
   extern void trap_vec(void);
-  rv64_stvec stvec_reg = {.bits = {.mode = DIRECT, .base = (unsigned long)trap_vec / 4}};
+  rv64_stvec stvec_reg = {.bits = {.mode = VECTORED, .base = (unsigned long)trap_vec / 4}};
   csrw_stvec(stvec_reg.val);
   csrw_sscratch((unsigned long)cpus_context[hrt_get_id()]);
 }
@@ -97,12 +97,12 @@ extern void do_syscall(struct context *context);
 extern void do_timer_int(struct context *context);
 extern void do_external_int(struct context *context);
 
-void handle_trap(void) {
+extern void trap_ret(struct context *context) __attribute__((noreturn));
+
+void handle_exception(void) {
   struct context *context = cpus_context[hrt_get_id()];
   prepare_nested_trap();
-  if (!(context->ctx_scause & CAUSE_INT_OFFSET)) {
-    intp_enable();
-  }
+  intp_enable();
   switch (context->ctx_scause) {
   case CAUSE_EXC_IF_PAGE_FAULT:
   case CAUSE_EXC_LD_PAGE_FAULT:
@@ -112,23 +112,37 @@ void handle_trap(void) {
   case CAUSE_EXC_U_ECALL:
     do_syscall(context);
     break;
-  case CAUSE_INT_OFFSET | CAUSE_INT_S_TIMER:
-    do_timer_int(context);
-    break;
-  case CAUSE_INT_OFFSET | CAUSE_INT_S_EXTERNAL:
-    do_external_int(context);
-    break;
   default:
-    fatal("failed to handle trap, cause=%016lx\n", context->ctx_scause);
+    fatal("failed to handle exception, cause=%lu\n", context->ctx_scause);
     break;
   }
-  if (!(context->ctx_scause & CAUSE_INT_OFFSET)) {
-    intp_disable();
-  }
+  intp_disable();
   ctx_free(cpus_context[hrt_get_id()]);
   hlist_remove_node(&context->ctx_link);
   cpus_context[hrt_get_id()] = context;
+  trap_ret(context);
+}
 
-  extern void trap_ret(struct context * context) __attribute__((noreturn));
+void handle_int_software(void) {
+  UNIMPLEMENTED;
+}
+
+void handle_int_timer(void) {
+  struct context *context = cpus_context[hrt_get_id()];
+  prepare_nested_trap();
+  do_timer_int(context);
+  ctx_free(cpus_context[hrt_get_id()]);
+  hlist_remove_node(&context->ctx_link);
+  cpus_context[hrt_get_id()] = context;
+  trap_ret(context);
+}
+
+void handle_int_external(void) {
+  struct context *context = cpus_context[hrt_get_id()];
+  prepare_nested_trap();
+  do_external_int(context);
+  ctx_free(cpus_context[hrt_get_id()]);
+  hlist_remove_node(&context->ctx_link);
+  cpus_context[hrt_get_id()] = context;
   trap_ret(context);
 }

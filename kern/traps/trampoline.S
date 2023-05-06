@@ -134,7 +134,8 @@
   fld f31, PT_FREG31(a0)
 .endm
 
-EXPORT(trap_vec)
+.macro BUILD_TRAP_HANDLER target
+EXPORT(trap_\target)
   csrrw a0, sscratch, a0
 
   SAVE_REGS
@@ -155,16 +156,34 @@ EXPORT(trap_vec)
 
   ld tp, PT_HARTID(a0)
   andi t0, t0, (1 << 8)  # SPP
-  bnez t0, TRAP_FROM_S_MODE
-TRAP_FROM_U_MODE:
+  bnez t0, 1f
   ld t0, cpus_cur_proc
   sll t1, tp, 3
   add t1, t0, t1
   ld t1, (t1)
   ld sp, (t1)
-TRAP_FROM_S_MODE:
-  call handle_trap
+1:
+  call handle_\target
+.endm
 
+.align 7
+EXPORT(trap_vec)
+  j trap_exception
+  j trap_int_software
+  j .
+  j .
+  j .
+  j trap_int_timer
+  j .
+  j .
+  j .
+  j trap_int_external
+  j .
+
+BUILD_TRAP_HANDLER exception
+BUILD_TRAP_HANDLER int_software
+BUILD_TRAP_HANDLER int_timer
+BUILD_TRAP_HANDLER int_external
 
 EXPORT(trap_ret_switch_as)
   csrr t0, sstatus
