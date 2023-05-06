@@ -16,7 +16,8 @@ void do_pagefault(struct context *context) {
 re_lookup:
   panic_e(pt_lookup(part->pa_pgdir, va, &pte));
   if (pte == NULL) {
-    if (va.val >= COMM_BASE && va.val < COMM_LIMT) {
+    rv64_sstatus sstatus = {.val = context->ctx_sstatus};
+    if (sstatus.bits.spp == RISCV_S_MODE && va.val >= COMM_BASE && va.val < COMM_LIMT) {
       perm_t perm = {.bits = {.r = 1, .w = 1}};
       catch_e(part_pt_alloc(part, va, perm, NULL), { goto err; });
     } else {
