@@ -23,16 +23,28 @@ void do_timer_int(struct context *context) {
     if (tick_num >= args_debug_tick_num) {
       sys_time_t diff_comp_act_time_tot = 0;
       sys_time_t diff_act_time_exp_time_tot = 0;
+      sys_time_t diff_comp_act_time_max = 0;
+      sys_time_t diff_act_time_exp_time_max = 0;
       for (size_t i = 0; i < args_debug_tick_num; i++) {
         // calculate the difference between actual claim time and complete time
-        diff_comp_act_time_tot += debug_timer_complete_time[i] - debug_timer_claim_time[i];
+        sys_time_t diff1 = debug_timer_complete_time[i] - debug_timer_claim_time[i];
+        diff_comp_act_time_tot += diff1;
+        if (diff1 > diff_comp_act_time_max) {
+          diff_comp_act_time_max = diff1;
+        }
         // calculate the difference between expected claim time and actual claim time
-        diff_act_time_exp_time_tot +=
-            debug_timer_claim_time[i] - debug_timer_claim_expected_time[i];
+        sys_time_t diff2 = debug_timer_claim_time[i] - debug_timer_claim_expected_time[i];
+        diff_act_time_exp_time_tot += diff2;
+        if (diff2 > diff_act_time_exp_time_max) {
+          diff_act_time_exp_time_max = diff2;
+        }
       }
-      halt("tick (total: %d) diff<T_act_claim, T_exp_claim>: %ld us, diff<T_comp, "
-           "T_act_time>: %ld us\n",
-           args_debug_tick_num, diff_act_time_exp_time_tot, diff_comp_act_time_tot);
+      info("time tick total: %d\n", args_debug_tick_num);
+      info("diff<T_act_claim, T_exp_claim>: {tot=%ld us, max=%ld us}\n",
+           diff_act_time_exp_time_tot, diff_act_time_exp_time_max);
+      info("diff<T_comp, T_act_time>: {tot=%ld us, max=%ld us}\n", diff_comp_act_time_tot,
+           diff_comp_act_time_max);
+      halt("real-time performance measurement done!\n");
     }
   }
 }
