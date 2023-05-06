@@ -35,6 +35,20 @@
     asm volatile("csrw " #reg ", %0" : : "r"(val));                                            \
   }
 
+#define RC_CSR_DEF(reg)                                                                        \
+  __attribute__((always_inline)) static inline unsigned long csrrc_##reg(unsigned long mask) { \
+    unsigned long val;                                                                         \
+    asm volatile("csrrc %0, " #reg ", %1" : "=r"(val) : "r"(mask));                            \
+    return val;                                                                                \
+  }
+
+#define RS_CSR_DEF(reg)                                                                        \
+  __attribute__((always_inline)) static inline unsigned long csrrs_##reg(unsigned long mask) { \
+    unsigned long val;                                                                         \
+    asm volatile("csrrs %0, " #reg ", %1" : "=r"(val) : "r"(mask));                            \
+    return val;                                                                                \
+  }
+
 R_REG_DEF(tp)
 W_REG_DEF(tp)
 
@@ -71,6 +85,8 @@ typedef union {
 
 R_CSR_DEF(sstatus)
 W_CSR_DEF(sstatus)
+RC_CSR_DEF(sstatus)
+RS_CSR_DEF(sstatus)
 
 enum rv64_stvec_mode_t {
   DIRECT = 0,

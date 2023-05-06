@@ -63,16 +63,14 @@ static void prepare_nested_trap(void) {
   csrw_sscratch((unsigned long)cpus_context[hrt_get_id()]);
 }
 
-void intp_enable(void) {
-  rv64_sstatus sstatus = {.val = csrr_sstatus()};
-  sstatus.bits.sie = 1;
-  csrw_sstatus(sstatus.val);
+unsigned long intp_enable(void) {
+  rv64_sstatus sstatus_set_mask = {.bits = {.sie = 1}};
+  return csrrs_sstatus(sstatus_set_mask.val);
 }
 
-void intp_disable(void) {
-  rv64_sstatus sstatus = {.val = csrr_sstatus()};
-  sstatus.bits.sie = 0;
-  csrw_sstatus(sstatus.val);
+unsigned long intp_disable(void) {
+  rv64_sstatus sstatus_clr_mask = {.bits = {.sie = 1}};
+  return csrrc_sstatus(sstatus_clr_mask.val);
 }
 
 void intp_pop(void) {
@@ -86,8 +84,7 @@ void intp_pop(void) {
 
 void intp_push(void) {
   if (likely(cpus_intp_layer != NULL)) {
-    rv64_sstatus sstatus = {.val = csrr_sstatus()};
-    intp_disable();
+    rv64_sstatus sstatus = {.val = intp_disable()};
     if (cpus_intp_layer[hrt_get_id()] == 0) {
       cpus_retained_intp[hrt_get_id()] = sstatus.bits.sie;
     }
