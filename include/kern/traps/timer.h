@@ -10,6 +10,7 @@
 #include <types.h>
 
 enum time_event_type {
+  TE_SIMPLE,
   TE_PARTITION_ACTIVATE,
   TE_PROCESS_SUSPEND_TIMEOUT,
   TE_PROCESS_DELAYED_START,

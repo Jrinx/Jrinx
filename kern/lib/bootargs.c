@@ -1,12 +1,14 @@
 #include <kern/chan/channel.h>
 #include <kern/chan/queuing.h>
 #include <kern/drivers/devicetree.h>
+#include <kern/lib/boottime.h>
 #include <kern/lib/debug.h>
 #include <kern/lib/errors.h>
 #include <kern/mm/kalloc.h>
 #include <kern/multitask/partition.h>
 #include <kern/multitask/sched.h>
 #include <kern/tests.h>
+#include <kern/traps/timer.h>
 #include <lib/argparser.h>
 #include <lib/string.h>
 
@@ -14,6 +16,8 @@ static const char *args_test;
 static int args_debug_dt = 0;
 int args_debug_kalloc_used = 0;
 int args_debug_as_switch = 0;
+int args_debug_tick_interval = 0;
+int args_debug_tick_num = 0;
 static const char *args_partitions_conf;
 static const char *args_scheduler_conf;
 static const char *args_sampling_ports_conf;
@@ -30,6 +34,8 @@ static struct arg_opt args_collections[] = {
     arg_of_bool(0, "debug-dt", &args_debug_dt),
     arg_of_bool(0, "debug-kalloc-used", &args_debug_kalloc_used),
     arg_of_bool(0, "debug-as-switch", &args_debug_as_switch),
+    arg_of_int(0, "debug-tick-interval", &args_debug_tick_interval),
+    arg_of_int(0, "debug-tick-num", &args_debug_tick_num),
     arg_of_end,
 };
 
@@ -326,6 +332,25 @@ long args_action(void) {
     extern struct dev_tree boot_dt;
     dt_print_tree(&boot_dt);
     halt("arg-driven print boot device tree done, halt!\n");
+  }
+  if (args_debug_tick_num) {
+    extern sys_time_t *debug_timer_complete_time;
+    extern sys_time_t *debug_timer_claim_time;
+    debug_timer_complete_time = kalloc(sizeof(sys_time_t) * args_debug_tick_num);
+    memset(debug_timer_complete_time, 0, sizeof(sys_time_t) * args_debug_tick_num);
+    debug_timer_claim_time = kalloc(sizeof(sys_time_t) * args_debug_tick_num);
+    memset(debug_timer_claim_time, 0, sizeof(sys_time_t) * args_debug_tick_num);
+    extern sys_time_t *debug_timer_claim_expected_time;
+    debug_timer_claim_expected_time = kalloc(sizeof(sys_time_t) * args_debug_tick_num);
+    sys_time_t now = boottime_get_now();
+    const sys_time_t delay =
+        2 * (SYS_TIME_SECOND > args_debug_tick_interval ? SYS_TIME_SECOND
+                                                        : args_debug_tick_interval);
+    for (size_t i = 0; i < args_debug_tick_num; i++) {
+      debug_timer_claim_expected_time[i] = delay + now + i * args_debug_tick_interval;
+      time_event_alloc(NULL, delay + now + i * args_debug_tick_interval, TE_SIMPLE);
+    }
+    info("arg-driven time event allocation done, first time event: %ld us\n", now + delay);
   }
   if (args_partitions_conf != NULL) {
     catch_e(do_partitions_create(args_partitions_conf));
