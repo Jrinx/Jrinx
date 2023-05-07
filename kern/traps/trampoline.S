@@ -170,20 +170,21 @@ EXPORT(trap_\target)
 EXPORT(trap_vec)
   j trap_exception
   j trap_int_software
-  j .
-  j .
-  j .
+  j trap_int_reserved
+  j trap_int_reserved
+  j trap_int_reserved
   j trap_int_timer
-  j .
-  j .
-  j .
+  j trap_int_reserved
+  j trap_int_reserved
+  j trap_int_reserved
   j trap_int_external
-  j .
+  j trap_int_reserved
 
 BUILD_TRAP_HANDLER exception
 BUILD_TRAP_HANDLER int_software
 BUILD_TRAP_HANDLER int_timer
 BUILD_TRAP_HANDLER int_external
+BUILD_TRAP_HANDLER int_reserved
 
 EXPORT(trap_ret_switch_as)
   csrr t0, sstatus

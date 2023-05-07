@@ -113,7 +113,7 @@ void handle_exception(void) {
     do_syscall(context);
     break;
   default:
-    fatal("failed to handle exception, cause=%lu\n", context->ctx_scause);
+    fatal("failed to handle exception, exccode=%lu\n", context->ctx_scause);
     break;
   }
   intp_disable();
@@ -145,4 +145,10 @@ void handle_int_external(void) {
   hlist_remove_node(&context->ctx_link);
   cpus_context[hrt_get_id()] = context;
   trap_ret(context);
+}
+
+void handle_int_reserved(void) {
+  struct context *context = cpus_context[hrt_get_id()];
+  fatal("failed to handle interrupt (reserved), exccode=%lu\n",
+        context->ctx_scause & ~CAUSE_INT_OFFSET);
 }
