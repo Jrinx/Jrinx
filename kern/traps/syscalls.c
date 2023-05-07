@@ -515,34 +515,40 @@ static ret_code_t do_send_queuing_message(que_port_id_t queuing_port_id,
     return INVALID_MODE;
   }
   panic_e(lk_acquire(&port->qp_channel->ch_lock));
-  while (queuing_port_is_full(port)) {
+  if (queuing_port_is_full(port)) {
     if (time_out == 0) {
       panic_e(lk_release(&port->qp_channel->ch_lock));
       return NOT_AVAILABLE;
       // TODO: check if proc owns a mutex or is error handler
     } else {
-      proc->pr_state = WAITING;
-      queuing_port_add_waiting_proc(port, proc);
       sys_time_t wakeup_time = boottime_get_now() + time_out;
-      struct te_proc_queuing_port *teqpp = NULL;
-      if (time_out != SYSTEM_TIME_INFINITE_VAL) {
-        proc->pr_waiting_reason = QUEUING_PORT_BLOCKED_WITH_TIMEOUT;
-        teqpp = kalloc(sizeof(struct te_proc_queuing_port));
-        teqpp->tepqp_proc = proc;
-        teqpp->tepqp_port = port;
-        time_event_alloc(teqpp, wakeup_time, TE_QUEUING_PORT_BLOCK_TIMEOUT);
-      } else {
-        proc->pr_waiting_reason = QUEUING_PORT_BLOCKED;
-      }
-      panic_e(lk_release(&port->qp_channel->ch_lock));
-      sched_proc_give_up(0);
-      if (time_out != SYSTEM_TIME_INFINITE_VAL) {
-        kfree(teqpp);
-        if (boottime_get_now() >= wakeup_time) {
+      do {
+        if (time_out != SYSTEM_TIME_INFINITE_VAL && wakeup_time <= boottime_get_now()) {
+          panic_e(lk_release(&port->qp_channel->ch_lock));
           return TIMED_OUT;
         }
-      }
-      panic_e(lk_acquire(&port->qp_channel->ch_lock));
+        proc->pr_state = WAITING;
+        queuing_port_add_waiting_proc(port, proc);
+        struct te_proc_queuing_port *teqpp = NULL;
+        if (time_out != SYSTEM_TIME_INFINITE_VAL) {
+          proc->pr_waiting_reason = QUEUING_PORT_BLOCKED_WITH_TIMEOUT;
+          teqpp = kalloc(sizeof(struct te_proc_queuing_port));
+          teqpp->tepqp_proc = proc;
+          teqpp->tepqp_port = port;
+          time_event_alloc(teqpp, wakeup_time, TE_QUEUING_PORT_BLOCK_TIMEOUT);
+        } else {
+          proc->pr_waiting_reason = QUEUING_PORT_BLOCKED;
+        }
+        panic_e(lk_release(&port->qp_channel->ch_lock));
+        sched_proc_give_up(0);
+        if (time_out != SYSTEM_TIME_INFINITE_VAL) {
+          kfree(teqpp);
+          if (boottime_get_now() >= wakeup_time) {
+            return TIMED_OUT;
+          }
+        }
+        panic_e(lk_acquire(&port->qp_channel->ch_lock));
+      } while (queuing_port_is_full(port));
     }
   }
   queuing_port_send(port, message_addr, length);
@@ -568,34 +574,44 @@ static ret_code_t do_receive_queuing_message(que_port_id_t queuing_port_id, sys_
     return INVALID_MODE;
   }
   panic_e(lk_acquire(&port->qp_channel->ch_lock));
-  while (queuing_port_is_empty(port)) {
+  if (queuing_port_is_empty(port)) {
     if (time_out == 0) {
       panic_e(lk_release(&port->qp_channel->ch_lock));
+      *length = 0;
       return NOT_AVAILABLE;
       // TODO: check if proc owns a mutex or is error handler
     } else {
-      proc->pr_state = WAITING;
-      queuing_port_add_waiting_proc(port, proc);
       sys_time_t wakeup_time = boottime_get_now() + time_out;
-      struct te_proc_queuing_port *teqpp = NULL;
-      if (time_out != SYSTEM_TIME_INFINITE_VAL) {
-        proc->pr_waiting_reason = QUEUING_PORT_BLOCKED_WITH_TIMEOUT;
-        teqpp = kalloc(sizeof(struct te_proc_queuing_port));
-        teqpp->tepqp_proc = proc;
-        teqpp->tepqp_port = port;
-        time_event_alloc(teqpp, wakeup_time, TE_QUEUING_PORT_BLOCK_TIMEOUT);
-      } else {
-        proc->pr_waiting_reason = QUEUING_PORT_BLOCKED;
-      }
-      panic_e(lk_release(&port->qp_channel->ch_lock));
-      sched_proc_give_up(0);
-      if (time_out != SYSTEM_TIME_INFINITE_VAL) {
-        kfree(teqpp);
-        if (boottime_get_now() >= wakeup_time) {
+      do {
+        if (time_out != SYSTEM_TIME_INFINITE_VAL && wakeup_time <= boottime_get_now()) {
+          panic_e(lk_release(&port->qp_channel->ch_lock));
+          *length = 0;
           return TIMED_OUT;
         }
-      }
-      panic_e(lk_acquire(&port->qp_channel->ch_lock));
+        proc->pr_state = WAITING;
+        queuing_port_add_waiting_proc(port, proc);
+        sys_time_t wakeup_time = boottime_get_now() + time_out;
+        struct te_proc_queuing_port *teqpp = NULL;
+        if (time_out != SYSTEM_TIME_INFINITE_VAL) {
+          proc->pr_waiting_reason = QUEUING_PORT_BLOCKED_WITH_TIMEOUT;
+          teqpp = kalloc(sizeof(struct te_proc_queuing_port));
+          teqpp->tepqp_proc = proc;
+          teqpp->tepqp_port = port;
+          time_event_alloc(teqpp, wakeup_time, TE_QUEUING_PORT_BLOCK_TIMEOUT);
+        } else {
+          proc->pr_waiting_reason = QUEUING_PORT_BLOCKED;
+        }
+        panic_e(lk_release(&port->qp_channel->ch_lock));
+        sched_proc_give_up(0);
+        if (time_out != SYSTEM_TIME_INFINITE_VAL) {
+          kfree(teqpp);
+          if (boottime_get_now() >= wakeup_time) {
+            *length = 0;
+            return TIMED_OUT;
+          }
+        }
+        panic_e(lk_acquire(&port->qp_channel->ch_lock));
+      } while (queuing_port_is_empty(port));
     }
   }
   queuing_port_recv(port, message_addr, length);
@@ -695,28 +711,34 @@ static ret_code_t do_send_buffer(buf_id_t buffer_id, msg_addr_t message_addr, ms
     return INVALID_PARAM;
   }
   panic_e(lk_acquire(&buf->buf_lock));
-  while (buffer_is_full(buf)) {
+  if (buffer_is_full(buf)) {
     if (time_out == 0) {
       panic_e(lk_release(&buf->buf_lock));
       return NOT_AVAILABLE;
       // TODO: check if proc owns a mutex or is error handler
     } else {
-      proc->pr_state = WAITING;
-      buffer_add_waiting_proc(buf, proc);
       sys_time_t wakeup_time = boottime_get_now() + time_out;
-      if (time_out != SYSTEM_TIME_INFINITE_VAL) {
-        proc->pr_waiting_reason = BUFFER_BLOCKED_WITH_TIMEOUT;
-        struct te_proc_buf tepb = {.tepb_proc = proc, .tepb_buf = buf};
-        time_event_alloc(&tepb, wakeup_time, TE_BUFFER_BLOCK_TIMEOUT);
-      } else {
-        proc->pr_waiting_reason = BUFFER_BLOCKED;
-      }
-      panic_e(lk_release(&buf->buf_lock));
-      sched_proc_give_up(0);
-      if (time_out != SYSTEM_TIME_INFINITE_VAL && boottime_get_now() > wakeup_time) {
-        return TIMED_OUT;
-      }
-      panic_e(lk_acquire(&buf->buf_lock));
+      do {
+        if (time_out != SYSTEM_TIME_INFINITE_VAL && wakeup_time <= boottime_get_now()) {
+          panic_e(lk_release(&buf->buf_lock));
+          return TIMED_OUT;
+        }
+        proc->pr_state = WAITING;
+        buffer_add_waiting_proc(buf, proc);
+        if (time_out != SYSTEM_TIME_INFINITE_VAL) {
+          proc->pr_waiting_reason = BUFFER_BLOCKED_WITH_TIMEOUT;
+          struct te_proc_buf tepb = {.tepb_proc = proc, .tepb_buf = buf};
+          time_event_alloc(&tepb, wakeup_time, TE_BUFFER_BLOCK_TIMEOUT);
+        } else {
+          proc->pr_waiting_reason = BUFFER_BLOCKED;
+        }
+        panic_e(lk_release(&buf->buf_lock));
+        sched_proc_give_up(0);
+        if (time_out != SYSTEM_TIME_INFINITE_VAL && boottime_get_now() > wakeup_time) {
+          return TIMED_OUT;
+        }
+        panic_e(lk_acquire(&buf->buf_lock));
+      } while (buffer_is_full(buf));
     }
   }
   buffer_send(buf, message_addr, length);
@@ -742,30 +764,37 @@ static ret_code_t do_receive_buffer(buf_id_t buffer_id, sys_time_t time_out,
     return INVALID_PARAM;
   }
   panic_e(lk_acquire(&buf->buf_lock));
-  while (buffer_is_empty(buf)) {
+  if (buffer_is_empty(buf)) {
     if (time_out == 0) {
       panic_e(lk_release(&buf->buf_lock));
       *length = 0;
       return NOT_AVAILABLE;
       // TODO: check if proc owns a mutex or is error handler
     } else {
-      proc->pr_state = WAITING;
-      buffer_add_waiting_proc(buf, proc);
       sys_time_t wakeup_time = boottime_get_now() + time_out;
-      if (time_out != SYSTEM_TIME_INFINITE_VAL) {
-        proc->pr_waiting_reason = BUFFER_BLOCKED_WITH_TIMEOUT;
-        struct te_proc_buf tepb = {.tepb_proc = proc, .tepb_buf = buf};
-        time_event_alloc(&tepb, wakeup_time, TE_BUFFER_BLOCK_TIMEOUT);
-      } else {
-        proc->pr_waiting_reason = BUFFER_BLOCKED;
-      }
-      panic_e(lk_release(&buf->buf_lock));
-      sched_proc_give_up(0);
-      if (time_out != SYSTEM_TIME_INFINITE_VAL && boottime_get_now() > wakeup_time) {
-        *length = 0;
-        return TIMED_OUT;
-      }
-      panic_e(lk_acquire(&buf->buf_lock));
+      do {
+        if (time_out != SYSTEM_TIME_INFINITE_VAL && wakeup_time <= boottime_get_now()) {
+          panic_e(lk_release(&buf->buf_lock));
+          *length = 0;
+          return TIMED_OUT;
+        }
+        proc->pr_state = WAITING;
+        buffer_add_waiting_proc(buf, proc);
+        if (time_out != SYSTEM_TIME_INFINITE_VAL) {
+          proc->pr_waiting_reason = BUFFER_BLOCKED_WITH_TIMEOUT;
+          struct te_proc_buf tepb = {.tepb_proc = proc, .tepb_buf = buf};
+          time_event_alloc(&tepb, wakeup_time, TE_BUFFER_BLOCK_TIMEOUT);
+        } else {
+          proc->pr_waiting_reason = BUFFER_BLOCKED;
+        }
+        panic_e(lk_release(&buf->buf_lock));
+        sched_proc_give_up(0);
+        if (time_out != SYSTEM_TIME_INFINITE_VAL && boottime_get_now() > wakeup_time) {
+          *length = 0;
+          return TIMED_OUT;
+        }
+        panic_e(lk_acquire(&buf->buf_lock));
+      } while (buffer_is_empty(buf));
     }
   }
   buffer_recv(buf, message_addr, length);
@@ -857,29 +886,37 @@ static ret_code_t do_read_blackboard(bb_id_t blackboard_id, sys_time_t time_out,
     return INVALID_PARAM;
   }
   panic_e(lk_acquire(&bb->bb_lock));
-  while (blackboard_is_empty(bb)) {
+  if (blackboard_is_empty(bb)) {
     if (time_out == 0) {
       panic_e(lk_release(&bb->bb_lock));
       *length = 0;
       return NOT_AVAILABLE;
       // TODO: check if proc owns a mutex or is error handler
     } else {
-      proc->pr_state = WAITING;
-      blackboard_add_waiting_proc(bb, proc);
       sys_time_t wakeup_time = boottime_get_now() + time_out;
-      if (time_out != SYSTEM_TIME_INFINITE_VAL) {
-        proc->pr_waiting_reason = BLACKBOARD_BLOCKED_WITH_TIMEOUT;
-        struct te_proc_bb tepbb = {.tepbb_proc = proc, .tepbb_bb = bb};
-        time_event_alloc(&tepbb, wakeup_time, TE_BLACKBOARD_BLOCK_TIMEOUT);
-      } else {
-        proc->pr_waiting_reason = BLACKBOARD_BLOCKED;
-      }
-      panic_e(lk_release(&bb->bb_lock));
-      sched_proc_give_up(0);
-      if (time_out != SYSTEM_TIME_INFINITE_VAL && boottime_get_now() > wakeup_time) {
-        return TIMED_OUT;
-      }
-      panic_e(lk_acquire(&bb->bb_lock));
+      do {
+        if (time_out != SYSTEM_TIME_INFINITE_VAL && wakeup_time <= boottime_get_now()) {
+          panic_e(lk_release(&bb->bb_lock));
+          *length = 0;
+          return TIMED_OUT;
+        }
+        proc->pr_state = WAITING;
+        blackboard_add_waiting_proc(bb, proc);
+        if (time_out != SYSTEM_TIME_INFINITE_VAL) {
+          proc->pr_waiting_reason = BLACKBOARD_BLOCKED_WITH_TIMEOUT;
+          struct te_proc_bb tepbb = {.tepbb_proc = proc, .tepbb_bb = bb};
+          time_event_alloc(&tepbb, wakeup_time, TE_BLACKBOARD_BLOCK_TIMEOUT);
+        } else {
+          proc->pr_waiting_reason = BLACKBOARD_BLOCKED;
+        }
+        panic_e(lk_release(&bb->bb_lock));
+        sched_proc_give_up(0);
+        if (time_out != SYSTEM_TIME_INFINITE_VAL && wakeup_time <= boottime_get_now()) {
+          *length = 0;
+          return TIMED_OUT;
+        }
+        panic_e(lk_acquire(&bb->bb_lock));
+      } while (blackboard_is_empty(bb));
     }
   }
   blackboard_read(bb, message_addr, length);
