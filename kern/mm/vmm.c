@@ -151,9 +151,11 @@ static struct list_head vmm_mmio_setup_list;
 
 void vmm_register_mmio(char *name, unsigned long *addr, unsigned long size) {
   struct mmio_setup *mmio = kalloc(sizeof(struct mmio_setup));
-  mmio->mm_name = name;
-  mmio->mm_addr = addr;
-  mmio->mm_size = size;
+  *mmio = (struct mmio_setup){
+      .mm_name = name,
+      .mm_addr = addr,
+      .mm_size = size,
+  };
   list_insert_head(&vmm_mmio_setup_list, &mmio->mm_link);
 }
 

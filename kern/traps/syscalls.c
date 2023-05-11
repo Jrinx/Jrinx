@@ -533,8 +533,7 @@ static ret_code_t do_send_queuing_message(que_port_id_t queuing_port_id,
         if (time_out != SYSTEM_TIME_INFINITE_VAL) {
           proc->pr_waiting_reason = QUEUING_PORT_BLOCKED_WITH_TIMEOUT;
           teqpp = kalloc(sizeof(struct te_proc_queuing_port));
-          teqpp->tepqp_proc = proc;
-          teqpp->tepqp_port = port;
+          *teqpp = (struct te_proc_queuing_port){.tepqp_proc = proc, .tepqp_port = port};
           time_event_alloc(teqpp, wakeup_time, TE_QUEUING_PORT_BLOCK_TIMEOUT);
         } else {
           proc->pr_waiting_reason = QUEUING_PORT_BLOCKED;
@@ -595,8 +594,7 @@ static ret_code_t do_receive_queuing_message(que_port_id_t queuing_port_id, sys_
         if (time_out != SYSTEM_TIME_INFINITE_VAL) {
           proc->pr_waiting_reason = QUEUING_PORT_BLOCKED_WITH_TIMEOUT;
           teqpp = kalloc(sizeof(struct te_proc_queuing_port));
-          teqpp->tepqp_proc = proc;
-          teqpp->tepqp_port = port;
+          *teqpp = (struct te_proc_queuing_port){.tepqp_proc = proc, .tepqp_port = port};
           time_event_alloc(teqpp, wakeup_time, TE_QUEUING_PORT_BLOCK_TIMEOUT);
         } else {
           proc->pr_waiting_reason = QUEUING_PORT_BLOCKED;

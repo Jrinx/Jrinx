@@ -99,15 +99,17 @@ void proc_reset(struct proc *proc) {
   memset(proc_ctx, 0, sizeof(struct context));
   proc_ctx->ctx_sepc = proc->pr_entrypoint;
   proc_ctx->ctx_hartid = HARTID_MAX;
-  rv64_si *proc_ctx_sie = (rv64_si *)&proc_ctx->ctx_sie;
-  proc_ctx_sie->bits.sei = 1;
-  proc_ctx_sie->bits.ssi = 1;
-  proc_ctx_sie->bits.sti = 1;
-  rv64_sstatus *proc_ctx_sstatus = (rv64_sstatus *)&proc_ctx->ctx_sstatus;
-  proc_ctx_sstatus->bits.fs = 1;
-  proc_ctx_sstatus->bits.spie = 1;
-  proc_ctx_sstatus->bits.spp = RISCV_U_MODE;
-  proc_ctx_sstatus->bits.sum = 1;
+  *(rv64_si *)&proc_ctx->ctx_sie = (rv64_si){.bits = {
+                                                 .sei = 1,
+                                                 .ssi = 1,
+                                                 .sti = 1,
+                                             }};
+  *(rv64_sstatus *)&proc_ctx->ctx_sstatus = (rv64_sstatus){.bits = {
+                                                               .fs = 1,
+                                                               .spie = 1,
+                                                               .spp = RISCV_U_MODE,
+                                                               .sum = 1,
+                                                           }};
   proc_ctx->ctx_regs.names.sp = proc->pr_ustacktop;
   hlist_insert_head(&proc->pr_trapframe.tf_ctx_list, &proc_ctx->ctx_link);
   spinlock_init(&proc->pr_state_lock);

@@ -40,10 +40,12 @@ static struct buddy_block *get_buddy(struct buddy_block *block) {
 
 void kalloc_init(void) {
   struct buddy_block *block = (struct buddy_block *)kalloc_pool;
-  block->size = KALLOCSIZE;
-  block->state = FREE;
-  block->next = NULL;
-  block->prev = NULL;
+  *block = (struct buddy_block){
+      .size = KALLOCSIZE,
+      .state = FREE,
+      .next = NULL,
+      .prev = NULL,
+  };
   kalloc_block_list = block;
 }
 

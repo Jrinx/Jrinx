@@ -246,16 +246,13 @@ static long part_load_prog_mapper(void *data, unsigned long va, size_t offset, c
   struct part_load_prog_mapper_ctx *ctx = data;
   void *pa;
   vaddr_t vaddr = {.val = va};
-  perm_t perm = {.bits = {.v = 1, .u = 1}};
-  if (ctx->phdr->p_flags & PF_X) {
-    perm.bits.x = 1;
-  }
-  if (ctx->phdr->p_flags & PF_W) {
-    perm.bits.w = 1;
-  }
-  if (ctx->phdr->p_flags & PF_R) {
-    perm.bits.r = 1;
-  }
+  perm_t perm = {.bits = {
+                     .v = 1,
+                     .u = 1,
+                     .x = !!(ctx->phdr->p_flags & PF_X),
+                     .w = !!(ctx->phdr->p_flags & PF_W),
+                     .r = !!(ctx->phdr->p_flags & PF_R),
+                 }};
   catch_e(part_pt_alloc(ctx->part, vaddr, perm, &pa));
   if (src != NULL) {
     memcpy(pa + offset, src, src_len);
