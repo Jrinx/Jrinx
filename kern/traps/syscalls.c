@@ -723,17 +723,22 @@ static ret_code_t do_send_buffer(buf_id_t buffer_id, msg_addr_t message_addr, ms
         }
         proc->pr_state = WAITING;
         buffer_add_waiting_proc(buf, proc);
+        struct te_proc_buf *tepb = NULL;
         if (time_out != SYSTEM_TIME_INFINITE_VAL) {
           proc->pr_waiting_reason = BUFFER_BLOCKED_WITH_TIMEOUT;
-          struct te_proc_buf tepb = {.tepb_proc = proc, .tepb_buf = buf};
-          time_event_alloc(&tepb, wakeup_time, TE_BUFFER_BLOCK_TIMEOUT);
+          tepb = kalloc(sizeof(struct te_proc_buf));
+          *tepb = (struct te_proc_buf){.tepb_proc = proc, .tepb_buf = buf};
+          time_event_alloc(tepb, wakeup_time, TE_BUFFER_BLOCK_TIMEOUT);
         } else {
           proc->pr_waiting_reason = BUFFER_BLOCKED;
         }
         panic_e(lk_release(&buf->buf_lock));
         sched_proc_give_up(0);
-        if (time_out != SYSTEM_TIME_INFINITE_VAL && boottime_get_now() > wakeup_time) {
-          return TIMED_OUT;
+        if (time_out != SYSTEM_TIME_INFINITE_VAL) {
+          kfree(tepb);
+          if (boottime_get_now() >= wakeup_time) {
+            return TIMED_OUT;
+          }
         }
         panic_e(lk_acquire(&buf->buf_lock));
       } while (buffer_is_full(buf));
@@ -778,18 +783,23 @@ static ret_code_t do_receive_buffer(buf_id_t buffer_id, sys_time_t time_out,
         }
         proc->pr_state = WAITING;
         buffer_add_waiting_proc(buf, proc);
+        struct te_proc_buf *tepb = NULL;
         if (time_out != SYSTEM_TIME_INFINITE_VAL) {
           proc->pr_waiting_reason = BUFFER_BLOCKED_WITH_TIMEOUT;
-          struct te_proc_buf tepb = {.tepb_proc = proc, .tepb_buf = buf};
-          time_event_alloc(&tepb, wakeup_time, TE_BUFFER_BLOCK_TIMEOUT);
+          tepb = kalloc(sizeof(struct te_proc_buf));
+          *tepb = (struct te_proc_buf){.tepb_proc = proc, .tepb_buf = buf};
+          time_event_alloc(tepb, wakeup_time, TE_BUFFER_BLOCK_TIMEOUT);
         } else {
           proc->pr_waiting_reason = BUFFER_BLOCKED;
         }
         panic_e(lk_release(&buf->buf_lock));
         sched_proc_give_up(0);
-        if (time_out != SYSTEM_TIME_INFINITE_VAL && boottime_get_now() > wakeup_time) {
-          *length = 0;
-          return TIMED_OUT;
+        if (time_out != SYSTEM_TIME_INFINITE_VAL) {
+          kfree(tepb);
+          if (boottime_get_now() >= wakeup_time) {
+            *length = 0;
+            return TIMED_OUT;
+          }
         }
         panic_e(lk_acquire(&buf->buf_lock));
       } while (buffer_is_empty(buf));
@@ -900,18 +910,23 @@ static ret_code_t do_read_blackboard(bb_id_t blackboard_id, sys_time_t time_out,
         }
         proc->pr_state = WAITING;
         blackboard_add_waiting_proc(bb, proc);
+        struct te_proc_bb *tepbb = NULL;
         if (time_out != SYSTEM_TIME_INFINITE_VAL) {
           proc->pr_waiting_reason = BLACKBOARD_BLOCKED_WITH_TIMEOUT;
-          struct te_proc_bb tepbb = {.tepbb_proc = proc, .tepbb_bb = bb};
-          time_event_alloc(&tepbb, wakeup_time, TE_BLACKBOARD_BLOCK_TIMEOUT);
+          tepbb = kalloc(sizeof(struct te_proc_bb));
+          *tepbb = (struct te_proc_bb){.tepbb_proc = proc, .tepbb_bb = bb};
+          time_event_alloc(tepbb, wakeup_time, TE_BLACKBOARD_BLOCK_TIMEOUT);
         } else {
           proc->pr_waiting_reason = BLACKBOARD_BLOCKED;
         }
         panic_e(lk_release(&bb->bb_lock));
         sched_proc_give_up(0);
-        if (time_out != SYSTEM_TIME_INFINITE_VAL && wakeup_time <= boottime_get_now()) {
-          *length = 0;
-          return TIMED_OUT;
+        if (time_out != SYSTEM_TIME_INFINITE_VAL) {
+          kfree(tepbb);
+          if (boottime_get_now() >= wakeup_time) {
+            *length = 0;
+            return TIMED_OUT;
+          }
         }
         panic_e(lk_acquire(&bb->bb_lock));
       } while (blackboard_is_empty(bb));
