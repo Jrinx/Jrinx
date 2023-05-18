@@ -48,6 +48,11 @@ inline struct sbiret sbi_hart_get_status(unsigned long hartid) {
   return sbi_call(hartid, 0, 0, SBI_EXT_HSM, SBI_EXT_HSM_HART_GET_STATUS);
 }
 
+inline struct sbiret sbi_hart_suspend(uint32_t suspend_type, unsigned long resume_addr,
+                                      unsigned long opaque) {
+  return sbi_call(suspend_type, resume_addr, opaque, SBI_EXT_HSM, SBI_EXT_HSM_HART_SUSPEND);
+}
+
 inline struct sbiret sbi_system_reset(uint32_t reset_type, uint32_t reset_reason) {
   return sbi_call(reset_type, reset_reason, 0, SBI_EXT_SRST, SBI_EXT_SRST_RESET);
 }

@@ -34,41 +34,9 @@ static void print_boot_info(void) {
   }
 }
 
-static void kernel_gen_init(void) {
-  static volatile unsigned long gen_init_state = 0;
-  static with_spinlock(gen_init_state);
-  switch (hrt_get_id()) {
-  case SYSCORE:
-    panic_e(args_action());
-    panic_e(channel_mem_setup());
-    panic_e(sched_launch());
-  default:
-    panic_e(lk_acquire(&spinlock_of(gen_init_state)));
-    gen_init_state++;
-    panic_e(lk_release(&spinlock_of(gen_init_state)));
-    break;
-  }
-  trap_init_vec();
-  while (gen_init_state != cpus_get_valid_count()) {
-  }
-}
-
-static void kernel_sched(void) {
-  static volatile unsigned long sched_state = 0;
-  static with_spinlock(sched_state);
-  switch (hrt_get_id()) {
-  case SYSCORE:
-    sched_global();
-    break;
-  default:
-    // TODO: sched in smp
-    break;
-  }
-  panic_e(lk_acquire(&spinlock_of(sched_state)));
-  sched_state++;
-  panic_e(lk_release(&spinlock_of(sched_state)));
-  while (sched_state != cpus_get_valid_count()) {
-  }
+static void __attribute__((noreturn)) kernel_suspend(void) {
+  panic_e(sbi_hart_suspend(SBI_HSM_SUSPEND_RET_DEFAULT, (unsigned long)kernel_suspend, 0));
+  fatal("suspend returned!\n");
 }
 
 void __attribute__((noreturn)) kernel_init(unsigned long hartid, void *dtb_addr) {
@@ -108,13 +76,16 @@ void __attribute__((noreturn)) kernel_init(unsigned long hartid, void *dtb_addr)
   while (init_state != cpus_get_valid_count()) {
   }
 
-  kernel_gen_init();
-  kernel_sched();
-
   if (hrt_get_id() == SYSCORE) {
+    panic_e(args_action());
+    panic_e(channel_mem_setup());
+    panic_e(sched_launch());
+  }
+  trap_init_vec();
+  if (hrt_get_id() == SYSCORE) {
+    sched_global();
     halt("All cores are running, halt!\n");
   } else {
-    while (1) {
-    }
+    kernel_suspend();
   }
 }
