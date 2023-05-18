@@ -101,7 +101,7 @@ static struct proc *sched_elect_next_proc(int round_robin) {
       const priority_t cur_pri = cpus_cur_proc[hrt_get_id()]->pr_cur_pri;
       LINKED_NODE_ITER (cpus_cur_proc[hrt_get_id()]->pr_sched_link.next, proc, pr_sched_link) {
         if ((proc->pr_state == READY || proc->pr_state == RUNNING) &&
-            (next_proc == NULL || proc->pr_cur_pri >= cur_pri)) {
+            proc->pr_cur_pri >= cur_pri) {
           next_proc = proc;
           goto rr_found;
         }
@@ -109,7 +109,7 @@ static struct proc *sched_elect_next_proc(int round_robin) {
       LINKED_NODE_ITER (cpus_cur_part[hrt_get_id()]->pa_proc_list.l_first, proc,
                         pr_sched_link) {
         if ((proc->pr_state == READY || proc->pr_state == RUNNING) &&
-            (next_proc == NULL || proc->pr_cur_pri >= cur_pri)) {
+            proc->pr_cur_pri >= cur_pri) {
           next_proc = proc;
           goto rr_found;
         }
