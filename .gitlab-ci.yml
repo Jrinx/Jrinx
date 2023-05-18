@@ -10,6 +10,7 @@ default:
 variables:
   CROSS_COMPILE: riscv64-linux-gnu-
   GIT_SUBMODULE_STRATEGY: recursive
+  MINTICK: 100
 
 check-style:
   stage: check
