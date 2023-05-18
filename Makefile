@@ -6,6 +6,7 @@ COLOR		?= y
 DTB		?=
 ARGS		?=
 SYSCONF		?=
+MINTICK		?= 10
 BOARD		?= virt
 CROSS_COMPILE	?= riscv64-unknown-linux-gnu-
 
@@ -22,6 +23,7 @@ CFLAGS		+= --std=gnu99 -nostdlib \
 		-fno-omit-frame-pointer -ffreestanding -fno-common -fno-stack-protector -fno-builtin \
 		-DCONFIG_ENDIAN=$(shell echo $(TARGET_ENDIAN) | tr '[:lower:]' '[:upper:]')_ENDIAN \
 		-DCONFIG_COLOR=$(shell [ "$(COLOR)" = "y" ] && echo 1 || echo 0) \
+		-DCONFIG_MINTICK=$(MINTICK) \
 		-DCONFIG_JRINX_LOGO='$(shell scripts/logo-gen $(JRINX_LOGO))' \
 		-DCONFIG_REVISON='"$(shell git rev-parse --short HEAD)"'
 

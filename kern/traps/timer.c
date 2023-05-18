@@ -118,7 +118,7 @@ void time_event_action(void) {
   while (!list_empty(&cpus_time_event_queue[hrt_get_id()])) {
     struct time_event *te = CONTAINER_OF(cpus_time_event_queue[hrt_get_id()].l_first,
                                          struct time_event, te_queue_link);
-    if (te->te_time <= boottime_get_now()) {
+    if (te->te_time <= boottime_get_now() + SYS_TIME_MIN_TICK) {
       switch (te->te_type) {
       case TE_PARTITION_ACTIVATE:
         resched_part = 1;
