@@ -10,6 +10,7 @@
 #include <kern/mm/kalloc.h>
 #include <kern/mm/pmm.h>
 #include <kern/mm/vmm.h>
+#include <lib/circbuf.h>
 #include <lib/string.h>
 
 struct uart16550a {
@@ -17,12 +18,8 @@ struct uart16550a {
   uintptr_t ur_addr;
   uintmax_t ur_size;
   uint32_t ur_shift;
-  struct {
-    uint8_t *buf_data;
-    size_t buf_off_b;
-    size_t buf_off_e;
-    size_t buf_size;
-  } ur_rd_buf, ur_wr_buf;
+  struct circbuf ur_rd_buf;
+  struct circbuf ur_wr_buf;
 };
 
 static inline void uart16550a_write(struct uart16550a *uart, unsigned long addr, uint8_t data) {
@@ -45,27 +42,24 @@ static void uart16550a_init(struct uart16550a *uart) {
 
 static int uart16550a_getc(void *ctx, uint8_t *c) {
   struct uart16550a *uart = ctx;
-  if (uart->ur_rd_buf.buf_size > 0) {
-    uint8_t r = uart->ur_rd_buf.buf_data[uart->ur_rd_buf.buf_off_b];
-    *c = r == 0xffU ? 0 : r;
-    uart->ur_rd_buf.buf_off_b = (uart->ur_rd_buf.buf_off_b + 1) % uart->ur_rd_buf.buf_size;
-    uart->ur_rd_buf.buf_size--;
+  if (!circbuf_is_empty(&uart->ur_rd_buf)) {
+    uint8_t data;
+    circbuf_dequeue(&uart->ur_rd_buf, &data);
+    *c = data == 0xffU ? 0 : data;
     return 1;
   }
   if ((uart16550a_read(uart, COM_LSR) & COM_LSR_DATA_AVAIL) == 0) {
     return 0;
   }
-  uint8_t r = uart16550a_read(uart, COM_RBR);
-  *c = r == 0xffU ? 0 : r;
+  uint8_t data = uart16550a_read(uart, COM_RBR);
+  *c = data == 0xffU ? 0 : data;
   return 1;
 }
 
 static int uart16550a_putc(void *ctx, uint8_t c) {
   struct uart16550a *uart = ctx;
-  if (uart->ur_wr_buf.buf_size < SERIAL_BUFFER_SIZE) {
-    uart->ur_wr_buf.buf_off_e = (uart->ur_wr_buf.buf_off_e + 1) % SERIAL_BUFFER_SIZE;
-    uart->ur_wr_buf.buf_data[uart->ur_wr_buf.buf_off_e] = c;
-    uart->ur_wr_buf.buf_size++;
+  if (!circbuf_is_full(&uart->ur_wr_buf)) {
+    circbuf_enqueue(&uart->ur_wr_buf, &c);
     uart16550a_write(uart, COM_IER, COM_IER_RCV_DATA_AVAIL | COM_IER_TRANS_HOLD_REG_EMPTY);
     return 1;
   }
@@ -74,12 +68,12 @@ static int uart16550a_putc(void *ctx, uint8_t c) {
 
 static void uart16550a_flush(void *ctx) {
   struct uart16550a *uart = ctx;
-  while (uart->ur_wr_buf.buf_size > 0) {
+  while (!circbuf_is_empty(&uart->ur_wr_buf)) {
     while ((uart16550a_read(uart, COM_LSR) & COM_LSR_THR_EMPTY) == 0) {
     }
-    uart16550a_write(uart, COM_THR, uart->ur_wr_buf.buf_data[uart->ur_wr_buf.buf_off_b]);
-    uart->ur_wr_buf.buf_off_b = (uart->ur_wr_buf.buf_off_b + 1) % SERIAL_BUFFER_SIZE;
-    uart->ur_wr_buf.buf_size--;
+    uint8_t data;
+    circbuf_dequeue(&uart->ur_wr_buf, &data);
+    uart16550a_write(uart, COM_THR, data);
   }
 }
 
@@ -90,24 +84,23 @@ static long uart16550a_handle_int(void *ctx, unsigned long trap_num) {
   case 0b0100:
   case 0b1100:
     while ((uart16550a_read(uart, COM_LSR) & COM_LSR_DATA_AVAIL) != 0) {
-      if (uart->ur_rd_buf.buf_size == SERIAL_BUFFER_SIZE) {
+      if (circbuf_is_full(&uart->ur_rd_buf)) {
         break;
       }
-      uart->ur_rd_buf.buf_off_e = (uart->ur_rd_buf.buf_off_e + 1) % SERIAL_BUFFER_SIZE;
-      uart->ur_rd_buf.buf_data[uart->ur_rd_buf.buf_off_e] = uart16550a_read(uart, COM_RBR);
-      uart->ur_rd_buf.buf_size++;
+      uint8_t data = uart16550a_read(uart, COM_RBR);
+      circbuf_enqueue(&uart->ur_rd_buf, &data);
     }
     break;
   case 0b0010:
     while ((uart16550a_read(uart, COM_LSR) & COM_LSR_THR_EMPTY) != 0) {
-      if (uart->ur_wr_buf.buf_size == 0) {
+      if (circbuf_is_empty(&uart->ur_wr_buf)) {
         break;
       }
-      uart16550a_write(uart, COM_THR, uart->ur_wr_buf.buf_data[uart->ur_wr_buf.buf_off_b]);
-      uart->ur_wr_buf.buf_off_b = (uart->ur_wr_buf.buf_off_b + 1) % SERIAL_BUFFER_SIZE;
-      uart->ur_wr_buf.buf_size--;
+      uint8_t data;
+      circbuf_dequeue(&uart->ur_wr_buf, &data);
+      uart16550a_write(uart, COM_THR, data);
     }
-    if (uart->ur_wr_buf.buf_size == 0) {
+    if (circbuf_is_empty(&uart->ur_wr_buf)) {
       uart16550a_write(uart, COM_IER, COM_IER_RCV_DATA_AVAIL);
     } else {
       uart16550a_write(uart, COM_IER, COM_IER_RCV_DATA_AVAIL | COM_IER_TRANS_HOLD_REG_EMPTY);
@@ -164,14 +157,10 @@ static long uart16550a_probe(const struct dev_node *node) {
   uart->ur_addr = addr;
   uart->ur_size = size;
   uart->ur_shift = shift;
-  uart->ur_rd_buf.buf_data = palloc(SERIAL_BUFFER_SIZE, PGSIZE);
-  uart->ur_rd_buf.buf_off_b = 0;
-  uart->ur_rd_buf.buf_off_e = -1;
-  uart->ur_rd_buf.buf_size = 0;
-  uart->ur_wr_buf.buf_data = palloc(SERIAL_BUFFER_SIZE, PGSIZE);
-  uart->ur_wr_buf.buf_off_b = 0;
-  uart->ur_wr_buf.buf_off_e = -1;
-  uart->ur_wr_buf.buf_size = 0;
+  void *rd_data = palloc(SERIAL_BUFFER_SIZE, PGSIZE);
+  circbuf_init(&uart->ur_rd_buf, rd_data, sizeof(uint8_t), SERIAL_BUFFER_SIZE);
+  void *wr_data = palloc(SERIAL_BUFFER_SIZE, PGSIZE);
+  circbuf_init(&uart->ur_wr_buf, wr_data, sizeof(uint8_t), SERIAL_BUFFER_SIZE);
 
   info("%s probed (shift: %u), interrupt %08x registered to intc %u\n", node->nd_name, shift,
        int_num, intc);

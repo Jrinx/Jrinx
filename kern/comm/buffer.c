@@ -59,15 +59,14 @@ long buffer_alloc(struct part *part, struct buffer **buf, buf_name_t name,
   tmp->buf_que_disc = que_disc;
   tmp->buf_max_msg_size = max_msg_size;
   tmp->buf_max_nb_msg = max_nb_msg;
-  tmp->buf_cap = (max_msg_size + sizeof(struct comm_msg)) * max_nb_msg;
-  catch_e(part_comm_alloc(part, tmp->buf_cap, &tmp->buf_data), {
-    kfree(tmp->buf_name);
-    kfree(tmp);
-    return err;
-  });
-  tmp->buf_off_b = 0;
-  tmp->buf_off_e = -(max_msg_size + sizeof(struct comm_msg));
-  tmp->buf_nb_msg = 0;
+  void *buf_data;
+  catch_e(
+      part_comm_alloc(part, max_nb_msg * (max_msg_size + sizeof(struct comm_msg)), &buf_data), {
+        kfree(tmp->buf_name);
+        kfree(tmp);
+        return err;
+      });
+  circbuf_init(&tmp->buf_body, buf_data, max_msg_size + sizeof(struct comm_msg), max_nb_msg);
   part_add_buf_name(part, tmp);
   spinlock_init(&tmp->buf_lock);
   list_init(&tmp->buf_waiting_procs);
@@ -84,31 +83,29 @@ long buffer_free(struct buffer *buf) {
 }
 
 int buffer_is_full(struct buffer *buf) {
-  return buf->buf_nb_msg >= buf->buf_max_nb_msg;
+  return circbuf_is_full(&buf->buf_body);
 }
 
 int buffer_is_empty(struct buffer *buf) {
-  return buf->buf_nb_msg == 0;
+  return circbuf_is_empty(&buf->buf_body);
 }
 
 void buffer_send(struct buffer *buf, msg_addr_t msg_addr, msg_size_t msg_len) {
   assert(!buffer_is_full(buf));
-  buf->buf_off_e =
-      (buf->buf_off_e + buf->buf_max_msg_size + sizeof(struct comm_msg)) % buf->buf_cap;
-  struct comm_msg *msg = (struct comm_msg *)(buf->buf_data + buf->buf_off_e);
+  uintptr_t tail = circbuf_enqu_st(&buf->buf_body);
+  struct comm_msg *msg = (struct comm_msg *)(buf->buf_body.cc_buf + tail);
   msg->msg_size = msg_len;
   memcpy(msg->msg_data, msg_addr, msg_len);
-  buf->buf_nb_msg++;
+  circbuf_enqu_ed(&buf->buf_body);
 }
 
 void buffer_recv(struct buffer *buf, msg_addr_t msg_addr, msg_size_t *msg_len) {
   assert(!buffer_is_empty(buf));
-  struct comm_msg *msg = (struct comm_msg *)(buf->buf_data + buf->buf_off_b);
+  uintptr_t head = circbuf_dequ_st(&buf->buf_body);
+  struct comm_msg *msg = (struct comm_msg *)(buf->buf_body.cc_buf + head);
   *msg_len = msg->msg_size;
   memcpy(msg_addr, msg->msg_data, *msg_len);
-  buf->buf_off_b =
-      (buf->buf_off_b + buf->buf_max_msg_size + sizeof(struct comm_msg)) % buf->buf_cap;
-  buf->buf_nb_msg--;
+  circbuf_dequ_ed(&buf->buf_body);
 }
 
 void buffer_add_waiting_proc(struct buffer *buf, struct proc *proc) {

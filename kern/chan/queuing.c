@@ -129,11 +129,6 @@ long queuing_port_conf_chan(que_port_name_t port_name, struct channel *chan) {
   LINKED_NODE_ITER (queuing_port_conf_list.h_first, qpc, qpc_link) {
     if (strcmp(qpc->qpc_name, port_name) == 0) {
       qpc->qpc_channel = chan;
-      size_t required_cap =
-          (qpc->qpc_max_msg_size + sizeof(struct comm_msg)) * qpc->qpc_max_nb_msg;
-      if (required_cap > chan->ch_cap) {
-        chan->ch_cap = required_cap;
-      }
       chan->ch_view.queuing.ch_max_msg_size = qpc->qpc_max_msg_size;
       chan->ch_view.queuing.ch_max_nb_msg = qpc->qpc_max_nb_msg;
       return KER_SUCCESS;
@@ -160,40 +155,33 @@ void queuing_port_register(struct queuing_port_conf *qpc) {
 }
 
 int queuing_port_is_full(struct queuing_port *qp) {
-  return qp->qp_channel->ch_view.queuing.ch_nb_msg ==
-         qp->qp_channel->ch_view.queuing.ch_max_nb_msg;
+  return circbuf_is_full(&qp->qp_channel->ch_view.queuing.ch_body);
 }
 
 int queuing_port_is_empty(struct queuing_port *qp) {
-  return qp->qp_channel->ch_view.queuing.ch_nb_msg == 0;
+  return circbuf_is_empty(&qp->qp_channel->ch_view.queuing.ch_body);
 }
 
 void queuing_port_send(struct queuing_port *qp, msg_addr_t msg_addr, msg_size_t msg_len) {
   assert(!queuing_port_is_full(qp));
   assert(qp->qp_dir == SOURCE);
-  qp->qp_channel->ch_view.queuing.ch_off_e =
-      (qp->qp_channel->ch_view.queuing.ch_off_e +
-       qp->qp_channel->ch_view.queuing.ch_max_msg_size + sizeof(struct comm_msg)) %
-      qp->qp_channel->ch_cap;
+  uintptr_t tail = circbuf_enqu_st(&qp->qp_channel->ch_view.queuing.ch_body);
   struct comm_msg *msg =
-      (struct comm_msg *)(qp->qp_channel->ch_data + qp->qp_channel->ch_view.queuing.ch_off_e);
+      (struct comm_msg *)(qp->qp_channel->ch_view.queuing.ch_body.cc_buf + tail);
   msg->msg_size = msg_len;
   memcpy(msg->msg_data, msg_addr, msg_len);
-  qp->qp_channel->ch_view.queuing.ch_nb_msg++;
+  circbuf_enqu_ed(&qp->qp_channel->ch_view.queuing.ch_body);
 }
 
 void queuing_port_recv(struct queuing_port *qp, msg_addr_t msg_addr, msg_size_t *msg_len) {
   assert(!queuing_port_is_empty(qp));
   assert(qp->qp_dir == DESTINATION);
+  uintptr_t head = circbuf_dequ_st(&qp->qp_channel->ch_view.queuing.ch_body);
   struct comm_msg *msg =
-      (struct comm_msg *)(qp->qp_channel->ch_data + qp->qp_channel->ch_view.queuing.ch_off_b);
+      (struct comm_msg *)(qp->qp_channel->ch_view.queuing.ch_body.cc_buf + head);
   *msg_len = msg->msg_size;
   memcpy(msg_addr, msg->msg_data, *msg_len);
-  qp->qp_channel->ch_view.queuing.ch_off_b =
-      (qp->qp_channel->ch_view.queuing.ch_off_b +
-       qp->qp_channel->ch_view.queuing.ch_max_msg_size + sizeof(struct comm_msg)) %
-      qp->qp_channel->ch_cap;
-  qp->qp_channel->ch_view.queuing.ch_nb_msg--;
+  circbuf_dequ_ed(&qp->qp_channel->ch_view.queuing.ch_body);
 }
 
 void queuing_port_add_waiting_proc(struct queuing_port *qp, struct proc *proc) {

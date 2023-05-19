@@ -37,16 +37,15 @@ long channel_create(struct channel_conf *cc) {
       kfree(ch);
       return -KER_PORT_ER;
     }
-    ch->ch_view.queuing.ch_nb_msg = 0;
-    ch->ch_view.queuing.ch_off_b = 0;
-    ch->ch_view.queuing.ch_off_e =
-        -(ch->ch_view.queuing.ch_max_msg_size + sizeof(struct comm_msg));
+    circbuf_init(&ch->ch_view.queuing.ch_body, (void *)channel_base,
+                 ch->ch_view.queuing.ch_max_msg_size + sizeof(struct comm_msg),
+                 ch->ch_view.queuing.ch_max_nb_msg);
     list_init(&ch->ch_view.queuing.ch_waiting_procs);
+    channel_base += (ch->ch_view.queuing.ch_max_msg_size + sizeof(struct comm_msg)) *
+                    ch->ch_view.queuing.ch_max_nb_msg;
   } else {
     UNIMPLEMENTED;
   }
-  ch->ch_data = (void *)channel_base;
-  channel_base += ch->ch_cap;
   spinlock_init(&ch->ch_lock);
   return KER_SUCCESS;
 }

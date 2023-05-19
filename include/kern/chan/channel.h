@@ -2,6 +2,7 @@
 #define _KERN_CHAN_CHANNEL_H_
 
 #include <kern/lock/lock.h>
+#include <lib/circbuf.h>
 #include <list.h>
 #include <types.h>
 
@@ -17,15 +18,11 @@ enum channel_type {
 struct channel {
   enum channel_media ch_media;
   enum channel_type ch_type;
-  void *ch_data;
-  size_t ch_cap;
   union {
     struct {
       msg_size_t ch_max_msg_size;
       msg_range_t ch_max_nb_msg;
-      long ch_off_b;
-      long ch_off_e;
-      msg_range_t ch_nb_msg;
+      struct circbuf ch_body;
       struct list_head ch_waiting_procs;
     } queuing;
   } ch_view;

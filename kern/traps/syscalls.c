@@ -643,7 +643,7 @@ static ret_code_t do_get_queuing_port_status(que_port_id_t queuing_port_id,
   queuing_port_status->MAX_MESSAGE_SIZE = port->qp_channel->ch_view.queuing.ch_max_msg_size;
   queuing_port_status->MAX_NB_MESSAGE = port->qp_channel->ch_view.queuing.ch_max_nb_msg;
   queuing_port_status->PORT_DIRECTION = port->qp_dir;
-  queuing_port_status->NB_MESSAGE = port->qp_channel->ch_view.queuing.ch_nb_msg;
+  queuing_port_status->NB_MESSAGE = port->qp_channel->ch_view.queuing.ch_body.cc_cnt;
   queuing_port_status->WAITING_PROCESSES = queuing_port_get_wait_proc_nb(port);
   return NO_ERROR;
 }
@@ -666,10 +666,7 @@ static ret_code_t do_clear_queuing_port(que_port_id_t queuing_port_id) {
       to_wakeup->pr_state = READY;
     }
   }
-  port->qp_channel->ch_view.queuing.ch_nb_msg = 0;
-  port->qp_channel->ch_view.queuing.ch_off_b = 0;
-  port->qp_channel->ch_view.queuing.ch_off_e =
-      -(port->qp_channel->ch_view.queuing.ch_max_msg_size + sizeof(struct comm_msg));
+  circbuf_reset(&port->qp_channel->ch_view.queuing.ch_body);
   panic_e(lk_release(&port->qp_channel->ch_lock));
   return NO_ERROR;
 }
@@ -834,7 +831,7 @@ static ret_code_t do_get_buffer_status(buf_id_t buffer_id, BUFFER_STATUS_TYPE *b
   if (buf == NULL || buf->buf_part_id != sched_cur_part()->pa_id) {
     return INVALID_PARAM;
   }
-  buffer_status->NB_MESSAGE = buf->buf_nb_msg;
+  buffer_status->NB_MESSAGE = buf->buf_body.cc_cnt;
   buffer_status->MAX_NB_MESSAGE = buf->buf_max_nb_msg;
   buffer_status->MAX_MESSAGE_SIZE = buf->buf_max_msg_size;
   buffer_status->WAITING_PROCESSES = buffer_get_waiting_proc_nb(buf);

@@ -10,17 +10,14 @@
 #include <kern/mm/kalloc.h>
 #include <kern/mm/pmm.h>
 #include <kern/mm/vmm.h>
+#include <lib/circbuf.h>
 
 struct sifiveuart0 {
   char *su_name;
   uintptr_t su_addr;
   uintmax_t su_size;
-  struct {
-    uint8_t *buf_data;
-    size_t buf_off_b;
-    size_t buf_off_e;
-    size_t buf_size;
-  } su_rd_buf, su_wr_buf;
+  struct circbuf su_rd_buf;
+  struct circbuf su_wr_buf;
 };
 
 static inline void sifiveuart0_write(struct sifiveuart0 *uart, unsigned long addr,
@@ -44,11 +41,10 @@ static void sifiveuart0_init(struct sifiveuart0 *uart) {
 
 static int sifiveuart0_getc(void *ctx, uint8_t *c) {
   struct sifiveuart0 *uart = ctx;
-  if (uart->su_rd_buf.buf_size > 0) {
-    uint8_t data = uart->su_rd_buf.buf_data[uart->su_rd_buf.buf_off_b];
+  if (!circbuf_is_empty(&uart->su_rd_buf)) {
+    uint8_t data;
+    circbuf_dequeue(&uart->su_rd_buf, &data);
     *c = data == 0xffU ? 0 : data;
-    uart->su_rd_buf.buf_off_b = (uart->su_rd_buf.buf_off_b + 1) % SERIAL_BUFFER_SIZE;
-    uart->su_rd_buf.buf_size--;
     return 1;
   }
   uint32_t rxdata = sifiveuart0_read(uart, COM_RXDATA);
@@ -62,10 +58,8 @@ static int sifiveuart0_getc(void *ctx, uint8_t *c) {
 
 static int sifiveuart0_putc(void *ctx, uint8_t c) {
   struct sifiveuart0 *uart = ctx;
-  if (uart->su_wr_buf.buf_size < SERIAL_BUFFER_SIZE) {
-    uart->su_wr_buf.buf_off_e = (uart->su_wr_buf.buf_off_e + 1) % SERIAL_BUFFER_SIZE;
-    uart->su_wr_buf.buf_data[uart->su_wr_buf.buf_off_e] = c;
-    uart->su_wr_buf.buf_size++;
+  if (!circbuf_is_full(&uart->su_wr_buf)) {
+    circbuf_enqueue(&uart->su_wr_buf, &c);
     sifiveuart0_write(uart, COM_IE, COM_IPE_RXWM | COM_IPE_TXWM);
     return 1;
   }
@@ -74,12 +68,12 @@ static int sifiveuart0_putc(void *ctx, uint8_t c) {
 
 static void sifiveuart0_flush(void *ctx) {
   struct sifiveuart0 *uart = ctx;
-  while (uart->su_wr_buf.buf_size > 0) {
+  while (!circbuf_is_empty(&uart->su_wr_buf)) {
     while ((sifiveuart0_read(uart, COM_TXDATA) & COM_TXDATA_FULL) != 0) {
     }
-    sifiveuart0_write(uart, COM_TXDATA, uart->su_wr_buf.buf_data[uart->su_wr_buf.buf_off_b]);
-    uart->su_wr_buf.buf_off_b = (uart->su_wr_buf.buf_off_b + 1) % SERIAL_BUFFER_SIZE;
-    uart->su_wr_buf.buf_size--;
+    uint8_t data;
+    circbuf_dequeue(&uart->su_wr_buf, &data);
+    sifiveuart0_write(uart, COM_TXDATA, data);
   }
 }
 
@@ -89,24 +83,22 @@ static long sifiveuart0_handle_int(void *ctx, unsigned long trap_num) {
   if (ip & COM_IPE_RXWM) {
     uint32_t data;
     while (((data = sifiveuart0_read(uart, COM_RXDATA)) & COM_RXDATA_EMPTY) != 0) {
-      if (uart->su_rd_buf.buf_size == SERIAL_BUFFER_SIZE) {
+      if (circbuf_is_full(&uart->su_rd_buf)) {
         break;
       }
-      uart->su_rd_buf.buf_off_e = (uart->su_rd_buf.buf_off_e + 1) % SERIAL_BUFFER_SIZE;
-      uart->su_rd_buf.buf_data[uart->su_rd_buf.buf_off_e] = data & 0xffU;
-      uart->su_rd_buf.buf_size++;
+      circbuf_enqueue(&uart->su_rd_buf, &data);
     }
   }
   if (ip & COM_IPE_TXWM) {
     while ((sifiveuart0_read(uart, COM_TXDATA) & COM_TXDATA_FULL) == 0) {
-      if (uart->su_wr_buf.buf_size == 0) {
+      if (circbuf_is_empty(&uart->su_wr_buf)) {
         break;
       }
-      sifiveuart0_write(uart, COM_TXDATA, uart->su_wr_buf.buf_data[uart->su_wr_buf.buf_off_b]);
-      uart->su_wr_buf.buf_off_b = (uart->su_wr_buf.buf_off_b + 1) % SERIAL_BUFFER_SIZE;
-      uart->su_wr_buf.buf_size--;
+      uint8_t data;
+      circbuf_dequeue(&uart->su_wr_buf, &data);
+      sifiveuart0_write(uart, COM_TXDATA, data);
     }
-    if (uart->su_wr_buf.buf_size == 0) {
+    if (circbuf_is_empty(&uart->su_wr_buf)) {
       sifiveuart0_write(uart, COM_IE, COM_IPE_RXWM);
     } else {
       sifiveuart0_write(uart, COM_IE, COM_IPE_RXWM | COM_IPE_TXWM);
@@ -153,14 +145,10 @@ static long sifiveuart0_probe(const struct dev_node *node) {
   uart->su_name = node->nd_name;
   uart->su_addr = addr;
   uart->su_size = size;
-  uart->su_rd_buf.buf_data = palloc(SERIAL_BUFFER_SIZE, PGSIZE);
-  uart->su_rd_buf.buf_off_b = 0;
-  uart->su_rd_buf.buf_off_e = -1;
-  uart->su_rd_buf.buf_size = 0;
-  uart->su_wr_buf.buf_data = palloc(SERIAL_BUFFER_SIZE, PGSIZE);
-  uart->su_wr_buf.buf_off_b = 0;
-  uart->su_wr_buf.buf_off_e = -1;
-  uart->su_wr_buf.buf_size = 0;
+  void *rd_data = palloc(SERIAL_BUFFER_SIZE, PGSIZE);
+  circbuf_init(&uart->su_rd_buf, rd_data, sizeof(uint8_t), SERIAL_BUFFER_SIZE);
+  void *wr_data = palloc(SERIAL_BUFFER_SIZE, PGSIZE);
+  circbuf_init(&uart->su_wr_buf, wr_data, sizeof(uint8_t), SERIAL_BUFFER_SIZE);
 
   info("%s probed, interrupt %08x registered to intc %u\n", node->nd_name, int_num, intc);
   struct fmt_mem_range mem_range = {.addr = addr, .size = size};

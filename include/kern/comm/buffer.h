@@ -3,6 +3,7 @@
 
 #include <kern/lock/lock.h>
 #include <layouts.h>
+#include <lib/circbuf.h>
 #include <list.h>
 #include <types.h>
 
@@ -13,11 +14,7 @@ struct buffer {
   que_disc_t buf_que_disc;
   msg_size_t buf_max_msg_size;
   msg_range_t buf_max_nb_msg;
-  void *buf_data;
-  size_t buf_cap;
-  long buf_off_b;
-  long buf_off_e;
-  msg_range_t buf_nb_msg;
+  struct circbuf buf_body;
   struct lock buf_lock;
   struct list_head buf_waiting_procs;
   struct linked_node buf_id_link;
