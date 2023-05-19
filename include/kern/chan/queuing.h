@@ -46,5 +46,6 @@ void queuing_port_add_waiting_proc(struct queuing_port *qp, struct proc *proc);
 void queuing_port_del_waiting_proc(struct queuing_port *qp, struct proc *proc);
 struct proc *queuing_port_wakeup_waiting_proc(struct queuing_port *qp);
 wait_range_t queuing_port_get_wait_proc_nb(struct queuing_port *qp);
+msg_range_t queuing_port_get_nb_message(struct queuing_port *qp);
 
 #endif

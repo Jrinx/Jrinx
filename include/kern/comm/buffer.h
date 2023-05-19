@@ -37,5 +37,6 @@ void buffer_add_waiting_proc(struct buffer *buf, struct proc *proc);
 void buffer_del_waiting_proc(struct buffer *buf, struct proc *proc);
 struct proc *buffer_wakeup_waiting_proc(struct buffer *buf);
 wait_range_t buffer_get_waiting_proc_nb(struct buffer *buf);
+msg_range_t buffer_get_nb_message(struct buffer *buf);
 
 #endif

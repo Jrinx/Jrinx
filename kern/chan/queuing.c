@@ -225,3 +225,7 @@ wait_range_t queuing_port_get_wait_proc_nb(struct queuing_port *qp) {
   }
   return nb;
 }
+
+msg_range_t queuing_port_get_nb_message(struct queuing_port *qp) {
+  return qp->qp_channel->ch_view.queuing.ch_body.cc_cnt;
+}

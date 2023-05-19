@@ -146,3 +146,7 @@ wait_range_t buffer_get_waiting_proc_nb(struct buffer *buf) {
   }
   return nb;
 }
+
+msg_range_t buffer_get_nb_message(struct buffer *buf) {
+  return buf->buf_body.cc_cnt;
+}
