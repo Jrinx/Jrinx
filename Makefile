@@ -174,4 +174,4 @@ register-git-hooks:
 	@ln -s ../../scripts/pre-commit .git/hooks/pre-commit
 
 cloc:
-	@cloc --exclude-dir=$(OPENSBI_ROOT),third-party .
+	@cloc --vcs=git .
