@@ -12,7 +12,7 @@ from utils import *
 
 
 PARALLEL_POOL_SIZE = mp.cpu_count()
-JRINX_MINTICK = 100
+JRINX_MINTICK = 10000
 
 
 def run_test(test, /, *,
