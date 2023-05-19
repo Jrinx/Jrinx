@@ -1,3 +1,4 @@
+#include <aligns.h>
 #include <kern/chan/channel.h>
 #include <kern/chan/queuing.h>
 #include <kern/drivers/devicetree.h>
@@ -345,8 +346,9 @@ long args_action(void) {
         2 * (SYS_TIME_SECOND > args_debug_tick_interval ? SYS_TIME_SECOND
                                                         : args_debug_tick_interval);
     for (size_t i = 0; i < args_debug_tick_num; i++) {
-      debug_timer_claim_expected_time[i] = delay + now + i * args_debug_tick_interval;
-      time_event_alloc(NULL, delay + now + i * args_debug_tick_interval, TE_SIMPLE);
+      debug_timer_claim_expected_time[i] =
+          align_up(delay + now + i * args_debug_tick_interval, SYS_TIME_MIN_TICK);
+      time_event_alloc(NULL, debug_timer_claim_expected_time[i], TE_SIMPLE);
     }
     info("arg-driven time event allocation done, first time event: %ld us\n", now + delay);
   }
