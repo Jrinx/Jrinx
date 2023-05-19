@@ -1,3 +1,4 @@
+#include <aligns.h>
 #include <kern/chan/queuing.h>
 #include <kern/comm/buffer.h>
 #include <kern/drivers/cpus.h>
@@ -38,7 +39,7 @@ void time_event_alloc(void *ctx, sys_time_t time, enum time_event_type type) {
   struct time_event *te = kalloc(sizeof(struct time_event));
   memset(te, 0, sizeof(struct time_event));
   te->te_ctx = ctx;
-  te->te_time = time;
+  te->te_time = align_up(time, SYS_TIME_MIN_TICK);
   te->te_type = type;
   struct time_event *i;
   intp_push();
@@ -118,7 +119,7 @@ void time_event_action(void) {
   while (!list_empty(&cpus_time_event_queue[hrt_get_id()])) {
     struct time_event *te = CONTAINER_OF(cpus_time_event_queue[hrt_get_id()].l_first,
                                          struct time_event, te_queue_link);
-    if (te->te_time <= boottime_get_now() + SYS_TIME_MIN_TICK) {
+    if (te->te_time <= boottime_get_now()) {
       switch (te->te_type) {
       case TE_PARTITION_ACTIVATE:
         resched_part = 1;

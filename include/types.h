@@ -8,6 +8,10 @@
 #define SYS_TIME_MILLISECOND (1000L * SYS_TIME_MICROSECOND)
 #define SYS_TIME_SECOND (1000L * SYS_TIME_MILLISECOND)
 
+#if !defined(CONFIG_MINTICK) || CONFIG_MINTICK < 1
+#error "CONFIG_MINTICK must be defined and greater than 0"
+#endif
+
 #define SYS_TIME_MIN_TICK (SYS_TIME_MICROSECOND * CONFIG_MINTICK)
 
 typedef enum {
