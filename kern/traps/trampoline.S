@@ -166,7 +166,7 @@ EXPORT(trap_\target)
   call handle_\target
 .endm
 
-.align 7
+.align 9
 EXPORT(trap_vec)
   j trap_exception
   j trap_int_software
