@@ -1,6 +1,7 @@
 #ifndef _KERN_MULTITASK_PARTITION_H_
 #define _KERN_MULTITASK_PARTITION_H_
 
+#include <attr.h>
 #include <kern/lock/lock.h>
 #include <kern/mm/vmm.h>
 #include <lib/hashmap.h>
@@ -53,7 +54,7 @@ struct prog_def_t {
 };
 
 #define link_prog(name)                                                                        \
-  struct prog_def_t *name##_prog __attribute__((section(".ksec.prog_def." #name), used)) = &name
+  struct prog_def_t *name##_prog __section(".ksec.prog_def." #name) __used = &name
 
 struct proc;
 struct buffer;
@@ -69,7 +70,7 @@ void part_add_bb_name(struct part *part, struct blackboard *bb);
 struct blackboard *part_get_bb_by_name(struct part *part, const char *name);
 long part_comm_alloc(struct part *part, size_t size, void **out);
 long part_pt_alloc(struct part *part, vaddr_t vaddr, perm_t perm, void **pa);
-long part_create(struct part_conf *conf) __attribute__((warn_unused_result));
+long part_create(struct part_conf *conf) __warn_unused_result;
 void part_pt_sync_kern_pgdir(void);
 
 static inline size_t part_get_proc_count(struct part *part) {

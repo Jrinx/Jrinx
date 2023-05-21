@@ -9,41 +9,42 @@
 
 #ifndef __ASSEMBLER__
 
+#include <attr.h>
 #include <stdint.h>
 
 #define R_REG_DEF(reg)                                                                         \
-  __attribute__((always_inline)) static inline unsigned long r_##reg(void) {                   \
+  __inline static inline unsigned long r_##reg(void) {                                         \
     unsigned long val;                                                                         \
     asm volatile("mv %0, " #reg : "=r"(val));                                                  \
     return val;                                                                                \
   }
 
 #define W_REG_DEF(reg)                                                                         \
-  __attribute__((always_inline)) static inline void w_##reg(unsigned long val) {               \
+  __inline static inline void w_##reg(unsigned long val) {                                     \
     asm volatile("mv " #reg ", %0" : : "r"(val));                                              \
   }
 
 #define R_CSR_DEF(reg)                                                                         \
-  __attribute__((always_inline)) static inline unsigned long csrr_##reg(void) {                \
+  __inline static inline unsigned long csrr_##reg(void) {                                      \
     unsigned long val;                                                                         \
     asm volatile("csrr %0, " #reg : "=r"(val));                                                \
     return val;                                                                                \
   }
 
 #define W_CSR_DEF(reg)                                                                         \
-  __attribute__((always_inline)) static inline void csrw_##reg(unsigned long val) {            \
+  __inline static inline void csrw_##reg(unsigned long val) {                                  \
     asm volatile("csrw " #reg ", %0" : : "r"(val));                                            \
   }
 
 #define RC_CSR_DEF(reg)                                                                        \
-  __attribute__((always_inline)) static inline unsigned long csrrc_##reg(unsigned long mask) { \
+  __inline static inline unsigned long csrrc_##reg(unsigned long mask) {                       \
     unsigned long val;                                                                         \
     asm volatile("csrrc %0, " #reg ", %1" : "=r"(val) : "r"(mask));                            \
     return val;                                                                                \
   }
 
 #define RS_CSR_DEF(reg)                                                                        \
-  __attribute__((always_inline)) static inline unsigned long csrrs_##reg(unsigned long mask) { \
+  __inline static inline unsigned long csrrs_##reg(unsigned long mask) {                       \
     unsigned long val;                                                                         \
     asm volatile("csrrs %0, " #reg ", %1" : "=r"(val) : "r"(mask));                            \
     return val;                                                                                \
@@ -80,7 +81,7 @@ typedef union {
     unsigned uxl : 2;
     unsigned blank6 : 29;
     unsigned sd : 1;
-  } __attribute__((packed)) bits;
+  } __packed bits;
 } rv64_sstatus;
 
 R_CSR_DEF(sstatus)
@@ -115,7 +116,7 @@ typedef union {
     unsigned sei : 1;
     unsigned blank3 : 6;
     unsigned long blank4 : 48;
-  } __attribute__((packed)) bits;
+  } __packed bits;
 } rv64_si;
 
 R_CSR_DEF(sip)
@@ -165,7 +166,7 @@ typedef union {
     unsigned long ppn : 44;
     unsigned long asid : 16;
     enum rv64_satp_mode_t mode : 4;
-  } __attribute__((packed)) bits;
+  } __packed bits;
 } rv64_satp;
 
 R_CSR_DEF(satp)

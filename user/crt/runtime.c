@@ -3,9 +3,9 @@
 #include <user/lib/logger.h>
 #include <user/sys/services.h>
 
-extern void main(void) __attribute__((noreturn));
+extern void main(void) __noreturn;
 
-__attribute__((noreturn)) void _runtime(void) {
+__noreturn void _runtime(void) {
   PARTITION_STATUS_TYPE part_init_status;
   check_e(GET_PARTITION_STATUS(&part_init_status, &ret));
   logger_init(part_init_status.IDENTIFIER);

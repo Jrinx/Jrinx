@@ -181,7 +181,6 @@ void proc_run(struct proc *proc) {
     info("switch to address space of '%s' (asid: %lu)\n", part->pa_name,
          part->pa_cpus_asid[hrt_get_id()]);
   }
-  extern void trap_ret_switch_as(struct context * ctx, unsigned long satp)
-      __attribute__((noreturn));
+  extern void trap_ret_switch_as(struct context * ctx, unsigned long satp) __noreturn;
   trap_ret_switch_as(proc_top_ctx, proc_satp.val);
 }

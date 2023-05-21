@@ -244,12 +244,13 @@ struct sbiret {
   long value;
 };
 
+#include <attr.h>
 #include <stdint.h>
 
-long sbi_set_timer(uint64_t stime_value) __attribute__((warn_unused_result));
-long sbi_console_putchar(int ch) __attribute__((warn_unused_result));
-long sbi_send_ipi(const unsigned long *hart_mask) __attribute__((warn_unused_result));
-void sbi_shutdown(void) __attribute__((noreturn));
+long sbi_set_timer(uint64_t stime_value) __warn_unused_result;
+long sbi_console_putchar(int ch) __warn_unused_result;
+long sbi_send_ipi(const unsigned long *hart_mask) __warn_unused_result;
+void sbi_shutdown(void) __noreturn;
 struct sbiret sbi_hart_start(unsigned long hartid, unsigned long start_addr,
                              unsigned long opaque);
 struct sbiret sbi_hart_stop(void);

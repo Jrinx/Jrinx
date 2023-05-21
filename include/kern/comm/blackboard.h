@@ -1,6 +1,7 @@
 #ifndef _KERNEL_COMM_BLACKBOARD_H_
 #define _KERNEL_COMM_BLACKBOARD_H_
 
+#include <attr.h>
 #include <kern/lock/lock.h>
 #include <list.h>
 #include <types.h>
@@ -25,8 +26,8 @@ struct proc;
 
 struct blackboard *blackboard_from_id(bb_id_t bb_id);
 long blackboard_alloc(struct part *part, struct blackboard **bb, bb_name_t name,
-                      msg_size_t max_msg_size) __attribute__((warn_unused_result));
-long blackboard_free(struct blackboard *bb) __attribute__((warn_unused_result));
+                      msg_size_t max_msg_size) __warn_unused_result;
+long blackboard_free(struct blackboard *bb) __warn_unused_result;
 int blackboard_is_full(struct blackboard *bb);
 int blackboard_is_empty(struct blackboard *bb);
 void blackboard_display(struct blackboard *bb, msg_addr_t msg_addr, msg_size_t msg_len);

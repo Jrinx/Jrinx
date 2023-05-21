@@ -22,7 +22,7 @@ struct buddy_block {
   struct buddy_block *prev;
 };
 
-static uint8_t kalloc_pool[KALLOCSIZE] __attribute__((aligned(KALLOC_MAX_SIZE)));
+static uint8_t kalloc_pool[KALLOCSIZE] __aligned(KALLOC_MAX_SIZE);
 static struct buddy_block *kalloc_block_list = NULL;
 static with_spinlock(kalloc_mod);
 

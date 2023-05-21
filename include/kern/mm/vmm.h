@@ -1,6 +1,7 @@
 #ifndef _KERN_MM_VMM_H_
 #define _KERN_MM_VMM_H_
 
+#include <attr.h>
 #include <callback.h>
 #include <stdint.h>
 
@@ -17,7 +18,7 @@ union sv39_perm_t {
     unsigned d : 1;
     unsigned rsw : 2;
     unsigned blank0 : 22;
-  } __attribute__((packed)) bits;
+  } __packed bits;
 };
 
 union sv39_va_t {
@@ -28,12 +29,12 @@ union sv39_va_t {
     unsigned vpn1 : 9;
     unsigned vpn2 : 9;
     unsigned blank0 : 25;
-  } __attribute__((packed)) bits;
+  } __packed bits;
   struct {
     unsigned off : 12;
     unsigned vpn : 27;
     unsigned blank0 : 25;
-  } __attribute__((packed)) pp;
+  } __packed pp;
 };
 
 union sv39_pa_t {
@@ -44,12 +45,12 @@ union sv39_pa_t {
     unsigned ppn1 : 9;
     unsigned ppn2 : 26;
     unsigned blank0 : 8;
-  } __attribute__((packed)) bits;
+  } __packed bits;
   struct {
     unsigned off : 12;
     unsigned long ppn : 44;
     unsigned blank0 : 8;
-  } __attribute__((packed)) pp;
+  } __packed pp;
 };
 
 union sv39_entry_t {
@@ -68,12 +69,12 @@ union sv39_entry_t {
     unsigned ppn1 : 9;
     unsigned ppn2 : 26;
     unsigned rsv : 10;
-  } __attribute__((packed)) bits;
+  } __packed bits;
   struct {
     unsigned perm : 10;
     unsigned long ppn : 44;
     unsigned rsv : 10;
-  } __attribute__((packed)) pp;
+  } __packed pp;
 };
 
 typedef union sv39_perm_t perm_t;
@@ -89,10 +90,9 @@ static inline paddr_t pte2pa(pte_t pte) {
 
 extern pte_t kern_pgdir[];
 
-long pt_lookup(pte_t *pgdir, vaddr_t va, pte_t **res) __attribute__((warn_unused_result));
-long pt_unmap(pte_t *pgdir, vaddr_t va) __attribute__((warn_unused_result));
-long pt_map(pte_t *pgdir, vaddr_t va, paddr_t pa, perm_t perm)
-    __attribute__((warn_unused_result));
+long pt_lookup(pte_t *pgdir, vaddr_t va, pte_t **res) __warn_unused_result;
+long pt_unmap(pte_t *pgdir, vaddr_t va) __warn_unused_result;
+long pt_map(pte_t *pgdir, vaddr_t va, paddr_t pa, perm_t perm) __warn_unused_result;
 
 void vmm_register_mmio(char *name, unsigned long *addr, unsigned long size);
 void vmm_setup_mmio(void);

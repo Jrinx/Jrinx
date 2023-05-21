@@ -97,7 +97,7 @@ extern void do_syscall(struct context *context);
 extern void do_timer_int(struct context *context);
 extern void do_external_int(struct context *context);
 
-extern void trap_ret(struct context *context) __attribute__((noreturn));
+extern void trap_ret(struct context *context) __noreturn;
 
 void handle_exception(void) {
   struct context *context = cpus_context[hrt_get_id()];

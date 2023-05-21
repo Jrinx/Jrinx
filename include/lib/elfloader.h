@@ -1,6 +1,7 @@
 #ifndef _LIB_ELFLOADER_H_
 #define _LIB_ELFLOADER_H_
 
+#include <attr.h>
 #include <callback.h>
 #include <elf.h>
 #include <stddef.h>
@@ -22,7 +23,7 @@ typedef long (*elf_mapper_t)(void *data, unsigned long va, size_t offset, const 
 typedef cb_typedef(elf_mapper_t) elf_mapper_callback_t;
 
 const Elf64_Ehdr *elf_from(const void *addr, size_t size);
-long elf_load_prog(Elf64_Phdr *phdr, const void *elf_addr, elf_mapper_callback_t map_callback)
-    __attribute__((warn_unused_result));
+long elf_load_prog(Elf64_Phdr *phdr, const void *elf_addr,
+                   elf_mapper_callback_t map_callback) __warn_unused_result;
 
 #endif

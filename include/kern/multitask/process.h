@@ -1,6 +1,7 @@
 #ifndef _KERN_MULTITASK_PROCESS_H_
 #define _KERN_MULTITASK_PROCESS_H_
 
+#include <attr.h>
 #include <kern/lib/regs.h>
 #include <kern/lock/lock.h>
 #include <kern/multitask/partition.h>
@@ -55,9 +56,9 @@ struct proc *proc_from_id(proc_id_t pr_id);
 void proc_reset(struct proc *proc);
 long proc_alloc(struct part *part, struct proc **proc, const char *name, sys_time_t period,
                 sys_time_t time_cap, sys_addr_t entrypoint, stack_size_t stacksize,
-                priority_t base_pri, deadline_t deadline) __attribute__((warn_unused_result));
+                priority_t base_pri, deadline_t deadline) __warn_unused_result;
 long proc_free(struct proc *proc);
-void proc_run(struct proc *proc) __attribute__((noreturn));
+void proc_run(struct proc *proc) __noreturn;
 
 static inline int proc_is_period(struct proc *proc) {
   return proc->pr_period != SYSTEM_TIME_INFINITE_VAL;

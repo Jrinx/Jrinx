@@ -1,6 +1,8 @@
 #ifndef _USER_SYS_SYSCALLS_H_
 #define _USER_SYS_SYSCALLS_H_
 
+#include <attr.h>
+#include <builtin.h>
 #include <stddef.h>
 #include <sysno.h>
 #include <types.h>
@@ -35,9 +37,9 @@ static inline void sys_cons_write_buf(const char *buf, size_t len) {
   syscall(SYS_CONS_WRITE_BUF, (unsigned long)buf, len, 0, 0, 0, 0, 0);
 }
 
-static inline __attribute__((noreturn)) void sys_halt(void) {
+static inline __noreturn void sys_halt(void) {
   syscall(SYS_HALT, 0, 0, 0, 0, 0, 0, 0);
-  __builtin_unreachable();
+  __unreachable();
 }
 
 static inline RETURN_CODE_TYPE
@@ -84,9 +86,9 @@ static inline RETURN_CODE_TYPE sys_resume(PROCESS_ID_TYPE process_id) {
   return syscall(SYS_RESUME, process_id, 0, 0, 0, 0, 0, 0);
 }
 
-static inline __attribute__((noreturn)) void sys_stop_self(void) {
+static inline __noreturn void sys_stop_self(void) {
   syscall(SYS_STOP_SELF, 0, 0, 0, 0, 0, 0, 0);
-  __builtin_unreachable();
+  __unreachable();
 }
 
 static inline RETURN_CODE_TYPE sys_stop(PROCESS_ID_TYPE process_id) {

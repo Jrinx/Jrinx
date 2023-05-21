@@ -129,7 +129,7 @@ static struct proc *sched_elect_next_proc(int round_robin) {
 }
 
 // TODO: impl standard arinc 653 scheduler
-__attribute__((noreturn)) void sched_proc(int round_robin) {
+__noreturn void sched_proc(int round_robin) {
   struct proc *cur_proc = cpus_cur_proc[hrt_get_id()];
   if (cur_proc != NULL && cur_proc->pr_state == RUNNING) {
     cur_proc->pr_state = READY;

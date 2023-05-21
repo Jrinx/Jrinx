@@ -35,7 +35,7 @@ def main():
 #include <kern/multitask/partition.h>
 
 static const uint8_t {out_array_name}_bin[]
-__attribute__((aligned(sizeof(Elf64_Ehdr)))) = {{{','.join(out_array)}}};
+__aligned(sizeof(Elf64_Ehdr)) = {{{','.join(out_array)}}};
 
 static struct prog_def_t {out_array_name} = {{
     .pg_name = "{out_array_name}",

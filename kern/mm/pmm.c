@@ -36,7 +36,7 @@ static with_spinlock(pf_free_list);
 static struct phy_frame **pf_array;
 static size_t *pf_array_len;
 
-static long __attribute__((warn_unused_result)) pa2sel(unsigned long addr, unsigned long *sel) {
+static long __warn_unused_result pa2sel(unsigned long addr, unsigned long *sel) {
   size_t mem_num = mem_get_num();
   for (size_t i = 0; i < mem_num; i++) {
     uintptr_t mem_addr;
@@ -51,8 +51,7 @@ static long __attribute__((warn_unused_result)) pa2sel(unsigned long addr, unsig
   return -KER_MEM_ER;
 }
 
-static long __attribute__((warn_unused_result))
-frame2sel(struct phy_frame *frame, unsigned long *sel) {
+static long __warn_unused_result frame2sel(struct phy_frame *frame, unsigned long *sel) {
   size_t mem_num = mem_get_num();
   for (size_t i = 0; i < mem_num; i++) {
     if (frame >= pf_array[i] && frame < pf_array[i] + pf_array_len[i]) {

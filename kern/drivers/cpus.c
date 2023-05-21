@@ -8,8 +8,7 @@
 #include <layouts.h>
 #include <lib/string.h>
 
-static uint8_t kern_master_stack[KSTKSIZE]
-    __attribute__((aligned(PGSIZE), section(".ksec.master_stack")));
+static uint8_t kern_master_stack[KSTKSIZE] __aligned(PGSIZE) __section(".ksec.master_stack");
 
 const uint8_t *kern_master_stacktop = kern_master_stack + KSTKSIZE;
 

@@ -1,3 +1,4 @@
+#include <builtin.h>
 #include <kern/lib/sbi.h>
 #include <stdint.h>
 
@@ -32,7 +33,7 @@ inline long sbi_send_ipi(const unsigned long *hart_mask) {
 
 inline void sbi_shutdown(void) {
   sbi_call(0, 0, 0, SBI_EXT_0_1_SHUTDOWN, 0);
-  __builtin_unreachable();
+  __unreachable();
 }
 
 inline struct sbiret sbi_hart_start(unsigned long hartid, unsigned long start_addr,

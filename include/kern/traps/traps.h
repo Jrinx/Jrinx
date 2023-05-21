@@ -79,6 +79,7 @@
 
 #ifndef __ASSEMBLER__
 
+#include <attr.h>
 #include <kern/lib/hart.h>
 #include <list.h>
 #include <stddef.h>
@@ -90,7 +91,7 @@ struct context {
   union {
     struct {
       unsigned long regs[32];
-    } __attribute__((packed)) array;
+    } __packed array;
     struct {
       unsigned long zero;
       unsigned long ra;
@@ -124,7 +125,7 @@ struct context {
       unsigned long t4;
       unsigned long t5;
       unsigned long t6;
-    } __attribute__((packed)) names;
+    } __packed names;
   } ctx_regs;
   unsigned long ctx_fregs[32];
   unsigned long ctx_sstatus;

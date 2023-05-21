@@ -2,6 +2,7 @@
 #define _KERN_LIB_DEBUG_H_
 
 #include <brpred.h>
+#include <builtin.h>
 #include <kern/lib/errors.h>
 #include <kern/lib/logger.h>
 #include <magicros.h>
@@ -21,7 +22,7 @@
     long err = *((long *)&ret);                                                                \
     if (unlikely(err < 0)) {                                                                   \
       (action);                                                                                \
-      __builtin_unreachable();                                                                 \
+      __unreachable();                                                                         \
     }                                                                                          \
   })
 

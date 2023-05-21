@@ -30,16 +30,16 @@ static void print_boot_info(void) {
   printk("\nJrinx OS (revision: %s)\n", CONFIG_REVISON);
   static const char kernel_logo[] = CONFIG_JRINX_LOGO;
   for (size_t i = 0; i < sizeof(kernel_logo); i++) {
-    long ret __attribute__((unused)) = sbi_console_putchar(kernel_logo[i]);
+    long ret __unused = sbi_console_putchar(kernel_logo[i]);
   }
 }
 
-static void __attribute__((noreturn)) kernel_suspend(void) {
+static void __noreturn kernel_suspend(void) {
   panic_e(sbi_hart_suspend(SBI_HSM_SUSPEND_RET_DEFAULT, (unsigned long)kernel_suspend, 0));
   fatal("suspend returned!\n");
 }
 
-void __attribute__((noreturn)) kernel_init(unsigned long hartid, void *dtb_addr) {
+void __noreturn kernel_init(unsigned long hartid, void *dtb_addr) {
   static volatile unsigned long init_state = 0;
   static with_spinlock(init_state);
   hrt_set_id(hartid);

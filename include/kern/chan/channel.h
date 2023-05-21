@@ -1,6 +1,7 @@
 #ifndef _KERN_CHAN_CHANNEL_H_
 #define _KERN_CHAN_CHANNEL_H_
 
+#include <attr.h>
 #include <kern/lock/lock.h>
 #include <lib/circbuf.h>
 #include <list.h>
@@ -35,7 +36,7 @@ struct channel_conf {
   char **cc_port_names;
 };
 
-long channel_create(struct channel_conf *cc) __attribute__((warn_unused_result));
-long channel_mem_setup(void) __attribute__((warn_unused_result));
+long channel_create(struct channel_conf *cc) __warn_unused_result;
+long channel_mem_setup(void) __warn_unused_result;
 
 #endif

@@ -14,7 +14,7 @@
 #include <lib/string.h>
 #include <stddef.h>
 
-pte_t kern_pgdir[PGSIZE / sizeof(pte_t)] __attribute__((aligned(PGSIZE)));
+pte_t kern_pgdir[PGSIZE / sizeof(pte_t)] __aligned(PGSIZE);
 
 static long pt_boot_frame_alloc(paddr_t *pa) {
   void *addr = palloc(PGSIZE, PGSIZE);

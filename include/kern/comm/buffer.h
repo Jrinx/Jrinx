@@ -1,6 +1,7 @@
 #ifndef _KERN_COMM_BUFFER_H_
 #define _KERN_COMM_BUFFER_H_
 
+#include <attr.h>
 #include <kern/lock/lock.h>
 #include <layouts.h>
 #include <lib/circbuf.h>
@@ -26,9 +27,9 @@ struct proc;
 
 struct buffer *buffer_from_id(buf_id_t buf_id);
 long buffer_alloc(struct part *part, struct buffer **buf, buf_name_t name,
-                  msg_size_t max_msg_size, msg_range_t max_nb_msg, que_disc_t que_disc)
-    __attribute__((warn_unused_result));
-long buffer_free(struct buffer *buf) __attribute__((warn_unused_result));
+                  msg_size_t max_msg_size, msg_range_t max_nb_msg,
+                  que_disc_t que_disc) __warn_unused_result;
+long buffer_free(struct buffer *buf) __warn_unused_result;
 int buffer_is_full(struct buffer *buf);
 int buffer_is_empty(struct buffer *buf);
 void buffer_send(struct buffer *buf, msg_addr_t msg_addr, msg_size_t msg_len);
