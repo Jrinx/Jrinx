@@ -1,4 +1,4 @@
-USER_LIBS		:= os sys lib
+USER_LIBS		:= os lib
 USER_APPS		:= app test
 
 ifeq ($(BUILD_3RD_PARTY), y)
