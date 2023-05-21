@@ -1,4 +1,4 @@
-#include <asm/asm.h>
+#include <asm.h>
 #include <kern/traps/traps.h>
 
 .macro SAVE_REGS

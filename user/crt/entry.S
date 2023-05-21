@@ -1,4 +1,4 @@
-#include <asm/asm.h>
+#include <asm.h>
 
 EXPORT(_start)
   j _runtime
