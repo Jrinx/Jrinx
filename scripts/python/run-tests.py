@@ -160,7 +160,7 @@ def main():
             bfatal('failed to build jrinx')
             return e.returncode
         try:
-            subprocess.check_call(['make', 'sbi-fw'],
+            subprocess.check_call(['make', 'opensbi'],
                                   stdout=subprocess.DEVNULL,
                                   stderr=subprocess.DEVNULL,
                                   )

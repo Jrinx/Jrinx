@@ -27,7 +27,7 @@ struct dev_tree boot_dt;
 const char *boot_dt_model;
 
 static void print_boot_info(void) {
-  printk("\nJrinx OS (revision: %s)\n", CONFIG_REVISON);
+  printk("\nJrinx OS (revision: %s)\n", CONFIG_REVISION);
   static const char kernel_logo[] = CONFIG_JRINX_LOGO;
   for (size_t i = 0; i < sizeof(kernel_logo); i++) {
     long ret __unused = sbi_console_putchar(kernel_logo[i]);

@@ -1,177 +1,335 @@
-# Qemu does not support big endian now.
-TARGET_ENDIAN	:= little
+CMD_PREFIX		?= @
+CPUS			?= 5
+COLOR			?= y
+DTB			?=
+ARGS			?=
+SYSCONF			?=
+MINTICK			?= 10
+BOARD			?= virt
+BUILD_3RD_PARTY		?= n
 
-CPUS		?= 5
-COLOR		?= y
-DTB		?=
-ARGS		?=
-SYSCONF		?=
-MINTICK		?= 10
-BOARD		?= virt
-CROSS_COMPILE	?= riscv64-unknown-linux-gnu-
+ENDIAN			=  little
+BUILD_ROOT_DIR		=  $(CURDIR)
+JRINX_LOGO		=  $(BUILD_ROOT_DIR)/jrinx.logo
 
-BUILD_3RD_PARTY	?= n
+CROSS_COMPILE		?= riscv64-unknown-linux-gnu-
+CC			=  $(CROSS_COMPILE)gcc
+OBJCOPY			=  $(CROSS_COMPILE)objcopy
+OBJDUMP			=  $(CROSS_COMPILE)objdump
+STRIP			=  $(CROSS_COMPILE)strip
+CPP			=  $(CC) -E
+LDSPP			=  $(CC) -E
+AS			=  $(CC)
+LD			=  $(CC)
+DTC			=  dtc
+LOGOGEN			=  $(BUILD_ROOT_DIR)/scripts/logo-gen
+BINTOC			=  $(BUILD_ROOT_DIR)/scripts/bintoc
+SYSCONFTR		=  $(BUILD_ROOT_DIR)/scripts/sysconf
+CHECKSTYLE		=  $(BUILD_ROOT_DIR)/scripts/check-style
+FIXSTYLE		=  $(CHECKSTYLE) --fix
+CLOC			=  cloc --vcs=git
 
-JRINX_LOGO	:= jrinx.logo
+GENFLAGS		+= -I$(BUILD_ROOT_DIR)/include
+GENFLAGS		+= -DCONFIG_ENDIAN=$(shell echo $(ENDIAN) | tr '[:lower:]' '[:upper:]')_ENDIAN
+GENFLAGS		+= -DCONFIG_COLOR=$(shell [ "$(COLOR)" = "y" ] && echo 1 || echo 0)
+GENFLAGS		+= -DCONFIG_MINTICK=$(MINTICK)
+GENFLAGS		+= -DCONFIG_JRINX_LOGO='$(shell $(LOGOGEN) $(JRINX_LOGO))'
+GENFLAGS		+= -DCONFIG_REVISION='"$(shell git rev-parse --short HEAD)"'
 
-GDB		:= gdb-multiarch
-GDB_EVAL_CMD	:= -ex 'target remote :1234'
+CFLAGS			=  $(GENFLAGS)
+CFLAGS			+= --std=gnu99 -g
+CFLAGS			+= -nostdlib
+CFLAGS			+= -Wall -Werror
+CFLAGS			+= -mabi=lp64d -march=rv64imafd -m$(ENDIAN)-endian -mcmodel=medany -mno-relax
+CFLAGS			+= -ffreestanding
+CFLAGS			+= -fno-common -fno-stack-protector -fno-builtin -fno-omit-frame-pointer
 
-CFLAGS		+= --std=gnu99 -nostdlib \
-		-Wall -Werror -Wa,--fatal-warnings \
-		-mabi=lp64d -march=rv64imafd -m$(TARGET_ENDIAN)-endian -mcmodel=medany -mno-relax \
-		-fno-omit-frame-pointer -ffreestanding -fno-common -fno-stack-protector -fno-builtin \
-		-DCONFIG_ENDIAN=$(shell echo $(TARGET_ENDIAN) | tr '[:lower:]' '[:upper:]')_ENDIAN \
-		-DCONFIG_COLOR=$(shell [ "$(COLOR)" = "y" ] && echo 1 || echo 0) \
-		-DCONFIG_MINTICK=$(MINTICK) \
-		-DCONFIG_JRINX_LOGO='$(shell scripts/logo-gen $(JRINX_LOGO))' \
-		-DCONFIG_REVISON='"$(shell git rev-parse --short HEAD)"'
-
-LDFLAGS		+= --fatal-warnings --warn-unresolved-symbols
-
-EMU 		:= qemu-system-riscv64
-EMU_MACH 	:= $(BOARD)
-EMU_CPUS 	:= $(CPUS)
-EMU_RAM_SIZE	:= 1G
-EMU_ARGS	:= $(ARGS) $(shell if [ -n "$(SYSCONF)" ]; then ./scripts/sysconf $(SYSCONF); fi)
-EMU_OPTS	:= -M $(EMU_MACH) -m $(EMU_RAM_SIZE) -nographic -smp $(EMU_CPUS) -no-reboot
-ifneq ($(DTB),)
-EMU_OPTS	+= -dtb $(DTB)
+ifneq ($(findstring release,$(MAKECMDGOALS)),)
+CFLAGS			+= -O2
+else
+CFLAGS			+= -O0 -ggdb
 endif
 
-MODULES		:= kern
-USER_MODULES	:= user
-LIB_MODULES	:= lib
-OBJECTS		:= $(addsuffix /**/*.o, $(MODULES) $(LIB_MODULES)) \
-		$(addsuffix /**/*.x, $(USER_MODULES))
-LDSCRIPT	:= kern.ld
-TARGET_DIR	:= target
-JRINX		:= $(TARGET_DIR)/jrinx
+CPPFLAGS		=  $(GENFLAGS)
+CPPFLAGS		+= -P
 
-OPENSBI_ROOT	:= opensbi
-OPENSBI_FW_PATH	:= $(OPENSBI_ROOT)/build/platform/generic/firmware
-OPENSBI_FW_JUMP	:= $(OPENSBI_FW_PATH)/fw_jump.elf
+LDSPPFLAGS		=  $(GENFLAGS)
+LDSPPFLAGS		+= -P -x c
 
-DTC		:= dtc
+ASFLAGS			=  $(CFLAGS)
+ASFLAGS			+= -Wa,-mno-relax,--fatal-warnings
 
-export CROSS_COMPILE CFLAGS LDFLAGS
-export LIB_MODULES
-export CHECK_PREPROC ?= n
-export BUILD_3RD_PARTY
-export BUILD_ROOT_DIR ?= $(abspath ./)
+LDFLAGS			=  $(CFLAGS)
+LDFLAGS			+= -static
+LDFLAGS			+= -Wl,--fatal-warnings,--warn-unresolved-symbols,--build-id=none
 
-MAKEFLAGS	:= -j$(shell nproc) -s $(MAKEFLAGS)
+ifneq ($(findstring release,$(MAKECMDGOALS)),)
+LDFLAGS			+= -Wl,-O,--gc-sections
+endif
+
+source-dir		:= $(BUILD_ROOT_DIR)
+target-dir		:= target
+kern-mods		:= kern
+user-lib-mods		:= user/crt user/lib
+user-exe-mods		:= user/app user/test
+user-3rd-mods		:= user/third-party
+lib-mods		:= lib
+
+define probe-objs
+	$(shell find $(1) \( -name '*.c' -a -not -path '$(user-3rd-mods)/*' \) | \
+		sed 's/\.c/\.$(2)/g') \
+	$(shell find $(1) \( -name '*.S' -a -not -path '$(user-3rd-mods)/*' \) | \
+		sed 's/\.S/\.$(2)/g')
+endef
+
+kern-lds		=  kern.ld
+kern-objs		=  $(call probe-objs,$(kern-mods),o)
+lib-objs		=  $(call probe-objs,$(lib-mods),o)
+user-lds		=  user/user.ld
+user-lib-objs		=  $(call probe-objs,$(user-lib-mods),o)
+user-exe-objs		=  $(call probe-objs,$(user-exe-mods),x)
+
+kern-lds-path		=  $(addprefix $(target-dir)/,$(kern-lds))
+kern-objs-path		=  $(addprefix $(target-dir)/,$(kern-objs))
+lib-objs-path		=  $(addprefix $(target-dir)/,$(lib-objs))
+user-lds-path		=  $(addprefix $(target-dir)/,$(user-lds))
+user-lib-objs-path	=  $(addprefix $(target-dir)/,$(user-lib-objs))
+user-exe-objs-path	=  $(addprefix $(target-dir)/,$(user-exe-objs))
+
+deps			=  $(kern-lds-path:.ld=.dep)
+deps			+= $(kern-objs-path:.o=.dep)
+deps			+= $(lib-objs-path:.o=.dep)
+deps			+= $(user-lds-path:.ld=.dep)
+deps			+= $(user-lib-objs-path:.o=.dep)
+deps			+= $(user-exe-objs-path:.x=.dep)
+
+preproc			=  $(kern-objs-path:.o=.i)
+preproc			+= $(lib-objs-path:.o=.i)
+preproc			+= $(user-lib-objs-path:.o=.i)
+
+targets			= $(target-dir)/jrinx
+ifneq ($(findstring preprocess,$(MAKECMDGOALS)),)
+targets			+= $(preproc)
+endif
+
+COMPILE_CC_DEP		= \
+			$(CMD_PREFIX)mkdir -p $$(dirname $(1)); \
+			echo " CC-DEP    $(subst $(target-dir)/,,$(1))"; \
+			printf %s $$(dirname $(1))/ > $(1) && \
+			$(CC) $(CFLAGS) -MM $(2) >> $(1) || \
+			rm -f $(1)
+COMPILE_CC		= \
+			$(CMD_PREFIX)mkdir -p $$(dirname $(1)); \
+			echo " CC        $(subst $(target-dir)/,,$(1))"; \
+			$(CC) $(CFLAGS) -c $(2) -o $(1)
+
+COMPILE_AS_DEP		= \
+			$(CMD_PREFIX)mkdir -p $$(dirname $(1)); \
+			echo " AS-DEP    $(subst $(target-dir)/,,$(1))"; \
+			printf %s $$(dirname $(1))/ > $(1) && \
+			$(CC) $(ASFLAGS) -MM $(2) >> $(1) || \
+			rm -f $(1)
+COMPILE_AS		= \
+			$(CMD_PREFIX)mkdir -p $$(dirname $(1)); \
+			echo " AS        $(subst $(target-dir)/,,$(1))"; \
+			$(AS) $(ASFLAGS) -c $(2) -o $(1)
+
+COMPILE_CPP_DEP		= \
+			$(CMD_PREFIX)mkdir -p $$(dirname $(1)); \
+			echo " CPP-DEP   $(subst $(target-dir)/,,$(1))"; \
+			printf %s $$(dirname $(1))/ > $(1) && \
+			$(CC) $(CPPFLAGS) -MM $(3) -MT $$(basename $(1:.dep=$(2))) >> $(1) || \
+			rm -f $(1)
+COMPILE_CPP		= \
+			$(CMD_PREFIX)mkdir -p $$(dirname $(1)); \
+			echo " CPP       $(subst $(target-dir)/,,$(1))"; \
+			$(CPP) $(CPPFLAGS) $(2) > $(1)
+
+COMPILE_LDSPP_DEP	= \
+			$(CMD_PREFIX)mkdir -p $$(dirname $(1)); \
+			echo " LDSPP-DEP $(subst $(target-dir)/,,$(1))"; \
+			printf %s $$(dirname $(1))/ > $(1) && \
+			$(CC) $(LDSPPFLAGS) -MM $(3) -MT $$(basename $(1:.dep=$(2))) >> $(1) || \
+			rm -f $(1)
+
+COMPILE_LDSPP		= \
+			$(CMD_PREFIX)mkdir -p $$(dirname $(1)); \
+			echo " LDSPP     $(subst $(target-dir)/,,$(1))"; \
+			$(LDSPP) $(LDSPPFLAGS) $(2) > $(1)
+
+COMPILE_LINK		= \
+			$(CMD_PREFIX)mkdir -p $$(dirname $(1)); \
+			echo " LINK      $(subst $(target-dir)/,,$(1))"; \
+			$(LD) $(LDFLAGS) $(3) -Wl,-T$(2) -o $(1)
+
+COMPILE_BINTOC		= \
+			$(CMD_PREFIX)mkdir -p $$(dirname $(1)); \
+			echo " BINTOC    $(subst $(target-dir)/,,$(1))"; \
+			$(BINTOC) $(2) -p $(3) -o $(1)
+
+MAKEFLAGS		:= -j$(shell nproc) -s $(MAKEFLAGS)
+
+.PHONY: all
+all: $(targets)
+
+.PHONY: debug release preprocess
+debug release preprocess: all
+
+.PHONY: third-party
+third-party:
+	$(CMD_PREFIX)BUILD_ROOT_DIR=$(BUILD_ROOT_DIR) $(MAKE) -C $(user-3rd-mods)
+
+.SECONDARY:
 
 .ONESHELL:
-.PHONY: all debug release release-debug build sbi-fw clean clean-dt clean-opensbi clean-all \
-	run dbg gdb gdb-sbi \
-	preprocess objdump strip objcopy mkimage dumpdts \
-	$(JRINX) $(MODULES) $(USER_MODULES) $(LIB_MODULES) \
-	check-style fix-style register-git-hooks cloc
+ifeq ($(BUILD_3RD_PARTY),y)
+$(target-dir)/jrinx: third-party
+endif
+$(target-dir)/jrinx: $(kern-lds-path) $(kern-objs-path) $(lib-objs-path) $(user-exe-objs-path)
+ifeq ($(BUILD_3RD_PARTY),y)
+	$(call COMPILE_LINK,$@,$(kern-lds-path), \
+		$(kern-objs-path) $(lib-objs-path) $(user-exe-objs-path) $(wildcard $(user-3rd-mods)/*.x))
+else
+	$(call COMPILE_LINK,$@,$(kern-lds-path), \
+		$(kern-objs-path) $(lib-objs-path) $(user-exe-objs-path))
+endif
 
-all: debug
+$(target-dir)/%.i: $(source-dir)/%.c
+	$(call COMPILE_CPP,$@,$<)
 
-release: CFLAGS		+= -O2
-release: LDFLAGS	+= -O --gc-sections
-release: build
+$(target-dir)/%.i: $(source-dir)/%.S
+	$(call COMPILE_CPP,$@,$<)
 
-release-debug: CFLAGS	+= -g -ggdb
-release-debug: release
+$(target-dir)/%.dep: $(source-dir)/%.c
+	$(call COMPILE_CC_DEP,$@,$<)
 
-debug: CFLAGS		+= -O0 -g -ggdb
-debug: build
+$(target-dir)/%.o: $(source-dir)/%.c
+	$(call COMPILE_CC,$@,$<)
 
-build: | clean $(JRINX)
+$(target-dir)/%.dep: $(source-dir)/%.S
+	$(call COMPILE_AS_DEP,$@,$<)
 
-$(JRINX): SHELL := $(shell which bash)
-$(JRINX): $(MODULES) $(USER_MODULES) $(LDSCRIPT) $(TARGET_DIR)
-	shopt -s nullglob globstar
-	$(LD) $(LDFLAGS) -T $(LDSCRIPT) -o $(JRINX) $(OBJECTS)
+$(target-dir)/%.o: $(source-dir)/%.S
+	$(call COMPILE_AS,$@,$<)
 
-$(MODULES): $(LIB_MODULES)
-$(USER_MODULES): $(LIB_MODULES)
+$(target-dir)/%.dep: $(source-dir)/%.ldS
+	$(call COMPILE_LDSPP_DEP,$@,.ld,$<)
 
-$(MODULES) $(USER_MODULES) $(LIB_MODULES):
-	$(MAKE) -C $@ $(shell \
-	if [ ! -f $@/Makefile ]; then \
-		echo '-f $(BUILD_ROOT_DIR)/mk/auto-make.mk'; \
-	fi)
+$(target-dir)/%.ld: $(source-dir)/%.ldS
+	$(call COMPILE_LDSPP,$@,$<)
 
-$(OPENSBI_FW_JUMP): sbi-fw
+$(target-dir)/%.x: $(target-dir)/%.b.c
+	$(call COMPILE_CC,$@,$<)
 
-sbi-fw:
-	@$(MAKE) -C $(OPENSBI_ROOT) all PLATFORM=generic PLATFORM_RISCV_XLEN=64
+$(target-dir)/%.b.c: $(target-dir)/%.b
+	$(call COMPILE_BINTOC,$@,$<,$(lastword $(subst /, ,$(dir $(abspath $@)))))
 
-$(TARGET_DIR):
-	@mkdir -p $@
+$(target-dir)/%.b: $(target-dir)/%.o $(user-lds-path) $(lib-objs-path) $(user-lib-objs-path)
+	$(call COMPILE_LINK,$@,$(user-lds-path), \
+		$< $(lib-objs-path) $(user-lib-objs-path))
 
-include mk/compile.mk
+ifeq ($(findstring clean,$(MAKECMDGOALS)),)
+-include $(deps)
+endif
 
-clean:
-	@rm -rf $(TARGET_DIR)
-	@find -- . -not \( -path './$(OPENSBI_ROOT)/*' \) \( \
-		-name '*.o' -o -name '*.b' -o -name '*.b.c' -o -name '*.x' -o \
-		-name '*.ld' -o -name '*.i' -o -name '$(EMU_TEST_CONF)' -o -name '*.objdump' \
-	\) -type f -delete
-
-clean-dt:
-	@find -- . -not \( -path './$(OPENSBI_ROOT)/*' \) \( \
-		-name '*.dtb' -o -name '*.dts' \
-	\) -type f -delete
-
-clean-opensbi:
-	@$(MAKE) -C $(OPENSBI_ROOT) distclean
-
-clean-all: clean clean-dt clean-opensbi
-
-preprocess: CHECK_PREPROC := y
-preprocess: all
-
+.PHONY: objdump objcopy strip mkimage
 objdump:
-	@find -- * \( -path $(JRINX) -o -name '*.b' \) -exec \
-		sh -c '$(OBJDUMP) {} -aldS > {}.objdump && echo {}.objdump' ';'
-
-strip:
-	@$(STRIP) $(JRINX)
+	$(CMD_PREFIX)find $(target-dir) \( -path $(target-dir)/jrinx -o -name '*.b' \) -exec \
+		sh -c '$(OBJDUMP) {} -aldS > {}.objdump && echo " OBJDUMP > {}.objdump"' \;
 
 objcopy:
-	@$(OBJCOPY) -O binary $(JRINX) $(JRINX).bin
+	$(CMD_PREFIX)$(OBJCOPY) -O binary $(target-dir)/jrinx $(target-dir)/jrinx.bin
+
+strip:
+	$(CMD_PREFIX)$(STRIP) $(target-dir)/jrinx
 
 mkimage: | strip objcopy
-	mkimage -A riscv -O linux -C none -a 0x80200000 -e 0x80200000 \
-		-n Jrinx -d $(JRINX).bin $(JRINX).uImage
+	$(CMD_PREFIX)mkimage -A riscv -O linux -C none -a 0x80200000 -e 0x80200000 \
+		-n Jrinx -d $(target-dir)/jrinx.bin $(target-dir)/jrinx.uImage
 
-run: EMU_OPTS			+= -kernel $(JRINX) -bios $(OPENSBI_FW_JUMP) -append '$(EMU_ARGS)'
-run: $(OPENSBI_FW_JUMP)
-	@$(EMU) $(EMU_OPTS)
+.PHONY: clean distclean 3rdclean
+clean:
+	$(CMD_PREFIX)mkdir -p $(target-dir)
+	$(CMD_PREFIX)find $(target-dir) -type f -name '*.i' -delete
+	$(CMD_PREFIX)find $(target-dir) -type f -name '*.o' -delete
+	$(CMD_PREFIX)find $(target-dir) -type f -name '*.b' -delete
+	$(CMD_PREFIX)find $(target-dir) -type f -name '*.b.c' -delete
+	$(CMD_PREFIX)find $(target-dir) -type f -name '*.x' -delete
+	$(CMD_PREFIX)find $(target-dir) -type f -name '*.ld' -delete
 
-dbg: EMU_OPTS			+= -s -S
+distclean:
+	$(CMD_PREFIX)rm -rf $(target-dir)
+
+3rdclean:
+	$(CMD_PREFIX)$(MAKE) -C $(user-3rd-mods) clean
+
+OPENSBI_ROOT		:= $(BUILD_ROOT_DIR)/opensbi
+OPENSBI_FW_PATH		:= $(OPENSBI_ROOT)/build/platform/generic/firmware
+OPENSBI_FW_JUMP		:= $(OPENSBI_FW_PATH)/fw_jump.elf
+
+.PHONY: opensbi clean-opensbi distclean-opensbi
+opensbi:
+	$(CMD_PREFIX)$(MAKE) -C $(OPENSBI_ROOT) all \
+		CROSS_COMPILE=$(CROSS_COMPILE) \
+		PLATFORM=generic \
+		PLATFORM_RISCV_XLEN=64
+
+clean-opensbi:
+	$(CMD_PREFIX)$(MAKE) -C $(OPENSBI_ROOT) clean
+
+distclean-opensbi:
+	$(CMD_PREFIX)$(MAKE) -C $(OPENSBI_ROOT) distclean
+
+EMU			:= qemu-system-riscv64
+EMU_RAM_SIZE		:= 1G
+EMU_ARGS		:= $(ARGS) $(shell if [ -n "$(SYSCONF)" ]; then $(SYSCONFTR) $(SYSCONF); fi)
+EMU_OPTS		:= -M $(BOARD) -smp $(CPUS) -m $(EMU_RAM_SIZE) -nographic -no-reboot
+
+ifneq ($(DTB),)
+EMU_OPTS		+= -dtb $(DTB)
+endif
+
+.PHONY: run dbg gdb
+
+run: EMU_OPTS		+= -kernel $(target-dir)/jrinx -bios $(OPENSBI_FW_JUMP) -append "$(EMU_ARGS)"
+run: opensbi
+	$(CMD_PREFIX)$(EMU) $(EMU_OPTS)
+
+dbg: EMU_OPTS		+= -s -S
 dbg: run
 
+GDB			?= gdb-multiarch
+GDB_EVAL_CMD		:= -ex 'target remote localhost:1234'
+
+ifneq ($(GDB_SYM_FILE),)
+GDB_EVAL_CMD		+= \
+			-ex 'set confirm off' \
+			-ex 'symbol-file $(GDB_SYM_FILE)' \
+			-ex 'set confirm on'
+endif
+
 gdb:
-	@$(GDB) $(GDB_EVAL_CMD) $(JRINX)
+	$(CMD_PREFIX)$(GDB) $(GDB_EVAL_CMD) $(target-dir)/jrinx
 
-gdb-sbi: GDB_EVAL_CMD		+= -ex 'set confirm off' -ex 'add-symbol-file $(OPENSBI_FW_JUMP)' \
-				-ex 'set confirm on'
-gdb-sbi: gdb
+.PHONY: dumpdts dumpdtb
+dumpdts: dumpdtb
+	$(CMD_PREFIX)$(DTC) -I dtb -O dts $(BOARD).dtb -o $(BOARD).dts
 
-dumpdts: $(EMU_MACH).dts
+dumpdtb: EMU_OPTS	+= -M $(BOARD),dumpdtb=$(BOARD).dtb
+dumpdtb:
+	$(CMD_PREFIX)$(EMU) $(EMU_OPTS)
 
-%.dts: %.dtb
-	@$(DTC) -I dtb -O dts $< -o $@
-
-$(EMU_MACH).dtb: EMU_OPTS	+= -M $(EMU_MACH),dumpdtb=$(EMU_MACH).dtb
-$(EMU_MACH).dtb:
-	@$(EMU) $(EMU_OPTS)
-
+.PHONY: check-style fix-style
 check-style:
-	@scripts/check-style
+	$(CMD_PREFIX)$(CHECKSTYLE)
 
 fix-style:
-	@scripts/check-style -f
+	$(CMD_PREFIX)$(FIXSTYLE)
 
+.PHONY: register-git-hooks
 register-git-hooks:
-	@ln -s ../../scripts/pre-commit .git/hooks/pre-commit
+	$(CMD_PREFIX)ln -sf ../../scripts/pre-commit .git/hooks/pre-commit
 
+.PHONY: cloc
 cloc:
-	@cloc --vcs=git .
+	$(CMD_PREFIX)$(CLOC) .
