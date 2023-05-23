@@ -29,6 +29,14 @@ CHECKSTYLE		=  $(BUILD_ROOT_DIR)/scripts/check-style
 FIXSTYLE		=  $(CHECKSTYLE) --fix
 CLOC			=  cloc --vcs=git
 
+ifeq ($(findstring release,$(MAKECMDGOALS)),)
+MODE			=  debug
+else
+MODE			=  release
+endif
+
+PREV_MODE		=  $(shell cat $(target-dir)/.compile-mode 2>/dev/null)
+
 GENFLAGS		+= -I$(BUILD_ROOT_DIR)/include
 GENFLAGS		+= -DCONFIG_ENDIAN=$(shell echo $(ENDIAN) | tr '[:lower:]' '[:upper:]')_ENDIAN
 GENFLAGS		+= -DCONFIG_COLOR=$(shell [ "$(COLOR)" = "y" ] && echo 1 || echo 0)
@@ -44,7 +52,7 @@ CFLAGS			+= -mabi=lp64d -march=rv64imafd -m$(ENDIAN)-endian -mcmodel=medany -mno
 CFLAGS			+= -ffreestanding
 CFLAGS			+= -fno-common -fno-stack-protector -fno-builtin -fno-omit-frame-pointer
 
-ifneq ($(findstring release,$(MAKECMDGOALS)),)
+ifeq ($(MODE),release)
 CFLAGS			+= -O2
 else
 CFLAGS			+= -O0 -ggdb
@@ -63,7 +71,7 @@ LDFLAGS			=  $(CFLAGS)
 LDFLAGS			+= -static
 LDFLAGS			+= -Wl,--fatal-warnings,--warn-unresolved-symbols,--build-id=none
 
-ifneq ($(findstring release,$(MAKECMDGOALS)),)
+ifeq ($(MODE),release)
 LDFLAGS			+= -Wl,-O,--gc-sections
 endif
 
@@ -107,7 +115,7 @@ preproc			=  $(kern-objs-path:.o=.i)
 preproc			+= $(lib-objs-path:.o=.i)
 preproc			+= $(user-lib-objs-path:.o=.i)
 
-targets			= $(target-dir)/jrinx
+targets			=  $(target-dir)/jrinx $(target-dir)/.compile-mode
 ifneq ($(findstring preprocess,$(MAKECMDGOALS)),)
 targets			+= $(preproc)
 endif
@@ -168,6 +176,10 @@ COMPILE_BINTOC		= \
 			$(BINTOC) $(2) -p $(3) -o $(1)
 
 MAKEFLAGS		:= -j$(shell nproc) -s $(MAKEFLAGS) -r
+OPENSBI_MAKEFLAGS	:= $(MAKEFLAGS)
+ifneq ($(MODE),$(PREV_MODE))
+MAKEFLAGS		+= -B
+endif
 
 .PHONY: all
 all: $(targets)
@@ -193,6 +205,9 @@ else
 	$(call COMPILE_LINK,$@,$(kern-lds-path), \
 		$(kern-objs-path) $(lib-objs-path) $(user-exe-objs-path))
 endif
+
+$(target-dir)/.compile-mode:
+	$(CMD_PREFIX)echo '$(MODE)' > $@
 
 $(target-dir)/%.i: $(source-dir)/%.c
 	$(call COMPILE_CPP,$@,$<)
@@ -268,6 +283,7 @@ OPENSBI_FW_PATH		:= $(OPENSBI_ROOT)/build/platform/generic/firmware
 OPENSBI_FW_JUMP		:= $(OPENSBI_FW_PATH)/fw_jump.elf
 
 .PHONY: opensbi clean-opensbi distclean-opensbi
+opensbi: export MAKEFLAGS=$(OPENSBI_MAKEFLAGS)
 opensbi:
 	$(CMD_PREFIX)$(MAKE) -C $(OPENSBI_ROOT) all \
 		CROSS_COMPILE=$(CROSS_COMPILE) \
