@@ -167,7 +167,7 @@ COMPILE_BINTOC		= \
 			echo " BINTOC    $(subst $(target-dir)/,,$(1))"; \
 			$(BINTOC) $(2) -p $(3) -o $(1)
 
-MAKEFLAGS		:= -j$(shell nproc) -s $(MAKEFLAGS)
+MAKEFLAGS		:= -j$(shell nproc) -s $(MAKEFLAGS) -r
 
 .PHONY: all
 all: $(targets)
