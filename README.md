@@ -69,9 +69,7 @@ $ make run SYSCONF=./sys-conf/ping-pong.yml
 │   ├── multitask/      # 分区、进程、调度管理
 │   ├── tests/          # 内核单元测试集
 │   ├── traps/          # 异常、中断处理
-│   └── Makefile        # 内核 Makefile
 ├── lib/                # 公共函数库
-├── mk/                 # 项目 Makefile 集
 ├── opensbi/            # OpenSBI 依赖
 ├── scripts/            # 项目脚本集
 ├── sys-conf/           # 系统配置文件集
@@ -84,7 +82,7 @@ $ make run SYSCONF=./sys-conf/ping-pong.yml
 ├── .gitmodules
 ├── Dockerfile          # CI 使用的 Docker 镜像
 ├── jrinx.logo          # Jrinx 的 LOGO
-├── kern.ld.S           # 内核链接脚本
+├── kern.ldS            # 内核链接脚本
 ├── Makefile            # 项目根目录的 Makefile
 └── README.md           # 本文件
 ```
