@@ -3,7 +3,7 @@
 #include <layouts.h>
 #include <lib/elfloader.h>
 
-const Elf64_Ehdr *elf_from(const void *addr, size_t size) {
+const Elf64_Ehdr *elf64_from(const void *addr, size_t size) {
   if (unlikely((unsigned long)addr % sizeof(Elf64_Ehdr) != 0)) {
     return NULL;
   }
@@ -27,7 +27,8 @@ const Elf64_Ehdr *elf_from(const void *addr, size_t size) {
   return ehdr;
 }
 
-long elf_load_prog(Elf64_Phdr *phdr, const void *elf_addr, elf_mapper_callback_t map_callback) {
+long elf64_load_prog(Elf64_Phdr *phdr, const void *elf_addr,
+                     elf_mapper_callback_t map_callback) {
   unsigned long prog_addr = phdr->p_vaddr;
   size_t prog_size = phdr->p_filesz;
   size_t mem_size = phdr->p_memsz;

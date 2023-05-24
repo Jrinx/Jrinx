@@ -261,7 +261,7 @@ static long part_load_prog_mapper(void *data, unsigned long va, size_t offset, c
 }
 
 static long part_load_prog(struct part *part, struct prog_def_t *prog) {
-  const Elf64_Ehdr *ehdr = elf_from(prog->pg_elf_bin, prog->pg_elf_size);
+  const Elf64_Ehdr *ehdr = elf64_from(prog->pg_elf_bin, prog->pg_elf_size);
   if (ehdr == NULL) {
     return -KER_ELF_ER;
   }
@@ -269,7 +269,8 @@ static long part_load_prog(struct part *part, struct prog_def_t *prog) {
     struct part_load_prog_mapper_ctx ctx = {.part = part, .phdr = phdr};
     cb_decl(elf_mapper_callback_t, part_load_prog_callback, part_load_prog_mapper, &ctx);
     if (phdr->p_type == PT_LOAD) {
-      catch_e(elf_load_prog(phdr, prog->pg_elf_bin + phdr->p_offset, part_load_prog_callback));
+      catch_e(
+          elf64_load_prog(phdr, prog->pg_elf_bin + phdr->p_offset, part_load_prog_callback));
     }
   }
   fence_i;
