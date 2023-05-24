@@ -5,6 +5,7 @@ DTB			?=
 ARGS			?=
 SYSCONF			?=
 MINTICK			?= 10
+FIXTICK			?= 3
 BOARD			?= virt
 BUILD_3RD_PARTY		?= n
 
@@ -41,6 +42,7 @@ GENFLAGS		+= -I$(BUILD_ROOT_DIR)/include
 GENFLAGS		+= -DCONFIG_ENDIAN=$(shell echo $(ENDIAN) | tr '[:lower:]' '[:upper:]')_ENDIAN
 GENFLAGS		+= -DCONFIG_COLOR=$(shell [ "$(COLOR)" = "y" ] && echo 1 || echo 0)
 GENFLAGS		+= -DCONFIG_MINTICK=$(MINTICK)
+GENFLAGS		+= -DCONFIG_FIXTICK=$(FIXTICK)
 GENFLAGS		+= -DCONFIG_JRINX_LOGO='$(shell $(LOGOGEN) $(JRINX_LOGO))'
 GENFLAGS		+= -DCONFIG_REVISION='"$(shell git rev-parse --short HEAD)"'
 GENFLAGS		+= -DCONFIG_BUILD_DATE='"$(shell date "+%Y-%m-%d %H:%M:%S %z")"'

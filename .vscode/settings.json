@@ -8,6 +8,7 @@
     "CONFIG_JRINX_LOGO={0x00}",
     "CONFIG_COLOR=1",
     "CONFIG_MINTICK=10",
+    "CONFIG_FIXTICK=3",
   ],
   "C_Cpp.default.includePath": [
     "${workspaceFolder}/include",
