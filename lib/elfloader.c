@@ -50,8 +50,7 @@ long elf_load_prog(Elf64_Phdr *phdr, const void *elf_addr, elf_mapper_callback_t
   }
 
   for (; i < mem_size; i += PGSIZE) {
-    src_len = prog_size - i < PGSIZE ? prog_size - i : PGSIZE;
-    if ((err = cb_invoke(map_callback)(prog_addr + i, 0, NULL, src_len)) != 0) {
+    if ((err = cb_invoke(map_callback)(prog_addr + i, 0, NULL, 0)) != 0) {
       return err;
     }
   }
