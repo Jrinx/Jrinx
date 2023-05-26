@@ -196,7 +196,7 @@ debug release preprocess: all
 .SECONDARY:
 
 .ONESHELL:
-$(target-dir)/jrinx: $(kern-lds-path) $(kern-objs-path) $(lib-objs-path) $(user-exe-objs-path)
+$(target-dir)/jrinx: $(kern-lds-path) $(kern-objs-path) $(lib-objs-path) $(user-exe-objs-path) FORCE
 	$(call COMPILE_LINK,$@,$(kern-lds-path), \
 		$(kern-objs-path) $(lib-objs-path) $(user-exe-objs-path) $(wildcard $(user-3rd-mods)/*.x))
 
@@ -343,3 +343,6 @@ register-git-hooks:
 .PHONY: cloc
 cloc:
 	$(CMD_PREFIX)$(CLOC) .
+
+.PHONY: FORCE
+FORCE:
