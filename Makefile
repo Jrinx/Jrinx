@@ -7,7 +7,6 @@ SYSCONF			?=
 MINTICK			?= 10
 FIXTICK			?= 3
 BOARD			?= virt
-BUILD_3RD_PARTY		?= n
 
 ENDIAN			=  little
 BUILD_ROOT_DIR		=  $(CURDIR)
@@ -190,24 +189,16 @@ all: $(targets)
 .PHONY: debug release preprocess
 debug release preprocess: all
 
-.PHONY: third-party
-third-party:
+.PHONY: 3rd
+3rd:
 	$(CMD_PREFIX)BUILD_ROOT_DIR=$(BUILD_ROOT_DIR) $(MAKE) -C $(user-3rd-mods)
 
 .SECONDARY:
 
 .ONESHELL:
-ifeq ($(BUILD_3RD_PARTY),y)
-$(target-dir)/jrinx: third-party
-endif
 $(target-dir)/jrinx: $(kern-lds-path) $(kern-objs-path) $(lib-objs-path) $(user-exe-objs-path)
-ifeq ($(BUILD_3RD_PARTY),y)
 	$(call COMPILE_LINK,$@,$(kern-lds-path), \
 		$(kern-objs-path) $(lib-objs-path) $(user-exe-objs-path) $(wildcard $(user-3rd-mods)/*.x))
-else
-	$(call COMPILE_LINK,$@,$(kern-lds-path), \
-		$(kern-objs-path) $(lib-objs-path) $(user-exe-objs-path))
-endif
 
 $(target-dir)/.compile-mode:
 	$(CMD_PREFIX)echo '$(MODE)' > $@
@@ -252,7 +243,7 @@ endif
 
 .PHONY: objdump objcopy strip mkimage
 objdump:
-	$(CMD_PREFIX)find $(target-dir) \( -path $(target-dir)/jrinx -o -name '*.b' \) -exec \
+	$(CMD_PREFIX)find . \( -path $(target-dir)/jrinx -o -name '*.b' \) -exec \
 		sh -c '$(OBJDUMP) {} -aldS > {}.objdump && echo " OBJDUMP > {}.objdump"' \;
 
 objcopy:
