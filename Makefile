@@ -117,7 +117,8 @@ preproc			=  $(kern-objs-path:.o=.i)
 preproc			+= $(lib-objs-path:.o=.i)
 preproc			+= $(user-lib-objs-path:.o=.i)
 
-targets			=  $(target-dir)/jrinx $(target-dir)/.compile-mode
+jrinx-elf		=  $(target-dir)/jrinx
+targets			=  $(jrinx-elf) $(target-dir)/.compile-mode
 ifneq ($(findstring preprocess,$(MAKECMDGOALS)),)
 targets			+= $(preproc)
 endif
@@ -196,7 +197,7 @@ debug release preprocess: all
 .SECONDARY:
 
 .ONESHELL:
-$(target-dir)/jrinx: $(kern-lds-path) $(kern-objs-path) $(lib-objs-path) $(user-exe-objs-path) FORCE
+$(jrinx-elf): $(kern-lds-path) $(kern-objs-path) $(lib-objs-path) $(user-exe-objs-path) FORCE
 	$(call COMPILE_LINK,$@,$(kern-lds-path), \
 		$(kern-objs-path) $(lib-objs-path) $(user-exe-objs-path) $(wildcard $(user-3rd-mods)/*.x))
 
@@ -243,18 +244,18 @@ endif
 
 .PHONY: objdump objcopy strip mkimage
 objdump:
-	$(CMD_PREFIX)find . \( -path $(target-dir)/jrinx -o -name '*.b' \) -exec \
+	$(CMD_PREFIX)find . \( -path $(jrinx-elf) -o -name '*.b' \) -exec \
 		sh -c '$(OBJDUMP) {} -aldS > {}.objdump && echo " OBJDUMP > {}.objdump"' \;
 
 objcopy:
-	$(CMD_PREFIX)$(OBJCOPY) -O binary $(target-dir)/jrinx $(target-dir)/jrinx.bin
+	$(CMD_PREFIX)$(OBJCOPY) -O binary $(jrinx-elf) $(jrinx-elf).bin
 
 strip:
-	$(CMD_PREFIX)$(STRIP) $(target-dir)/jrinx
+	$(CMD_PREFIX)$(STRIP) $(jrinx-elf)
 
 mkimage: | strip objcopy
 	$(CMD_PREFIX)mkimage -A riscv -O linux -C none -a 0x80200000 -e 0x80200000 \
-		-n Jrinx -d $(target-dir)/jrinx.bin $(target-dir)/jrinx.uImage
+		-n Jrinx -d $(jrinx-elf).bin $(jrinx-elf).uImage
 
 .PHONY: clean distclean 3rdclean
 clean:
@@ -301,7 +302,7 @@ endif
 
 .PHONY: run dbg gdb
 
-run: EMU_OPTS		+= -kernel $(target-dir)/jrinx -bios $(OPENSBI_FW_JUMP) -append "$(EMU_ARGS)"
+run: EMU_OPTS		+= -kernel $(jrinx-elf) -bios $(OPENSBI_FW_JUMP) -append "$(EMU_ARGS)"
 run: opensbi
 	$(CMD_PREFIX)$(EMU) $(EMU_OPTS)
 
@@ -319,7 +320,7 @@ GDB_EVAL_CMD		+= \
 endif
 
 gdb:
-	$(CMD_PREFIX)$(GDB) $(GDB_EVAL_CMD) $(target-dir)/jrinx
+	$(CMD_PREFIX)$(GDB) $(GDB_EVAL_CMD) $(jrinx-elf)
 
 .PHONY: dumpdts dumpdtb
 dumpdts: dumpdtb
