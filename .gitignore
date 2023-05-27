@@ -1,8 +1,8 @@
-compile_commands.json
-target
+/compile_commands.json
+/logs
+/target
 __pycache__
 
-*.test-out
 *.o
 *.b
 *.b.c

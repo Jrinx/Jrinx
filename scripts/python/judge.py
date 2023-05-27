@@ -3,6 +3,7 @@
 from __future__ import annotations
 from abc import abstractmethod
 import argparse
+from datetime import datetime
 import os
 import pathlib
 import psutil
@@ -23,6 +24,7 @@ except ImportError:
 CHILD_TIMEOUT = 60
 CHILD_FINAL_STUCK_TIMEOUT = 5
 CHILD_TERM_TIMEOUT = 5
+LOG_PATH = 'logs'
 
 
 class JudgeException(Exception):
@@ -287,6 +289,8 @@ def main():
                           start_new_session=True,
                           )
 
+    ch_out = []
+
     try:
         with Rules(verbose, conf) as rules_check:
             final_stuck = False
@@ -305,6 +309,7 @@ after expected patterns detected'
             signal.alarm(CHILD_TIMEOUT)
             for out in ch.stdout:
                 line = out if isinstance(out, str) else out.decode('utf-8')
+                ch_out.append(line)
                 if verbose and not suppress_emu_out:
                     sys.stdout.write(line)
                 if interactive:
@@ -318,8 +323,17 @@ after expected patterns detected'
                 if not final_stuck and rules_check(line):
                     final_stuck = True
                     signal.alarm(CHILD_FINAL_STUCK_TIMEOUT)
-    except JudgeTimeout as e:
-        warn(e)
+    except JudgeException as e:
+        if not verbose:
+            now = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+            if not os.path.isdir(LOG_PATH):
+                os.mkdir(LOG_PATH)
+            log_file_name = f'{os.path.basename(args.rules_file).split(".")[0]}-{now}.log'
+            log_file_path = pathlib.Path(LOG_PATH) / log_file_name
+            with open(log_file_path, 'w', encoding='utf-8') as lf:
+                lf.writelines(ch_out)
+        fatal(e)
+        raise e
     finally:
         signal.alarm(0)
         if ch:
