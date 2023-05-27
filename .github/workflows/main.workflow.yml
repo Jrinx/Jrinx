@@ -36,3 +36,8 @@ jobs:
           BOARD: ${{ matrix.board }}
         run: |
           ./scripts/run-tests -p
+      - uses: actions/upload-artifact@v3
+        if: failure()
+        with:
+          name: logs-${{ matrix.mode }}-${{ matrix.board }}
+          path: logs/*.log
