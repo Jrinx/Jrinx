@@ -1,14 +1,6 @@
 #include <asm.h>
 #include <layouts.h>
 
-.data
-
-.align 12
-.section .ksec.stack
-.globl kstack
-kstack:
-.space KSTKSIZE
-
 .text
 .section .boot
 EXPORT(_start)
