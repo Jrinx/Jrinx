@@ -167,10 +167,14 @@ void sched_proc_give_up(int round_robin) {
   struct proc *proc = cpus_cur_proc[hrt_get_id()];
   struct proc *next_proc = sched_elect_next_proc(round_robin);
   if (proc != next_proc) {
+    rv64_sstatus prev_intp = {.val = intp_disable()};
     struct context *context;
     panic_e(ctx_alloc(&context));
     hlist_insert_head(&proc->pr_trapframe.tf_ctx_list, &context->ctx_link);
     extern void _sched_proc_give_up(struct context * context, int round_robin);
     _sched_proc_give_up(context, round_robin);
+    if (prev_intp.bits.sie) {
+      intp_enable();
+    }
   }
 }
