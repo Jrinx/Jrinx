@@ -1,4 +1,4 @@
-name: Code Style Check & Regression Test
+name: Regression Test
 
 on: [push]
 
@@ -6,18 +6,7 @@ env:
   CROSS_COMPILE: riscv64-linux-gnu-
 
 jobs:
-  check-style:
-    runs-on: ubuntu-latest
-    container:
-      image: coekjan/jrinx-devel:latest
-    steps:
-      - uses: actions/checkout@v3
-      - run: git config --system --add safe.directory "$GITHUB_WORKSPACE"
-      - name: Check Style
-        run: |
-          make check-style
   regression-test:
-    needs: [check-style]
     runs-on: ubuntu-latest
     container:
       image: coekjan/jrinx-devel:latest

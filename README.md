@@ -1,6 +1,6 @@
 # Jrinx
 
-![github workflows status](https://github.com/Coekjan/Jrinx/actions/workflows/main.workflow.yml/badge.svg?branch=master)
+![check-style status](https://github.com/Coekjan/Jrinx/actions/workflows/check-style.yml/badge.svg?branch=master) ![regression-test status](https://github.com/Coekjan/Jrinx/actions/workflows/regression-test.yml/badge.svg?branch=master)
 
 ## 什么是 Jrinx？
 
