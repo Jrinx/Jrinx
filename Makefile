@@ -311,6 +311,7 @@ dbg: run
 
 GDB			?= gdb-multiarch
 GDB_EVAL_CMD		:= -ex 'target remote localhost:1234'
+GDB_SYM_FILE		?=
 
 ifneq ($(GDB_SYM_FILE),)
 GDB_EVAL_CMD		+= \
