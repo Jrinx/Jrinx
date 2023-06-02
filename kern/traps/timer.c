@@ -31,15 +31,20 @@ static void time_event_set_head(void) {
   }
   te = CONTAINER_OF(cpus_time_event_queue[hrt_get_id()].l_first, struct time_event,
                     te_queue_link);
-  assert(boottime_get_now() < te->te_time);
-  panic_e(sbi_set_timer(te->te_time * (cpus_get_timebase_freq() / SYS_TIME_SECOND)));
+  if (boottime_get_now() >= te->te_time) {
+    rv64_si sip = {.val = csrr_sip()};
+    sip.bits.sti = 1;
+    csrw_sip(sip.val);
+  } else {
+    panic_e(sbi_set_timer(te->te_time * (cpus_get_timebase_freq() / SYS_TIME_SECOND)));
+  }
 }
 
 void time_event_alloc(void *ctx, sys_time_t time, enum time_event_type type) {
   struct time_event *te = kalloc(sizeof(struct time_event));
   memset(te, 0, sizeof(struct time_event));
   te->te_ctx = ctx;
-  te->te_time = align_up(time, SYS_TIME_MIN_TICK);
+  te->te_time = time;
   te->te_type = type;
   struct time_event *i;
   intp_push();
@@ -119,7 +124,7 @@ void time_event_action(void) {
   while (!list_empty(&cpus_time_event_queue[hrt_get_id()])) {
     struct time_event *te = CONTAINER_OF(cpus_time_event_queue[hrt_get_id()].l_first,
                                          struct time_event, te_queue_link);
-    if (te->te_time <= boottime_get_now() + CONFIG_FIXTICK) {
+    if (te->te_time <= boottime_get_now()) {
       switch (te->te_type) {
       case TE_PARTITION_ACTIVATE:
         resched_part = 1;

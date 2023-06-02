@@ -7,8 +7,6 @@
     "CONFIG_BUILD_DATE=\"2023-04-26 00:00:00 +0800\"",
     "CONFIG_JRINX_LOGO={0x00}",
     "CONFIG_COLOR=1",
-    "CONFIG_MINTICK=10",
-    "CONFIG_FIXTICK=3",
   ],
   "C_Cpp.default.includePath": [
     "${workspaceFolder}/include",

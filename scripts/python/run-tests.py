@@ -12,8 +12,6 @@ from utils import *
 
 
 PARALLEL_POOL_SIZE = mp.cpu_count()
-JRINX_MINTICK = 10000
-JRINX_FIXTICK = 5000
 
 
 def run_test(test, /, *,
@@ -154,11 +152,7 @@ def main():
     if not no_make:
         try:
             subprocess.check_call(['make', compile_mode],
-                                  env=dict(os.environ,
-                                           COLOR='n',
-                                           MINTICK=f'{JRINX_MINTICK}',
-                                           FIXTICK=f'{JRINX_FIXTICK}',
-                                           ),
+                                  env=dict(os.environ, COLOR='n'),
                                   stdout=subprocess.DEVNULL,
                                   )
         except subprocess.CalledProcessError as e:
