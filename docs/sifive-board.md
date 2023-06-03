@@ -17,7 +17,7 @@
 
 ```console
 $ cd <path to this repo>
-$ make sbi-fw
+$ make opensbi
 ```
 
 ### 构建 u-boot
