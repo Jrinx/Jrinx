@@ -46,7 +46,7 @@ CFLAGS			=  $(GENFLAGS)
 CFLAGS			+= --std=gnu99 -g
 CFLAGS			+= -nostdlib
 CFLAGS			+= -Wall -Werror
-CFLAGS			+= -mabi=lp64d -march=rv64imafd -m$(ENDIAN)-endian -mcmodel=medany -mno-relax
+CFLAGS			+= -mabi=lp64d -march=rv64imafd_zifencei -m$(ENDIAN)-endian -mcmodel=medany -mno-relax
 CFLAGS			+= -ffreestanding
 CFLAGS			+= -fno-common -fno-stack-protector -fno-builtin -fno-omit-frame-pointer
 
