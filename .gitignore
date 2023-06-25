@@ -1,6 +1,7 @@
 /compile_commands.json
 /logs
 /target
+/venv
 __pycache__
 
 *.o
